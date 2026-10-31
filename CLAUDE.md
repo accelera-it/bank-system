@@ -34,6 +34,14 @@ dotnet ef migrations add <Name> --project core/BankSystem.Data --startup-project
 dotnet ef migrations add <Name> --project core/CentralApi.Data --startup-project web/CentralApi
 ```
 
+Docker (build context is the repo root; each app has its own `Dockerfile`):
+
+```bash
+docker compose up --build   # BankSystem.Web :8080, DemoShop :8082 (db and api (CentralApi) are internal only)
+```
+
+Compose overrides connection strings and inter-service URLs through env vars (`Section__Key`); set `MSSQL_SA_PASSWORD` in `.env` to change the default SA password.
+
 ## Architecture
 
 ### Layering

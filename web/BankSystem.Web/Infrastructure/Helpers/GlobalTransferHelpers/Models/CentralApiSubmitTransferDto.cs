@@ -1,6 +1,6 @@
 ﻿namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers.Models
 {
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
 
     public class CentralApiSubmitTransferDto : IMapWith<GlobalTransferDto>
     {

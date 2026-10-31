@@ -18,7 +18,7 @@ namespace DemoShop.Web.Models
         [Required]
         [Display(Name = "Expiration date")]
         [StringLength(5, MinimumLength = 5)]
-        [RegularExpression(@"^(0[1-9]|1[0-c2])\/\d{2}$", ErrorMessage = "Invalid expiration date")]
+        [RegularExpression(@"^(0[1-9]|1[0-2])\/\d{2}$", ErrorMessage = "Invalid expiration date")]
         public string ExpiryDate { get; set; }
 
         [Required]

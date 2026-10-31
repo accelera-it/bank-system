@@ -3,7 +3,7 @@
     using System;
     using System.Globalization;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Common;
     using Infrastructure.Filters;
     using Infrastructure.Helpers.GlobalTransferHelpers;
@@ -36,7 +36,7 @@
         public async Task<IActionResult> Post([FromBody] string data)
         {
             var model = JsonConvert.DeserializeObject<PaymentInfoModel>(data);
-            if (this.TryValidateModel(model))
+            if (!this.TryValidateModel(model))
             {
                 return this.BadRequest();
             }

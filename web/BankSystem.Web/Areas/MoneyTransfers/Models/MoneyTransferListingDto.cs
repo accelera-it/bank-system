@@ -1,7 +1,7 @@
 ﻿namespace BankSystem.Web.Areas.MoneyTransfers.Models
 {
     using System;
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Services.Models.MoneyTransfer;
 
     public class MoneyTransferListingDto : IMapWith<MoneyTransferListingServiceModel>

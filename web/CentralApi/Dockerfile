@@ -1,7 +1,8 @@
 # Build context: repository root (see docker-compose.yml)
-FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+COPY Directory.Build.props Directory.Packages.props ./
 COPY core/BankSystem.Common/BankSystem.Common.csproj core/BankSystem.Common/
 COPY core/CentralApi.Models/CentralApi.Models.csproj core/CentralApi.Models/
 COPY core/CentralApi.Data/CentralApi.Data.csproj core/CentralApi.Data/
@@ -18,7 +19,7 @@ COPY core/CentralApi.Services/ core/CentralApi.Services/
 COPY web/CentralApi/ web/CentralApi/
 RUN dotnet publish web/CentralApi/CentralApi.csproj -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:3.1 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:80 \
     TZ=Asia/Tashkent

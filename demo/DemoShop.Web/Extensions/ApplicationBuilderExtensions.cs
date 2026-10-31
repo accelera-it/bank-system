@@ -14,7 +14,14 @@ namespace DemoShop.Web.Extensions
             {
                 var dbContext = serviceScope.ServiceProvider.GetRequiredService<DemoShopDbContext>();
 
-                await dbContext.Database.MigrateAsync();
+                if (dbContext.Database.IsRelational())
+                {
+                    await dbContext.Database.MigrateAsync();
+                }
+                else
+                {
+                    await dbContext.Database.EnsureCreatedAsync();
+                }
             }
         }
     }

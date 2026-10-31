@@ -1,0 +1,35 @@
+# Each test project is its own service; all run on EF Core InMemory, without SQL Server.
+# All:  docker compose -f docker-compose.test.yml up --build --abort-on-container-failure
+# One:  docker compose -f docker-compose.test.yml run --rm --build api-unit
+name: bank-system-test
+
+x-tests: &tests
+  image: bank-system-tests
+  build:
+    context: .
+    dockerfile: tests/Dockerfile
+
+services:
+  web-unit:
+    <<: *tests
+    command: tests/BankSystem.UnitTests
+
+  web-integration:
+    <<: *tests
+    command: tests/BankSystem.IntegrationTests
+
+  api-unit:
+    <<: *tests
+    command: tests/CentralApi.UnitTests
+
+  api-integration:
+    <<: *tests
+    command: tests/CentralApi.IntegrationTests
+
+  demo-unit:
+    <<: *tests
+    command: tests/DemoShop.UnitTests
+
+  demo-integration:
+    <<: *tests
+    command: tests/DemoShop.IntegrationTests

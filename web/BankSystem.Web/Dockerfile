@@ -1,7 +1,8 @@
 # Build context: repository root (see docker-compose.yml)
-FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+COPY Directory.Build.props Directory.Packages.props ./
 COPY core/BankSystem.Common/BankSystem.Common.csproj core/BankSystem.Common/
 COPY core/BankSystem.Models/BankSystem.Models.csproj core/BankSystem.Models/
 COPY core/BankSystem.Data/BankSystem.Data.csproj core/BankSystem.Data/
@@ -18,7 +19,7 @@ COPY core/BankSystem.Services/ core/BankSystem.Services/
 COPY web/BankSystem.Web/ web/BankSystem.Web/
 RUN dotnet publish web/BankSystem.Web/BankSystem.Web.csproj -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:3.1 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:80 \
     TZ=Asia/Tashkent

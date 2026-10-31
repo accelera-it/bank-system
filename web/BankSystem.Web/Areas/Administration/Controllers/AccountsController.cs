@@ -3,7 +3,7 @@ namespace BankSystem.Web.Areas.Administration.Controllers
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Infrastructure.Extensions;
     using Microsoft.AspNetCore.Mvc;
     using Models;

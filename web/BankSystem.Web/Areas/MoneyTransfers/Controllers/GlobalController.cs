@@ -3,7 +3,7 @@
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Common;
     using Infrastructure.Helpers.GlobalTransferHelpers;
     using Infrastructure.Helpers.GlobalTransferHelpers.Models;

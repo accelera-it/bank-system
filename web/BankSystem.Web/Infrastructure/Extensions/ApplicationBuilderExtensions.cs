@@ -30,7 +30,14 @@
                 var userManager = serviceScope.ServiceProvider.GetService<UserManager<BankUser>>();
                 var roleManager = serviceScope.ServiceProvider.GetService<RoleManager<IdentityRole>>();
 
-                await dbContext.Database.MigrateAsync();
+                if (dbContext.Database.IsRelational())
+                {
+                    await dbContext.Database.MigrateAsync();
+                }
+                else
+                {
+                    await dbContext.Database.EnsureCreatedAsync();
+                }
                 await SeedUser(userManager, dbContext);
 
                 if (!await roleManager.RoleExistsAsync(GlobalConstants.AdministratorRoleName))

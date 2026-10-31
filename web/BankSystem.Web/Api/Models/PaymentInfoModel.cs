@@ -2,7 +2,7 @@
 {
     using System;
     using System.ComponentModel.DataAnnotations;
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Infrastructure.Helpers.GlobalTransferHelpers.Models;
 
     public class PaymentInfoModel : IMapWith<GlobalTransferDto>

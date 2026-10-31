@@ -1,9 +1,8 @@
 ﻿namespace BankSystem.Web
 {
     using System;
-    using AutoMapper;
+    using MapsterMapper;
     using BankSystem.Models;
-    using Common.AutoMapping.Profiles;
     using Common.Configuration;
     using Common.EmailSender;
     using Common.Utils;
@@ -41,6 +40,8 @@
             services.AddDbContextPool<BankSystemDbContext>(options =>
                 options.UseSqlServer(
                     this.Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddDatabaseDeveloperPageExceptionFilter();
 
             services
                 .Configure<CookieTempDataProviderOptions>(options => { options.Cookie.IsEssential = true; });
@@ -117,7 +118,7 @@
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseDatabaseErrorPage();
+                app.UseMigrationsEndPoint();
             }
             else
             {

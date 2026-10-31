@@ -1,6 +1,6 @@
 ﻿namespace BankSystem.Web.Models.BankAccount
 {
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Services.Models.BankAccount;
 
     public class BankAccountIndexViewModel : IMapWith<BankAccountIndexServiceModel>

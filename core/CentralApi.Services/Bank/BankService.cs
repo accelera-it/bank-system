@@ -5,8 +5,8 @@
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Threading.Tasks;
-    using AutoMapper;
-    using AutoMapper.QueryableExtensions;
+    using Mapster;
+    using MapsterMapper;
     using Data;
     using Microsoft.EntityFrameworkCore;
     using Models.Banks;
@@ -29,7 +29,7 @@
                     EF.Functions.Like(b.Name, string.Format(likeExpression, bankName)) &&
                     EF.Functions.Like(b.SwiftCode, string.Format(likeExpression, swiftCode)) &&
                     EF.Functions.Like(b.Location, string.Format(likeExpression, bankCountry)))
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
 
             return bank;
@@ -44,7 +44,7 @@
                 .Where(b => b.PaymentUrl != null)
                 .OrderBy(b => b.Location)
                 .ThenBy(b => b.Name)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
             return banks;
@@ -57,7 +57,7 @@
                 .Banks
                 .AsNoTracking()
                 .Where(b => b.Id == id)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
         }
 
@@ -67,7 +67,7 @@
                 .Banks
                 .AsNoTracking()
                 .Where(b => b.BankIdentificationCardNumbers == identificationCardNumbers)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
     }
 }

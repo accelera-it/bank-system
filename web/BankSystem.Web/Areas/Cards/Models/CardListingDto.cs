@@ -1,6 +1,6 @@
 ﻿namespace BankSystem.Web.Areas.Cards.Models
 {
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Services.Models.Card;
 
     public class CardListingDto : IMapWith<CardDetailsServiceModel>

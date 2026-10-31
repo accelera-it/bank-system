@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-BankSystem is an ASP.NET Core 3.1 solution (`BankSystem.sln` at the repo root) made of three independently deployed web apps:
+BankSystem is an ASP.NET Core (.NET 10) solution (`BankSystem.sln` at the repo root) made of three independently deployed web apps:
 
 - **BankSystem.Web** (`web/BankSystem.Web`) — the bank: MVC + Razor Pages (Identity under `Pages/Account`), feature areas `Cards`, `MoneyTransfers`, `Administration`.
 - **CentralApi** (`web/CentralApi`) — a hub that connects multiple BankSystem instances and routes global transfers, card payments and direct payments between them.
@@ -14,13 +14,13 @@ Repo layout (mirrored by solution folders in `BankSystem.sln`): `core/` (shared 
 
 ## Commands
 
-All projects target `netcoreapp3.1` / `netstandard2.1`. Newer SDKs build them, but running apps/tests needs the .NET Core 3.1 runtime (x64 only on macOS).
+All projects target `net10.0` through `Directory.Build.props`; package versions live in `Directory.Packages.props` (central package management). `dotnet tool restore` installs `dotnet-ef`.
 
 ```bash
 dotnet restore
 dotnet build --no-restore
-dotnet test                                                        # all tests (xUnit)
-dotnet test tests/BankSystem.Services.Tests                        # one project
+dotnet test                                                        # all six test projects, no database needed
+dotnet test tests/BankSystem.UnitTests                             # one project
 dotnet test --filter "FullyQualifiedName~MoneyTransferServiceTests" # one class
 dotnet test --filter "FullyQualifiedName~MoneyTransferServiceTests.MethodName" # one test
 dotnet run --project web/BankSystem.Web
@@ -38,24 +38,26 @@ Docker (build context is the repo root; each app has its own `Dockerfile`):
 
 ```bash
 docker compose up --build   # BankSystem.Web :8080, DemoShop :8082 (db and api (CentralApi) are internal only)
+docker compose -f docker-compose.test.yml up --build --abort-on-container-failure   # all six test projects, one service each, on EF Core InMemory
+docker compose -f docker-compose.test.yml run --rm --build api-unit   # one project: {web,api,demo}-{unit,integration}
 ```
 
-Compose overrides connection strings and inter-service URLs through env vars (`Section__Key`); set `MSSQL_SA_PASSWORD` in `.env` to change the default SA password.
+Compose overrides connection strings and inter-service URLs through env vars (`Section__Key`); set `MSSQL_SA_PASSWORD` in `.env` to change the default SA password and `DEMO_PORT` to move DemoShop off 8082.
 
 ## Architecture
 
 ### Layering
 Each app follows the same layered layout, split into separate projects per layer:
-`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Every project sits directly under its top-level folder (no nesting): BankSystem and CentralApi layers in `core/`, DemoShop layers in `demo/`. `core/BankSystem.Common` is shared by BankSystem and CentralApi (config classes, crypto utils, email sender, AutoMapper setup).
+`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Every project sits directly under its top-level folder (no nesting): BankSystem and CentralApi layers in `core/`, DemoShop layers in `demo/`. `core/BankSystem.Common` is shared by BankSystem and CentralApi (config classes, crypto utils, email sender, Mapster setup).
 
 ### Convention-based DI
 `web/BankSystem.Web/Infrastructure/Extensions/ServiceCollectionExtensions.cs` registers every class `Foo` that implements an interface named `IFoo` — scoped for the Services and Common assemblies, transient for the web assembly. New services need no manual registration as long as they follow the `Foo`/`IFoo` naming.
 
-### Convention-based AutoMapper
-`core/BankSystem.Common/AutoMapping/Profiles/DefaultProfile.cs` scans loaded assemblies whose name contains `BankSystem` or `CentralApi`:
+### Convention-based Mapster mapping
+`core/BankSystem.Common/Mapping/MappingConfig.cs` scans the assemblies passed to `AddMapping`/`MappingConfig.Create`:
 - types implementing `IMapWith<T>` get a bidirectional map with `T`;
 - types implementing `IHaveCustomMapping` configure their own maps.
-Add mappings by implementing these interfaces on the DTO/view model rather than writing new profiles. Because assemblies load lazily, tests make sure the right assemblies are loaded before the profile is built.
+Add mappings by implementing these interfaces on the DTO/view model.
 
 ### Inter-bank security protocol
 All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`core/BankSystem.Common/Utils/SignatureVerificationUtil.cs`, `CryptographyExtensions.cs`, `RsaExtensions.cs`):
@@ -65,8 +67,10 @@ All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`core/B
 
 ### Configuration and multi-bank setup
 - Bank identity comes from the `BankConfiguration` section (name, `UniqueIdentifier` = swift code, country, `First3CardDigits`, own RSA `Key`, `CentralApiPublicKey`, `CentralApiAddress`). It and `SendGridConfiguration` are validated in `PostConfigure`, so startup throws if a value is missing.
-- CentralApi knows banks through its `Banks` table (`core/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `web/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`.
+- CentralApi knows banks through its `Banks` table (`core/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `web/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`, at the address in the `DefaultBankBaseUrl` setting.
 - BankSystem.Web seeds the `test@test.com` user with an account and the Administrator role on startup (`Infrastructure/Extensions/ApplicationBuilderExtensions.cs`).
 
 ### Tests
-Only the service layers are tested (`tests/BankSystem.Services.Tests`, `tests/CentralApi.Services.Tests`): xUnit + FluentAssertions + Moq, against an EF Core InMemory DB that is created fresh per access of `BaseTest.DatabaseInstance`, with a shared mapper from `Setup/TestSetup.cs`.
+Six xUnit projects (FluentAssertions, Moq): `tests/{BankSystem,CentralApi,DemoShop}.{UnitTests,IntegrationTests}`.
+- Unit tests cover services and crypto/payment helpers on an EF Core InMemory DB.
+- Integration tests boot the real app with `WebApplicationFactory`, one instance and database per test class. Helpers are linked from `tests/Shared`: `TestDatabase` (SQL Server when `TEST_SQL_CONNECTION` is set, otherwise InMemory, as in `docker-compose.test.yml`, so the seeders call `EnsureCreated` instead of migrating), `TestAuthHandler` (sign in through headers), `StubHttpServer` (loopback server for the next hop, because the apps create their own `HttpClient`) and `SecureRequestBuilder` (the inter-bank protocol).

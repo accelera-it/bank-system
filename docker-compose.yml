@@ -16,7 +16,8 @@ services:
       dockerfile: web/CentralApi/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-      ConnectionStrings__DefaultConnection: Server=db,1433;Database=BankSystemCentralApi;User Id=sa;Password=${MSSQL_SA_PASSWORD:-BankSystem_Dev123!};MultipleActiveResultSets=true
+      ConnectionStrings__DefaultConnection: Server=db,1433;Database=BankSystemCentralApi;User Id=sa;Password=${MSSQL_SA_PASSWORD:-BankSystem_Dev123!};MultipleActiveResultSets=true;TrustServerCertificate=True
+      DefaultBankBaseUrl: http://web
     depends_on:
       db:
         condition: service_healthy
@@ -27,7 +28,7 @@ services:
       dockerfile: web/BankSystem.Web/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-      ConnectionStrings__DefaultConnection: Server=db,1433;Database=BankSystem;User Id=sa;Password=${MSSQL_SA_PASSWORD:-BankSystem_Dev123!};MultipleActiveResultSets=true
+      ConnectionStrings__DefaultConnection: Server=db,1433;Database=BankSystem;User Id=sa;Password=${MSSQL_SA_PASSWORD:-BankSystem_Dev123!};MultipleActiveResultSets=true;TrustServerCertificate=True
       BankConfiguration__CentralApiAddress: http://api/
     ports:
       - "8080:80"
@@ -43,12 +44,14 @@ services:
       dockerfile: demo/DemoShop.Web/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-      ConnectionStrings__DefaultConnection: Server=db,1433;Database=DemoShop;User Id=sa;Password=${MSSQL_SA_PASSWORD:-BankSystem_Dev123!};MultipleActiveResultSets=true
-      DirectPaymentsConfiguration__SiteUrl: http://localhost:8082/
+      ConnectionStrings__DefaultConnection: Server=db,1433;Database=DemoShop;User Id=sa;Password=${MSSQL_SA_PASSWORD:-BankSystem_Dev123!};MultipleActiveResultSets=true;TrustServerCertificate=True
+      DirectPaymentsConfiguration__SiteUrl: http://localhost:${DEMO_PORT:-8082}/
       DirectPaymentsConfiguration__CentralApiPaymentUrl: http://localhost:8081/pay
       CardPaymentsConfiguration__CentralApiCardPaymentsUrl: http://api/api/CardPayments
+      DestinationBankAccountConfiguration__DestinationBankAccountUniqueId: ABCJ98131785
+      DestinationBankAccountConfiguration__RecipientName: Test Testov
     ports:
-      - "8082:80"
+      - "${DEMO_PORT:-8082}:80"
     depends_on:
       db:
         condition: service_healthy

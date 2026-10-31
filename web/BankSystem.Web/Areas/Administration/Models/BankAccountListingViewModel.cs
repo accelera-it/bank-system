@@ -1,7 +1,7 @@
 namespace BankSystem.Web.Areas.Administration.Models
 {
     using System;
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Services.Models.BankAccount;
 
     public class BankAccountListingViewModel : IMapWith<BankAccountDetailsServiceModel>

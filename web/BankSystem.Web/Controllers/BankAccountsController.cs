@@ -4,7 +4,7 @@ namespace BankSystem.Web.Controllers
     using System.Linq;
     using System.Threading.Tasks;
     using Areas.MoneyTransfers.Models;
-    using AutoMapper;
+    using MapsterMapper;
     using Common;
     using Common.Configuration;
     using Infrastructure.Extensions;

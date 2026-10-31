@@ -3,8 +3,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
-    using AutoMapper.QueryableExtensions;
+    using Mapster;
+    using MapsterMapper;
     using BankSystem.Models;
     using Data;
     using Microsoft.EntityFrameworkCore;
@@ -54,7 +54,7 @@
                 .Accounts
                 .AsNoTracking()
                 .Where(a => a.UniqueId == uniqueId)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
 
         public async Task<T> GetByIdAsync<T>(string id)
@@ -63,7 +63,7 @@
                 .Accounts
                 .AsNoTracking()
                 .Where(a => a.Id == id)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
 
         public async Task<bool> ChangeAccountNameAsync(string accountId, string newName)
@@ -89,7 +89,7 @@
                 .Accounts
                 .AsNoTracking()
                 .Where(a => a.UserId == userId)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<IEnumerable<T>> GetAccountsAsync<T>(int pageIndex = 1, int count = int.MaxValue)
@@ -99,7 +99,7 @@
                 .AsNoTracking()
                 .Skip((pageIndex - 1) * count)
                 .Take(count)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<int> GetCountOfAccountsAsync()

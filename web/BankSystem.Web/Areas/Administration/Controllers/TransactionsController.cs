@@ -1,6 +1,6 @@
 ﻿namespace BankSystem.Web.Areas.Administration.Controllers
 {
-    using AutoMapper;
+    using MapsterMapper;
     using Microsoft.AspNetCore.Mvc;
     using MoneyTransfers.Models;
     using Services.Models.MoneyTransfer;

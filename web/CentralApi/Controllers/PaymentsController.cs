@@ -3,7 +3,7 @@ namespace CentralApi.Controllers
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Infrastructure.Helpers.PaymentHelpers;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;

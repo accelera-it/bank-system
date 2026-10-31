@@ -5,7 +5,7 @@
     using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Common;
     using Infrastructure.Extensions;
     using Microsoft.AspNetCore.Mvc;

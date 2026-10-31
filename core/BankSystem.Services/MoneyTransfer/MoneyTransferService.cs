@@ -4,8 +4,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
-    using AutoMapper.QueryableExtensions;
+    using Mapster;
+    using MapsterMapper;
     using BankSystem.Models;
     using Common;
     using Common.EmailSender.Interface;
@@ -31,7 +31,7 @@
                 .Transfers
                 .AsNoTracking()
                 .Where(t => t.ReferenceNumber == referenceNumber)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<int> GetCountOfAllMoneyTransfersForUserAsync(string userId)
@@ -48,7 +48,7 @@
                 .OrderByDescending(mt => mt.MadeOn)
                 .Skip((pageIndex - 1) * count)
                 .Take(count)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<int> GetCountOfAllMoneyTransfersForAccountAsync(string accountId)
@@ -65,7 +65,7 @@
                 .OrderByDescending(mt => mt.MadeOn)
                 .Skip((pageIndex - 1) * count)
                 .Take(count)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<IEnumerable<T>> GetLast10MoneyTransfersForUserAsync<T>(string userId)
@@ -76,7 +76,7 @@
                 .Where(mt => mt.Account.UserId == userId)
                 .OrderByDescending(mt => mt.MadeOn)
                 .Take(10)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<bool> CreateMoneyTransferAsync<T>(T model)

@@ -1,6 +1,6 @@
 namespace CentralApi.Models
 {
-    using BankSystem.Common.AutoMapping.Interfaces;
+    using BankSystem.Common.Mapping.Interfaces;
     using Services.Models.Banks;
 
     public class BankListingViewModel : IMapWith<BankListingServiceModel>

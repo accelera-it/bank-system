@@ -2,7 +2,7 @@
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Microsoft.AspNetCore.Mvc.Rendering;
     using Services.Models.Card;
 

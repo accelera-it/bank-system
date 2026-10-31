@@ -2,7 +2,7 @@
 {
     using System;
     using Areas.MoneyTransfers.Models;
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
     using Infrastructure.Collections;
     using Services.Models.BankAccount;
 

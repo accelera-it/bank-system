@@ -1,8 +1,7 @@
 ﻿namespace CentralApi
 {
     using System;
-    using AutoMapper;
-    using BankSystem.Common.AutoMapping.Profiles;
+    using BankSystem.Common.Mapping;
     using BankSystem.Common.Utils;
     using Data;
     using Infrastructure;
@@ -38,7 +37,7 @@
                     throw new ApplicationException("CentralApiConfiguration is invalid");
                 }
             });
-            services.AddAutoMapper(typeof(DefaultProfile));
+            services.AddMapping(typeof(Startup).Assembly);
             services
                 .AddControllersWithViews();
         }

@@ -6,6 +6,7 @@
     using Common.Configuration;
     using Common.Utils;
     using Common.Utils.Models;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.Filters;
     using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,8 @@
 
             if (!isValid)
             {
-                context.Result = new ForbidResult();
+                // Plain 403: API callers are other services, so no auth challenge or login redirect
+                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
                 return;
             }
 

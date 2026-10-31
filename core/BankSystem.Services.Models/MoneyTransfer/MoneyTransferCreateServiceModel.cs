@@ -2,10 +2,10 @@
 {
     using System;
     using System.ComponentModel.DataAnnotations;
-    using AutoMapper;
+    using Mapster;
     using BankSystem.Models;
     using Common;
-    using Common.AutoMapping.Interfaces;
+    using Common.Mapping.Interfaces;
 
     public class MoneyTransferCreateServiceModel : MoneyTransferBaseServiceModel, IHaveCustomMapping
     {
@@ -40,10 +40,10 @@
         [Required]
         public string ReferenceNumber { get; set; }
 
-        public void ConfigureMapping(Profile mapper)
+        public void ConfigureMapping(TypeAdapterConfig config)
         {
-            mapper.CreateMap<MoneyTransferCreateServiceModel, MoneyTransfer>()
-                .ForMember(dest => dest.Destination, opt => opt.MapFrom(src => src.DestinationBankAccountUniqueId));
+            config.ForType<MoneyTransferCreateServiceModel, MoneyTransfer>()
+                .Map(dest => dest.Destination, src => src.DestinationBankAccountUniqueId);
         }
     }
 }

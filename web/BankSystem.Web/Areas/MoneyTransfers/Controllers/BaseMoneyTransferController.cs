@@ -2,7 +2,7 @@ namespace BankSystem.Web.Areas.MoneyTransfers.Controllers
 {
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Microsoft.AspNetCore.Mvc;
     using Services.BankAccount;
     using Services.Models.BankAccount;

@@ -5,7 +5,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
     using System.Security.Cryptography;
     using System.Text;
     using System.Threading.Tasks;
-    using AutoMapper;
+    using MapsterMapper;
     using Common.Configuration;
     using Common.Utils;
     using Microsoft.Extensions.Options;

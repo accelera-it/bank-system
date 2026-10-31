@@ -27,6 +27,8 @@
             services.AddDbContext<DemoShopDbContext>(options =>
                 options.UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddDatabaseDeveloperPageExceptionFilter();
+
             services.AddIdentity<DemoShopUser, IdentityRole>(options =>
                 {
                     options.Password.RequiredLength = 6;
@@ -64,7 +66,7 @@
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseDatabaseErrorPage();
+                app.UseMigrationsEndPoint();
             }
             else
             {

@@ -36,7 +36,7 @@ All traffic between components is encrypted and signed (RSA + AES hybrid encrypt
 | `core/` | Shared library (`BankSystem.Common`) and the Models / Data / Services layers of BankSystem and CentralApi
 | `web/` | `BankSystem.Web` and `CentralApi`
 | `demo/` | `DemoShop`
-| `tests/` | Service-layer unit tests (xUnit)
+| `tests/` | Unit and integration tests for each app (xUnit) |
 
 All projects are in `BankSystem.sln` at the repository root.
 
@@ -57,7 +57,7 @@ SQL Server (`db`, built from `data/Dockerfile`) and CentralApi (`api`) are only 
 
 ### Without Docker
 
-Requires the .NET Core 3.1 SDK and SQL Server (connection strings are in each app's `appsettings.json`). Databases are migrated automatically on startup.
+Requires the .NET 10 SDK and SQL Server (connection strings are in each app's `appsettings.json`). Databases are migrated automatically on startup.
 
 ```bash
 dotnet build
@@ -65,6 +65,15 @@ dotnet test
 dotnet run --project web/CentralApi
 dotnet run --project web/BankSystem.Web
 dotnet run --project demo/DemoShop.Web
+```
+
+### Tests
+
+`dotnet test` runs all six test projects without a database. To run them in Docker, on EF Core InMemory with no SQL Server (services `web-`, `api-` and `demo-` + `unit` or `integration`):
+
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-failure
+docker compose -f docker-compose.test.yml run --rm --build api-unit   # one project
 ```
 
 ### Demo account
@@ -92,10 +101,10 @@ Keys use the .NET `<RSAKeyValue>` XML format. To generate a new key pair (requir
 
 ## Tech stack
 
-- C#, ASP.NET Core 3.1 (MVC, Razor Pages, Web API)
+- C#, ASP.NET Core 10 (MVC, Razor Pages, Web API)
 - Entity Framework Core, SQL Server
 - ASP.NET Core Identity
-- AutoMapper
+- Mapster
 - jQuery, Bootstrap
 - xUnit, Moq, FluentAssertions
 - Docker, Docker Compose

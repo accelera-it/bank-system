@@ -2,7 +2,7 @@
 {
     using System.ComponentModel.DataAnnotations;
     using BankSystem.Common;
-    using BankSystem.Common.AutoMapping.Interfaces;
+    using BankSystem.Common.Mapping.Interfaces;
 
     public class SendTransactionModel : IMapWith<ReceiveTransactionModel>
     {

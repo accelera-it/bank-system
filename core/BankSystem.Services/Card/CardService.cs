@@ -3,8 +3,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using AutoMapper;
-    using AutoMapper.QueryableExtensions;
+    using Mapster;
+    using MapsterMapper;
     using BankSystem.Models;
     using Data;
     using Microsoft.EntityFrameworkCore;
@@ -63,7 +63,7 @@
                     c.Number == cardNumber &&
                     c.SecurityCode == cardSecurityCode &&
                     c.ExpiryDate == cardExpiryDate)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
 
         public async Task<T> GetAsync<T>(string id)
@@ -72,7 +72,7 @@
                 .Cards
                 .AsNoTracking()
                 .Where(c => c.Id == id)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
 
         public async Task<int> GetCountOfAllCardsOwnedByUserAsync(string userId)
@@ -88,7 +88,7 @@
                 .Where(c => c.UserId == userId)
                 .Skip((pageIndex - 1) * count)
                 .Take(count)
-                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
 
         public async Task<bool> DeleteAsync(string id)

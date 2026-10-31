@@ -31,16 +31,16 @@
                 @if (order.PaymentStatus == PaymentStatus.Pending)
                 {
                     <a class="btn btn-primary" asp-controller="DirectPayments", asp-action="Pay" asp-route-id="@order.Id">
-                        Direct payment
+                        <i class="fas fa-university mr-1" aria-hidden="true"></i> Direct payment
                     </a>
                     <a class="btn btn-info" asp-controller="CardPayments", asp-action="Pay" asp-route-id="@order.Id">
-                        Card payment
+                        <i class="fas fa-credit-card mr-1" aria-hidden="true"></i> Card payment
                     </a>
                 }
                 else
                 {
                     <button class="btn btn-success" disabled="disabled">
-                        Completed
+                        <i class="fas fa-check mr-1" aria-hidden="true"></i> Completed
                     </button>
                 }
             </div>

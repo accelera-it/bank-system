@@ -30,16 +30,11 @@
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => true;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
+            services.AddHealthChecks();
 
             services.AddDbContextPool<BankSystemDbContext>(options =>
                 options.UseSqlServer(
-                    this.Configuration.GetConnectionString("DefaultConnection")));
+                    this.Configuration.GetConnectionString("BankSystem")));
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -145,7 +140,6 @@
                             $"public,max-age={cacheDurationInSeconds}";
                     }
                 });
-            app.UseCookiePolicy();
 
             app.UseStatusCodePagesWithReExecute("/error/{0}");
 
@@ -161,6 +155,7 @@
                     "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapRazorPages();
+                endpoints.MapHealthChecks("/health");
             });
 
             app.InitializeDatabase();

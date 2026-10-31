@@ -4,10 +4,10 @@
     ViewData["Title"] = "Create internal money transfer";
 }
 
-<div class="mx-auto my-4 text-center w-lg-50 w-md-75">
+<div class="my-4 w-lg-50 w-md-75">
     <h2>@ViewData["Title"]</h2>
     <form method="post">
-        <hr class="w-75" />
+        <hr />
         <div class="form-group">
             <label asp-for="AccountId"></label>
             <select class="custom-select form-control" asp-for="AccountId">
@@ -21,7 +21,7 @@
         </div>
         <div class="form-group">
             <label asp-for="DestinationBankAccountUniqueId"></label>
-            <input class="form-control" asp-for="DestinationBankAccountUniqueId" id="destination" />
+            <input class="form-control" asp-for="DestinationBankAccountUniqueId" id="destination" placeholder="e.g. ABCJ98131785" />
             <span asp-validation-for="DestinationBankAccountUniqueId" class="text-danger"></span>
             @if (Model.OwnAccounts.Count() > 1)
             {
@@ -40,7 +40,7 @@
                 <div class="input-group-prepend">
                     <div class="input-group-text">UZS</div>
                 </div>
-                <input type="number" min="0.01" step="0.01" class="form-control" asp-for="Amount" />
+                <input type="number" min="0.01" step="0.01" class="form-control" asp-for="Amount" placeholder="0.00" />
             </div>
             <span asp-validation-for="Amount" class="text-danger"></span>
         </div>
@@ -49,12 +49,12 @@
                 Description
                 <span class="font-italic text-muted">(optional)</span>
             </label>
-            <input class="form-control" asp-for="Description" />
+            <input class="form-control" asp-for="Description" placeholder="What is this transfer for?" />
             <span asp-validation-for="Description" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary">Cancel</a>
-            <button class="btn btn-primary" type="submit">Pay</button>
+            <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary"><i class="fas fa-times mr-1" aria-hidden="true"></i> Cancel</a>
+            <button class="btn btn-primary" type="submit"><i class="fas fa-credit-card mr-1" aria-hidden="true"></i> Pay</button>
         </div>
     </form>
 </div>

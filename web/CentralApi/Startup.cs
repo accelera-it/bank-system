@@ -22,9 +22,11 @@
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHealthChecks();
+
             services.AddDbContext<CentralApiDbContext>(options =>
                 options.UseSqlServer(
-                    this.Configuration.GetConnectionString("DefaultConnection")));
+                    this.Configuration.GetConnectionString("CentralApi")));
             services.AddScoped<IBanksService, BanksService>();
 
             services.Configure<CentralApiConfiguration>(
@@ -61,7 +63,11 @@
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapHealthChecks("/health");
+            });
 
             app.SeedData();
         }

@@ -24,8 +24,10 @@
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHealthChecks();
+
             services.AddDbContext<DemoShopDbContext>(options =>
-                options.UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(this.Configuration.GetConnectionString("DemoShop")));
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -87,6 +89,7 @@
                     "{area:exists}/{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapRazorPages();
+                endpoints.MapHealthChecks("/health");
             });
         }
     }

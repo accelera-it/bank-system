@@ -21,8 +21,8 @@ namespace BankSystem.IntegrationTests
     public class BankWebFactory : WebApplicationFactory<Startup>
     {
         public const string SeededAccountUniqueId = "ABCJ98131785";
-        public const string SeededUserName = "test@test.com";
-        public const string SeededUserFullName = "Test Testov";
+        public const string SeededUserName = "admin@abs.uz";
+        public const string SeededUserFullName = "ABS Admin";
 
         private readonly string databaseName = TestDatabase.CreateName("BankTests");
 

@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Two-factor authentication";
 }
-<div class="text-center w-md-75 w-lg-50 mx-auto my-4">
+<div class="w-md-75 w-lg-50 my-4">
     <h2>@ViewData["Title"]</h2>
     <p>To confirm your identity, please enter the login code from your authenticator app</p>
     <hr/>
@@ -12,7 +12,7 @@
         <div asp-validation-summary="All" class="text-danger"></div>
         <div class="form-group">
             <label asp-for="Input.TwoFactorCode"></label>
-            <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off"/>
+            <input asp-for="Input.TwoFactorCode" class="form-control" autocomplete="off" placeholder="6-digit code"/>
         </div>
         <div class="form-group">
             <label asp-for="Input.RememberMachine">
@@ -21,7 +21,7 @@
             </label>
         </div>
         <div class="form-group">
-            <button type="submit" class="btn btn-primary">Continue</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-arrow-right mr-1" aria-hidden="true"></i> Continue</button>
         </div>
     </form>
 </div>

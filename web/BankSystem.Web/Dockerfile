@@ -25,4 +25,6 @@ ENV ASPNETCORE_URLS=http://+:80 \
     TZ=Asia/Tashkent
 EXPOSE 80
 COPY --from=build /app/publish .
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
+    CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/80 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q ' 200 ' <&3"]
 ENTRYPOINT ["dotnet", "BankSystem.Web.dll"]

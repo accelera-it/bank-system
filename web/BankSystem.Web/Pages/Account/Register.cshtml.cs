@@ -9,6 +9,7 @@ namespace BankSystem.Web.Pages.Account
     using Microsoft.Extensions.Logging;
     using Models;
     using System.ComponentModel.DataAnnotations;
+    using System.Linq;
     using System.Text.Encodings.Web;
     using System.Threading.Tasks;
 
@@ -31,11 +32,6 @@ namespace BankSystem.Web.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
-        [BindProperty]
-        public ReCaptchaModel Recaptcha { get; set; }
-
-        public string ReturnUrl { get; set; }
-
         public IActionResult OnGet(string returnUrl = null)
         {
             returnUrl = returnUrl ?? this.Url.Content("~/");
@@ -45,9 +41,7 @@ namespace BankSystem.Web.Pages.Account
                 return this.LocalRedirect(returnUrl);
             }
 
-            this.ReturnUrl = returnUrl;
-
-            return this.Page();
+            return this.RedirectToAuthModal(returnUrl);
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -61,7 +55,10 @@ namespace BankSystem.Web.Pages.Account
 
             if (!this.ModelState.IsValid)
             {
-                return this.Page();
+                this.ShowErrorMessage(string.Join(" ", this.ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)));
+                return this.RedirectToAuthModal(returnUrl);
             }
 
             var user = new BankUser
@@ -74,12 +71,8 @@ namespace BankSystem.Web.Pages.Account
             var result = await this.userManager.CreateAsync(user, this.Input.Password);
             if (!result.Succeeded)
             {
-                foreach (var error in result.Errors)
-                {
-                    this.ModelState.AddModelError(string.Empty, error.Description);
-                }
-
-                return this.Page();
+                this.ShowErrorMessage(string.Join(" ", result.Errors.Select(e => e.Description)));
+                return this.RedirectToAuthModal(returnUrl);
             }
 
             this.logger.LogInformation("User created a new account with password.");
@@ -97,6 +90,14 @@ namespace BankSystem.Web.Pages.Account
             this.ShowSuccessMessage(NotificationMessages.SuccessfulRegistration);
             return this.RedirectToLoginPage();
         }
+
+        private IActionResult RedirectToAuthModal(string returnUrl)
+            => this.RedirectToAction("Index", "Home", new
+            {
+                area = string.Empty,
+                auth = "register",
+                returnUrl = returnUrl == this.Url.Content("~/") ? null : returnUrl
+            });
 
         public class InputModel
         {
@@ -121,10 +122,6 @@ namespace BankSystem.Web.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
-        }
-
-        public class ReCaptchaModel : BaseReCaptchaModel
-        {
         }
     }
 }

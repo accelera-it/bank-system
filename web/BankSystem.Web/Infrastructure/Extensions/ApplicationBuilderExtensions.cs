@@ -15,6 +15,10 @@
 
     public static class ApplicationBuilderExtensions
     {
+        private const string AdministratorEmail = "admin@abs.uz";
+        private const string AdministratorPassword = "123456";
+        private const string AdministratorAccountId = "ABCJ98131785";
+
         public static IApplicationBuilder InitializeDatabase(this IApplicationBuilder app)
         {
             InitializeDatabaseAsync(app).GetAwaiter().GetResult();
@@ -38,39 +42,63 @@
                 {
                     await dbContext.Database.EnsureCreatedAsync();
                 }
-                await SeedUser(userManager, dbContext);
 
                 if (!await roleManager.RoleExistsAsync(GlobalConstants.AdministratorRoleName))
                 {
                     await roleManager.CreateAsync(new IdentityRole(GlobalConstants.AdministratorRoleName));
                 }
+
+                await SeedAdministrator(userManager, dbContext);
             }
         }
 
-        private static async Task SeedUser(UserManager<BankUser> userManager, BankSystemDbContext dbContext)
+        private static async Task SeedAdministrator(UserManager<BankUser> userManager, BankSystemDbContext dbContext)
         {
-            if (!dbContext.Users.Any())
+            if (await userManager.FindByNameAsync(AdministratorEmail) != null)
             {
-                var user = new BankUser
+                return;
+            }
+
+            var user = new BankUser
+            {
+                Email = AdministratorEmail,
+                FullName = "ABS Admin",
+                UserName = AdministratorEmail,
+                EmailConfirmed = true
+            };
+
+            // Hashed directly: this demo password is below the policy that applies to real users
+            user.PasswordHash = userManager.PasswordHasher.HashPassword(user, AdministratorPassword);
+
+            // A database seeded earlier already holds this account, under the previous default user
+            var account = await dbContext.Accounts.SingleOrDefaultAsync(a => a.UniqueId == AdministratorAccountId);
+            if (account == null)
+            {
+                user.BankAccounts = new List<BankAccount>
                 {
-                    Email = "test@test.com",
-                    FullName = "Test Testov",
-                    UserName = "test@test.com",
-                    EmailConfirmed = true,
-                    BankAccounts = new List<BankAccount>
+                    new BankAccount
                     {
-                        new BankAccount
-                        {
-                            Balance = 10_000_000,
-                            CreatedOn = DateTime.UtcNow,
-                            Name = "Main account",
-                            UniqueId = "ABCJ98131785"
-                        }
+                        Balance = 10_000_000,
+                        CreatedOn = DateTime.UtcNow,
+                        Name = "Main account",
+                        UniqueId = AdministratorAccountId
                     }
                 };
-
-                await userManager.CreateAsync(user, "Test123$");
             }
+
+            var result = await userManager.CreateAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(" ", result.Errors.Select(e => e.Description)));
+            }
+
+            if (account != null)
+            {
+                account.UserId = user.Id;
+                await dbContext.SaveChangesAsync();
+            }
+
+            await userManager.AddToRoleAsync(user, GlobalConstants.AdministratorRoleName);
         }
 
         public static IApplicationBuilder AddDefaultSecurityHeaders(

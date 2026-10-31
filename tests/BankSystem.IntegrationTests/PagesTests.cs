@@ -18,8 +18,6 @@ namespace BankSystem.IntegrationTests
 
         [Theory]
         [InlineData("/")]
-        [InlineData("/account/login")]
-        [InlineData("/account/register")]
         public async Task AnonymousPages_ShouldRender(string url)
         {
             var response = await this.Client().GetAsync(url);

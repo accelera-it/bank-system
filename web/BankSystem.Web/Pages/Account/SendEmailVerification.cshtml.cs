@@ -31,9 +31,6 @@
         [BindProperty]
         public InputModel Input { get; set; }
 
-        [BindProperty]
-        public ReCaptchaModel Recaptcha { get; set; }
-
         public IActionResult OnGet()
             => this.Page();
 
@@ -78,10 +75,6 @@
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
-        }
-
-        public class ReCaptchaModel : BaseReCaptchaModel
-        {
         }
     }
 }

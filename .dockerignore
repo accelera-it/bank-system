@@ -11,4 +11,5 @@
 .dockerignore
 docker-compose*.yml
 .env
+locale.env
 *.md

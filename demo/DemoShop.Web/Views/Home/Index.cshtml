@@ -1,29 +1,33 @@
 ﻿@using DemoShop.Web.Controllers
 @model HomeViewModel
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Products";
 }
 
-<h1 class="text-center">Products</h1>
+<section class="shop-hero">
+    <h1>Technology for work and study</h1>
+    <p>Choose a product and pay directly from your bank account or by card.</p>
+</section>
+
 <div class="row my-3">
     @foreach (var product in Model.Products)
     {
-        <div class="col-12 col-md-4 p-2 mx-auto">
-            <div class="card shadow">
+        <div class="col-12 col-md-6 col-lg-4 p-2">
+            <div class="card shadow product-card">
                 <img class="card-img-top product-thumbnail-img" src="@product.ImageUrl" alt="@product.Name">
                 <div class="card-body">
                     <h4 class="card-title">@product.Name</h4>
-                    <p class="card-text">@product.Price UZS</p>
+                    <p class="card-text product-price">@product.Price.ToString("N0") UZS</p>
                     @if (User.Identity.IsAuthenticated)
                     {
                         <button class="btn btn-primary" data-toggle="modal" data-target="#orderModal"
                                 data-id="@product.Id" data-name="@product.Name" data-price="@product.Price">
-                            Buy now
+                            <i class="fas fa-shopping-cart mr-1" aria-hidden="true"></i> Buy now
                         </button>
                     }
                     else
                     {
-                        <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login">Buy now</a>
+                        <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login"><i class="fas fa-shopping-cart mr-1" aria-hidden="true"></i> Buy now</a>
                     }
                 </div>
             </div>
@@ -31,7 +35,7 @@
     }
 </div>
 
-<div class="text-center">
+<div class="mt-3">
     <a class="btn btn-outline-primary" asp-controller="Products" asp-action="Create">
         <i class="fas fa-plus"></i> Create product
     </a>
@@ -50,17 +54,17 @@
                 </div>
                 <div class="modal-body"></div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary mr-auto" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary mr-auto" data-dismiss="modal"><i class="fas fa-times mr-1" aria-hidden="true"></i> Cancel</button>
 
                     <form asp-action="OrderProduct" asp-controller="Orders" method="post">
                         <input type="hidden" name="productId">
                         <button type="submit" class="btn btn-info" name="paymentMethod"
                                 value="@OrdersController.CardPaymentMethodName">
-                            Pay by card
+                            <i class="fas fa-credit-card mr-1" aria-hidden="true"></i> Pay by card
                         </button>
                         <button type="submit" class="btn btn-primary" name="paymentMethod"
                                 value="@OrdersController.DirectPaymentMethodName">
-                            Direct payment
+                            <i class="fas fa-university mr-1" aria-hidden="true"></i> Direct payment
                         </button>
                     </form>
                 </div>

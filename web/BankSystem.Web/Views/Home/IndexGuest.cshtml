@@ -1,50 +1,152 @@
 ﻿@{
     ViewData["Title"] = "Home";
+
+    var auth = Context.Request.Query["auth"].ToString();
+    var authTab = auth == "register" ? "register" : "login";
+    var openModal = auth == "login" || auth == "register";
+    var requestedReturnUrl = Context.Request.Query["returnUrl"].ToString();
+    var returnUrl = Url.IsLocalUrl(requestedReturnUrl) ? requestedReturnUrl : null;
+
+    if (openModal)
+    {
+        ViewData["AuthModal"] = true;
+    }
 }
 
 
 @section UnderNavbar
 {
-    <div id="carousel" class="carousel slide shadow" data-ride="carousel">
-        <ol class="carousel-indicators">
-            <li data-target="#carousel" data-slide-to="0" class="active"></li>
-            <li data-target="#carousel" data-slide-to="1"></li>
-            <li data-target="#carousel" data-slide-to="2"></li>
-        </ol>
-        <div class="carousel-inner home-carousel" role="listbox">
-            <div class="carousel-item home-carousel-item active" style="background-image: url('/img/home-1.jpg')">
-                <div class="carousel-caption">
-                    <h1>BankSystem</h1>
-                </div>
-            </div>
-
-            <div class="carousel-item home-carousel-item" style="background-image: url('/img/home-2.jpg')">
-                <div class="carousel-caption">
-                    <h3>Modern banking</h3>
-                </div>
-            </div>
-
-            <div class="carousel-item home-carousel-item" style="background-image: url('/img/home-3.jpg')">
-                <div class="carousel-caption">
-                    <h3>Direct &amp; card payments</h3>
+    <section class="hero" style="background-image: url('/img/home-1.jpg')">
+        <div class="container">
+            <div class="hero-content">
+                <img class="hero-logo" src="~/img/logo.svg" alt="Bank System" width="64" height="64" asp-append-version="true" />
+                <h1>Banking that keeps up with you</h1>
+                <p class="hero-lead">Manage accounts, issue cards and send money to any connected bank from one secure place.</p>
+                <div class="hero-actions">
+                    <a class="btn btn-light btn-lg" data-toggle="modal" data-target="#authModal" data-auth-tab="register" href="#"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i> Open an account</a>
+                    <a class="btn btn-outline-light btn-lg" data-toggle="modal" data-target="#authModal" data-auth-tab="login" href="#"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Log in</a>
                 </div>
             </div>
         </div>
-        <a class="carousel-control-prev" href="#carousel" role="button" data-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="sr-only">Previous</span>
-        </a>
-        <a class="carousel-control-next" href="#carousel" role="button" data-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="sr-only">Next</span>
-        </a>
-    </div>
+    </section>
 }
 
-<div class="mx-auto my-4 text-center pb-3">
-    <h2 class="animate bounceInLeft slow">Welcome to BankSystem</h2>
-    <a class="btn btn-primary btn-lg m-3 animate bounceInUp slow delay-1s" asp-page="/Account/Register">Register</a>
-    <a class="btn btn-outline-primary btn-lg m-3 animate bounceInRight slow delay-1s" asp-page="/Account/Login">Login</a>
+<section class="features">
+    <div class="row">
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+                <h3>Bank accounts</h3>
+                <p>Open as many accounts as you need and follow every balance in UZS.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
+                <h3>Cards</h3>
+                <p>Issue a card for any account and pay at connected online shops.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                <h3>Money transfers</h3>
+                <p>Move money between your accounts, to other customers or to another bank.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-shopping-cart" aria-hidden="true"></i></span>
+                <h3>Online payments</h3>
+                <p>Confirm direct and card payments from merchants in a few clicks.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
+                <h3>Two-factor security</h3>
+                <p>Protect your sign-in with a code from an authenticator app.</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-history" aria-hidden="true"></i></span>
+                <h3>Full history</h3>
+                <p>Review every transfer with its date, amount and reference number.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <h2>Ready to get started?</h2>
+    <a class="btn btn-light btn-lg" data-toggle="modal" data-target="#authModal" data-auth-tab="register" href="#"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i> Open an account</a>
+</section>
+
+<div class="modal fade" id="authModal" tabindex="-1" role="dialog" aria-label="Log in or register">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <ul class="nav nav-pills" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link" id="login-tab" data-toggle="pill" href="#login-pane" role="tab">Log in</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="register-tab" data-toggle="pill" href="#register-pane" role="tab">Register</a>
+                    </li>
+                </ul>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @if (openModal && TempData[GlobalConstants.TempDataErrorMessageKey] is string errorMessage)
+                {
+                    <div class="alert alert-danger" role="alert">@errorMessage</div>
+                }
+                @if (openModal && TempData[GlobalConstants.TempDataSuccessMessageKey] is string successMessage)
+                {
+                    <div class="alert alert-success" role="alert">@successMessage</div>
+                }
+                <div class="tab-content">
+                    <div class="tab-pane fade" id="login-pane" role="tabpanel">
+                        <form asp-page="/Account/Login" asp-route-returnUrl="@returnUrl" method="post">
+                            <div class="form-group">
+                                <label for="loginEmail">Email</label>
+                                <input id="loginEmail" class="form-control" type="email" name="Input.Email" placeholder="name@example.com" autocomplete="username" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Password</label>
+                                <input id="loginPassword" class="form-control" type="password" name="Input.Password" placeholder="Enter your password" autocomplete="current-password" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Log in</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="register-pane" role="tabpanel">
+                        <form asp-page="/Account/Register" asp-route-returnUrl="@returnUrl" method="post">
+                            <div class="form-group">
+                                <label for="registerEmail">Email</label>
+                                <input id="registerEmail" class="form-control" type="email" name="Input.Email" placeholder="name@example.com" autocomplete="username" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="registerFullName">Full name</label>
+                                <input id="registerFullName" class="form-control" type="text" name="Input.FullName" placeholder="e.g. Aziz Karimov" autocomplete="name" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="registerPassword">Password</label>
+                                <input id="registerPassword" class="form-control" type="password" name="Input.Password" placeholder="Upper and lower case letters and a digit" autocomplete="new-password" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="registerConfirmPassword">Confirm password</label>
+                                <input id="registerConfirmPassword" class="form-control" type="password" name="Input.ConfirmPassword" placeholder="Repeat the password" autocomplete="new-password" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i> Register</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section CustomCss
@@ -55,9 +157,19 @@
 @section Scripts
 {
     <script>
-        $('#carousel').carousel({
-            interval: 5000,
-            pause: false
+        function showAuthTab(tab) {
+            $('#' + tab + '-tab').tab('show');
+        }
+
+        $('[data-auth-tab]').click(function () {
+            showAuthTab($(this).data('authTab'));
         });
+
+        showAuthTab('@authTab');
+
+        @if (openModal)
+        {
+            <text>$('#authModal').modal('show');</text>
+        }
     </script>
 }

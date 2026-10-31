@@ -30,8 +30,6 @@
         [BindProperty]
         public InputModel Input { get; set; }
 
-        public string ReturnUrl { get; private set; }
-
         public async Task<IActionResult> OnGetAsync(string returnUrl = null)
         {
             // Session has expired
@@ -50,9 +48,7 @@
             // Clear the existing external cookie to ensure a clean login process
             await this.HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            this.ReturnUrl = returnUrl;
-
-            return this.Page();
+            return this.RedirectToAuthModal(returnUrl);
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -66,7 +62,8 @@
 
             if (!this.ModelState.IsValid)
             {
-                return this.Page();
+                this.ShowErrorMessage(NotificationMessages.InvalidCredentials);
+                return this.RedirectToAuthModal(returnUrl);
             }
 
             var result = await this.signInManager.PasswordSignInAsync(this.Input.Email, this.Input.Password,
@@ -82,7 +79,7 @@
                 if (result.IsLockedOut)
                 {
                     this.ShowErrorMessage(NotificationMessages.LoginLockedOut);
-                    return this.Page();
+                    return this.RedirectToAuthModal(returnUrl);
                 }
 
                 if (result.IsNotAllowed)
@@ -92,7 +89,7 @@
                 }
 
                 this.ShowErrorMessage(NotificationMessages.InvalidCredentials);
-                return this.Page();
+                return this.RedirectToAuthModal(returnUrl);
             }
 
             var user = await this.signInManager.UserManager.FindByNameAsync(this.Input.Email);
@@ -117,6 +114,14 @@
             };
             this.User.AddIdentity(new ClaimsIdentity(claims));
         }
+
+        private IActionResult RedirectToAuthModal(string returnUrl)
+            => this.RedirectToAction("Index", "Home", new
+            {
+                area = string.Empty,
+                auth = "login",
+                returnUrl = returnUrl == this.Url.Content("~/") ? null : returnUrl
+            });
 
         public class InputModel
         {

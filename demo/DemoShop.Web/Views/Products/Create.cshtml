@@ -4,29 +4,29 @@
     ViewData["Title"] = "Create product";
 }
 
-<div class="text-center w-50 mx-auto my-4">
+<div class="w-50 my-4">
     <h2>@ViewData["Title"]</h2>
     <form method="post">
-        <hr class="w-75"/>
+        <hr/>
         <div asp-validation-summary="All" class="text-danger"></div>
         <div class="form-group">
             <label asp-for="Name"></label>
-            <input class="form-control" asp-for="Name"/>
+            <input class="form-control" asp-for="Name" placeholder="e.g. Wireless headphones"/>
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="Price"></label>
-            <input class="form-control" asp-for="Price"/>
+            <input class="form-control" asp-for="Price" placeholder="0.00"/>
             <span asp-validation-for="Price" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="ImageUrl"></label>
-            <input class="form-control" asp-for="ImageUrl"/>
+            <input class="form-control" asp-for="ImageUrl" placeholder="https://example.com/image.jpg"/>
             <span asp-validation-for="ImageUrl" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Cancel</a>
-            <button type="submit" class="btn btn-primary">Create</button>
+            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index"><i class="fas fa-times mr-1" aria-hidden="true"></i> Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-plus mr-1" aria-hidden="true"></i> Create</button>
         </div>
     </form>
 </div>

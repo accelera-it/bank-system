@@ -37,14 +37,14 @@ dotnet ef migrations add <Name> --project core/CentralApi.Data --startup-project
 Docker (build context is the repo root; each app has its own `Dockerfile`):
 
 ```bash
-docker compose --env-file locale.env up --build   # BankSystem.Web :8080, DemoShop :8082 (db and api (CentralApi) are internal only)
+docker compose --env-file locale.env up --build   # CentralApi :8080, BankSystem.Web :8081, DemoShop :8082 (db is internal only)
 docker compose -f docker-compose.test.yml up --build --abort-on-container-failure   # all six test projects, one service each, on EF Core InMemory
 docker compose -f docker-compose.test.yml run --rm --build api-unit   # one project: {web,api,demo}-{unit,integration}
 ```
 
 Every service has a Docker `HEALTHCHECK`: the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
 
-Every `docker-compose.yml` service loads `locale.env` through `env_file`, which overrides connection strings and inter-service URLs (`Section__Key`, one connection string per app: `ConnectionStrings__BankSystem`, `__CentralApi`, `__DemoShop`). `WEB_PORT` and `DEMO_PORT` from that file also set the published ports, so all `docker-compose.yml` commands need `--env-file locale.env`.
+Every `docker-compose.yml` service loads `locale.env` through `env_file`, which overrides connection strings and inter-service URLs (`Section__Key`, one connection string per app: `ConnectionStrings__BankSystem`, `__CentralApi`, `__DemoShop`). `API_PORT`, `WEB_PORT` and `DEMO_PORT` from that file also set the published ports, so all `docker-compose.yml` commands need `--env-file locale.env`.
 
 ## Architecture
 
@@ -69,7 +69,7 @@ All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`core/B
 
 ### Configuration and multi-bank setup
 - Bank identity comes from the `BankConfiguration` section (name, `UniqueIdentifier` = swift code, country, `First3CardDigits`, own RSA `Key`, `CentralApiPublicKey`, `CentralApiAddress`). It and `SendGridConfiguration` are validated in `PostConfigure`, so startup throws if a value is missing.
-- CentralApi knows banks through its `Banks` table (`core/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `web/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`, at the address in the `DefaultBankBaseUrl` setting.
+- CentralApi knows banks through its `Banks` table (`core/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `web/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`, at the address in the `DefaultBankBaseUrl` setting, with its browser-facing payment page at `DefaultBankPublicUrl`.
 - BankSystem.Web seeds the `admin@abs.uz` / `123456` user with an account and the Administrator role on startup (its password bypasses the policy by being hashed directly), and DemoShop seeds `demo@abs.uz` / `123456` and a laptop product (`Infrastructure/Extensions/ApplicationBuilderExtensions.cs`).
 
 ### Tests

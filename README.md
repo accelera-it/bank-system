@@ -22,7 +22,7 @@ demo (DemoShop) ──► api (CentralApi) ──► web (BankSystem.Web)
 ```
 
 | Component | Description
-|-|-
+| - | -
 | **BankSystem.Web** | The bank: web UI plus API endpoints that receive transfers and card payments
 | **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
 | **DemoShop** | Sample online shop that accepts card and direct payments
@@ -32,7 +32,7 @@ All traffic between components is encrypted and signed (RSA + AES hybrid encrypt
 ## Repository structure
 
 | Folder | Contents
-|-|-
+| - | -
 | `core/` | Shared library (`BankSystem.Common`) and the Models / Data / Services layers of BankSystem and CentralApi
 | `web/` | `BankSystem.Web` and `CentralApi`
 | `demo/` | `DemoShop`
@@ -50,10 +50,11 @@ docker compose --env-file locale.env up --build
 
 | Service | Address
 |-|-
-| **BankSystem.Web** | http://localhost:8080
-| **DemoShop** | http://localhost:8082
+| **BankSystem.Web** | <http://localhost:8081>
+| **CentralApi** | <http://localhost:8080>
+| **DemoShop** | <http://localhost:8082>
 
-SQL Server (`db`, built from `data/Dockerfile`) and CentralApi (`api`) are only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in `locale.env`.
+SQL Server (`db`, built from `data/Dockerfile`) is only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in `locale.env`.
 
 ### Without Docker
 
@@ -82,7 +83,7 @@ On first start the bank creates a demo user with a 10,000,000 UZS account:
 
 | Email | Password
 |-|-
-| admin@abs.uz | 123456
+| <admin@abs.uz> | 123456
 
 ## Configuration
 

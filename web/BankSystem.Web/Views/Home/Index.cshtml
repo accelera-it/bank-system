@@ -1,74 +1,106 @@
 ﻿@model HomeViewModel
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
-<div class="container">
+@{
+    var totalBalance = Model.UserBankAccounts.Sum(a => a.Balance);
+    var incoming = Model.MoneyTransfers.Where(t => t.Amount > 0).Sum(t => t.Amount);
+    var outgoing = Model.MoneyTransfers.Where(t => t.Amount < 0).Sum(t => -t.Amount);
+}
+
+<div>
+    <div class="row">
+        <div class="col-12 col-lg-6 col-xl-4 mb-3">
+            <div class="stat stat-primary">
+                <span class="stat-label">Total balance</span>
+                <span class="stat-value">@totalBalance.ToString("N2") UZS</span>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
+            <div class="stat">
+                <span class="stat-label">Accounts</span>
+                <span class="stat-value">@Model.UserBankAccounts.Count()</span>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3 mb-3">
+            <div class="stat">
+                <span class="stat-label">Incoming, last 10 transfers</span>
+                <span class="stat-value text-green">@(incoming > 0 ? "+" : string.Empty)@incoming.ToString("N2")</span>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6 col-xl-3 mb-3">
+            <div class="stat">
+                <span class="stat-label">Outgoing, last 10 transfers</span>
+                <span class="stat-value text-red">@(outgoing > 0 ? "-" : string.Empty)@outgoing.ToString("N2")</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12 col-md-4 mb-3">
+            <a class="quick-action" asp-page="/MoneyTransfers">
+                <span class="quick-action-icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                <span>New transfer<small>Inside or outside the bank</small></span>
+            </a>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <a class="quick-action" asp-area="Cards" asp-controller="Cards" asp-action="Create">
+                <span class="quick-action-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
+                <span>New card<small>For any of your accounts</small></span>
+            </a>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+            <a class="quick-action" asp-controller="BankAccounts" asp-action="Create">
+                <span class="quick-action-icon"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+                <span>New account<small>Open another account</small></span>
+            </a>
+        </div>
+    </div>
+
     <div class="row flex-lg-row-reverse">
         <div class="col-12 col-lg-4">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Your Accounts</h5>
-                    @foreach (var account in Model.UserBankAccounts)
-                    {
-                        <div class="d-flex flex-row justify-content-between hover-parent">
-                            <p class="card-text">
+            <section class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Your accounts</h2>
+                </div>
+                @foreach (var account in Model.UserBankAccounts)
+                {
+                    <div class="account-row hover-parent">
+                        <div>
+                            <p>
                                 <a asp-controller="BankAccounts" asp-action="Details" asp-route-id="@account.Id">@account.Name</a>
                                 <i class="fas fa-pen ml-1 cursor-pointer hover-visible text-muted text-primary-hover"
                                    data-toggle="modal" data-target="#editModal" data-id="@account.Id">
                                 </i>
                             </p>
-                            <p class="card-text text-green text-right ml-3">@account.Balance UZS</p>
+                            <small>@account.UniqueId</small>
                         </div>
-                    }
-
-                    <a class="btn btn-primary float-right" asp-controller="BankAccounts" asp-action="Create"><i class="fas fa-plus mr-1" aria-hidden="true"></i> Create new account</a>
-                </div>
-            </div>
+                        <p class="amount">@account.Balance.ToString("N2") UZS</p>
+                    </div>
+                }
+            </section>
         </div>
         <div class="col-12 col-lg-8">
-            <h3>Last 10 transactions</h3>
-            @if (Model.MoneyTransfers.Any())
-            {
-                <table class="table table-hover table-bordered auto-datatable">
-                    <thead>
-                        <tr>
-                            <th data-priority="2">Date</th>
-                            <th data-priority="4">Details</th>
-                            <th data-priority="3">From</th>
-                            <th data-priority="5">To</th>
-                            <th data-priority="1">Amount</th>
-                            <th class="none">Reference number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var moneyTransfer in Model.MoneyTransfers)
-                        {
-                            <tr>
-                                <td class="auto-format-date">@moneyTransfer.MadeOn.ToString("O")</td>
-                                <td class="word-break-all">@moneyTransfer.Description</td>
-                                <td>@moneyTransfer.Source</td>
-                                <td>@moneyTransfer.Destination</td>
-                                <td>
-                                    @if (moneyTransfer.Amount < 0)
-                                    {
-                                        <span class="text-red">@moneyTransfer.Amount UZS</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-green">+@moneyTransfer.Amount UZS</span>
-                                    }
-                                </td>
-                                <td>@moneyTransfer.ReferenceNumber</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                <a asp-area="MoneyTransfers" asp-controller="Home" asp-action="All" class="btn btn-outline-primary"><i class="fas fa-list mr-1" aria-hidden="true"></i> View all transactions</a>
-            }
-            else
-            {
-                <h5 class="text-muted">No transactions have been made yet.</h5>
-            }
+            <section class="panel panel-table">
+                <div class="panel-header">
+                    <h2 class="panel-title">Last 10 transfers</h2>
+                    @if (Model.MoneyTransfers.Any())
+                    {
+                        <a asp-area="MoneyTransfers" asp-controller="Home" asp-action="All">View all</a>
+                    }
+                </div>
+                @if (Model.MoneyTransfers.Any())
+                {
+                    <partial name="_TransfersTable" model="@Model.MoneyTransfers" />
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                        No transfers have been made yet.
+                    </div>
+                }
+            </section>
         </div>
     </div>
 

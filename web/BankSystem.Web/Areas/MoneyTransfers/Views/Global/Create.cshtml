@@ -9,10 +9,8 @@
     <h2>Processing</h2>
 </div>
 
-<div class="container">
-    <h3 class="mb-3">Money transfer to another bank</h3>
-
-    <h5 class="mt-3">Payer</h5>
+<div>
+    <h5 class="mt-0">Payer</h5>
     <form id="transferForm" method="post" onsubmit="showLoading()">
         <div class="background-grey container pt-1">
             <div class="form-group row">
@@ -24,7 +22,7 @@
                         <option disabled selected>Select source account...</option>
                         @foreach (var account in Model.OwnAccounts)
                         {
-                            <option value="@account.Id">@account.Name - @account.Balance.ToString("F2") UZS</option>
+                            <option value="@account.Id">@account.Name - @account.Balance.ToString("N2") UZS</option>
                         }
                     </select>
                     <span asp-validation-for="AccountId" class="text-danger"></span>
@@ -311,7 +309,7 @@
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
         </div>
-        <div class="form-group text-right">
+        <div class="form-group">
             <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary"><i class="fas fa-times mr-1" aria-hidden="true"></i> Cancel</a>
             <button class="btn btn-primary" type="submit"><i class="fas fa-credit-card mr-1" aria-hidden="true"></i> Pay</button>
         </div>

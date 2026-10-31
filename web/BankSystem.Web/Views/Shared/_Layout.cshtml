@@ -1,4 +1,19 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var authenticated = User.Identity.IsAuthenticated;
+    var routeArea = ViewContext.RouteData.Values["area"] as string ?? string.Empty;
+    var routeController = ViewContext.RouteData.Values["controller"] as string;
+    var routeAction = ViewContext.RouteData.Values["action"] as string;
+    var routePage = ViewContext.RouteData.Values["page"] as string ?? string.Empty;
+    var IsSettings = routePage.StartsWith("/Account/Settings");
+    var IsTransferCreation = routePage == "/MoneyTransfers"
+        || (routeArea == "MoneyTransfers" && routeController != "Home");
+
+    string NavClass(string area, string controller, string action = null)
+        => routeArea == area && routeController == controller && (action == null || routeAction == action)
+            ? "active"
+            : string.Empty;
+}
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -17,99 +32,74 @@
     @RenderSection("CustomCss", false)
 
 </head>
-<body>
-    <header>
-        @if (User.Identity.IsAuthenticated)
-        {
-        <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom shadow">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/img/logo.svg" alt="Bank System" width="40" height="40" asp-append-version="true" />
+<body class="@(authenticated ? "app-body" : string.Empty)">
+    <div class="@(authenticated ? "app-shell" : string.Empty)">
+    @if (authenticated)
+    {
+        <aside class="app-sidebar" id="appSidebar">
+            <a class="app-sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <img src="~/img/brand.svg" alt="Bank System" width="195" height="40" asp-append-version="true" />
+            </a>
+
+            <nav aria-label="Main">
+                <a class="app-nav-link @NavClass("", "Home")" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-th-large" aria-hidden="true"></i> Dashboard
                 </a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse">
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <ul class="navbar-nav mx-auto text-uppercase">
-                            <li class="nav-item dropdown auto-dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button">
-                                    Cards
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" asp-area="Cards" asp-controller="Cards" asp-action="Index">
-                                        Your Cards
-                                    </a>
-                                    <a class="dropdown-item" asp-area="Cards" asp-action="Create" asp-controller="Cards">
-                                        Create new card
-                                    </a>
-                                </div>
-                            </li>
-                            <li class="nav-item dropdown auto-dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button">
-                                    Money transfers
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a asp-page="/MoneyTransfers" class="dropdown-item">
-                                        New Transfer
-                                    </a>
-                                    <a asp-area="MoneyTransfers" asp-controller="Home" asp-action="All" class="dropdown-item">
-                                        Archives
-                                    </a>
-                                </div>
-                            </li>
 
-                            @if (User.IsInRole(GlobalConstants.AdministratorRoleName))
-                            {
-                                <li class="nav-item dropdown auto-dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button">
-                                        Administration
-                                    </a>
-                                    <div class="dropdown-menu">
-                                        <a asp-area="Administration" asp-controller="Accounts" asp-action="Index"
-                                           class="dropdown-item">
-                                            Accounts
-                                        </a>
-                                        <a asp-area="Administration" asp-controller="Transactions" asp-action="Search"
-                                           class="dropdown-item">
-                                            Look up transaction
-                                        </a>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
+                <div class="app-nav-heading">Cards</div>
+                <a class="app-nav-link @NavClass("Cards", "Cards", "Index")" asp-area="Cards" asp-controller="Cards" asp-action="Index">
+                    <i class="fas fa-credit-card" aria-hidden="true"></i> Your cards
+                </a>
+                <a class="app-nav-link @NavClass("Cards", "Cards", "Create")" asp-area="Cards" asp-controller="Cards" asp-action="Create">
+                    <i class="fas fa-plus" aria-hidden="true"></i> New card
+                </a>
 
-                        <ul class="navbar-nav">
-                            <li class="nav-item dropdown auto-dropdown">
-                                <a class="nav-link dropdown-toggle" href="#"
-                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="fas fa-user-circle"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <h5 class="dropdown-header">
-                                        @User.Identity.Name
-                                    </h5>
-                                    <a class="dropdown-item" asp-page="/Account/Settings/Index">Settings</a>
-                                    <form class="form-inline" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new {area = ""})">
-                                        <button type="submit" class="btn btn-link text-danger dropdown-item "><i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i> Logout</button>
-                                    </form>
-                                </div>
-                            </li>
-                        </ul>
-                    }
-                    else
-                    {
-                        <ul class="navbar-nav ml-auto">
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Login">Login</a>
-                            </li>
-                        </ul>
-                    }
-                </div>
+                <div class="app-nav-heading">Transfers</div>
+                <a class="app-nav-link @(IsTransferCreation ? "active" : string.Empty)" asp-area="" asp-page="/MoneyTransfers">
+                    <i class="fas fa-exchange-alt" aria-hidden="true"></i> New transfer
+                </a>
+                <a class="app-nav-link @NavClass("MoneyTransfers", "Home")" asp-area="MoneyTransfers" asp-controller="Home" asp-action="All">
+                    <i class="fas fa-history" aria-hidden="true"></i> History
+                </a>
+
+                @if (User.IsInRole(GlobalConstants.AdministratorRoleName))
+                {
+                    <div class="app-nav-heading">Administration</div>
+                    <a class="app-nav-link @NavClass("Administration", "Accounts")" asp-area="Administration" asp-controller="Accounts" asp-action="Index">
+                        <i class="fas fa-users" aria-hidden="true"></i> All accounts
+                    </a>
+                    <a class="app-nav-link @NavClass("Administration", "Transactions")" asp-area="Administration" asp-controller="Transactions" asp-action="Search">
+                        <i class="fas fa-search" aria-hidden="true"></i> Look up transfer
+                    </a>
+                }
+            </nav>
+
+            <div class="app-sidebar-footer">
+                <a class="app-nav-link @(IsSettings ? "active" : string.Empty)" asp-area="" asp-page="/Account/Settings/Index">
+                    <i class="fas fa-cog" aria-hidden="true"></i> Settings
+                </a>
+                <form asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new {area = ""})">
+                    <button type="submit" class="app-nav-link">
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+                    </button>
+                </form>
             </div>
-        </nav>
+        </aside>
+    }
+    <div class="@(authenticated ? "app-main" : string.Empty)">
+    <header>
+        @if (authenticated)
+        {
+            <div class="app-topbar">
+                <button type="button" class="app-sidebar-toggle" id="appSidebarToggle" aria-label="Toggle navigation">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
+                <h1 class="app-topbar-title">@ViewData["Title"]</h1>
+                <a class="app-user" asp-page="/Account/Settings/Index" title="Settings">
+                    <span class="app-user-email">@User.Identity.Name</span>
+                    <span class="app-user-avatar"><i class="fas fa-user" aria-hidden="true"></i></span>
+                </a>
+            </div>
         }
 
         @if (ViewData["AuthModal"] == null && TempData.ContainsKey(GlobalConstants.TempDataSuccessMessageKey))
@@ -181,10 +171,12 @@
 
     @RenderSection("UnderNavbar", false)
 
-    <div class="container">
-        <main role="main" class="py-4">
+    <div class="@(authenticated ? string.Empty : "container")">
+        <main role="main" class="@(authenticated ? "app-content" : "py-4")">
             @RenderBody()
         </main>
+    </div>
+    </div>
     </div>
 
     <script src="~/bundle/vendor.min.js" asp-append-version="true"></script>
@@ -198,6 +190,15 @@
         function noTwoFactorModalDoNotShow() {
             document.cookie = '@GlobalConstants.IgnoreTwoFactorWarningCookie=yes; Max-Age=2592000; Secure';
         }
+        </script>
+    }
+
+    @if (authenticated)
+    {
+        <script>
+            $('#appSidebarToggle').click(function () {
+                $('#appSidebar').toggleClass('open');
+            });
         </script>
     }
 

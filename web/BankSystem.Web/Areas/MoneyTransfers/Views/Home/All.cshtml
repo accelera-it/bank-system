@@ -1,58 +1,21 @@
 ﻿@model MoneyTransferListingViewModel
 @{
-    ViewData["Title"] = "All payments";
+    ViewData["Title"] = "Transfer history";
 }
 
-<div class="container">
-    @if (!Model.MoneyTransfers.Any())
+<section class="panel panel-table">
+    @if (Model.MoneyTransfers.Any())
     {
-        <h3>No money transfers have been made from this account</h3>
+        <partial name="_TransfersTable" model="@Model.MoneyTransfers" />
     }
     else
     {
-        <h3>All payments from all accounts</h3>
-        <table class="table table-hover table-bordered auto-datatable">
-            <thead>
-            <tr>
-                <th data-priority="2">Date</th>
-                <th data-priority="4">Details</th>
-                <th data-priority="3">From</th>
-                <th data-priority="5">To</th>
-                <th data-priority="1">Amount</th>
-                <th class="none">Reference number</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var moneyTransfer in Model.MoneyTransfers)
-            {
-                <tr>
-                    <td class="auto-format-date">@moneyTransfer.MadeOn.ToString("O")</td>
-                    <td class="word-break-all">@moneyTransfer.Description</td>
-                    <td>
-                        <p>@moneyTransfer.SenderName</p>
-                        <p>@moneyTransfer.Source</p>
-                    </td>
-                    <td>
-                        <p>@moneyTransfer.RecipientName</p>
-                        <p>@moneyTransfer.Destination</p>
-                    </td>
-                    <td>
-                        @if (moneyTransfer.Amount < 0)
-                        {
-                            <span class="text-red">@moneyTransfer.Amount UZS</span>
-                        }
-                        else
-                        {
-                            <span class="text-green">+@moneyTransfer.Amount UZS</span>
-                        }
-                    </td>
-                    <td>@moneyTransfer.ReferenceNumber</td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        <div class="empty-state">
+            <i class="fas fa-history" aria-hidden="true"></i>
+            No money transfers have been made yet.
+        </div>
     }
-</div>
+</section>
 
 @if (Model.MoneyTransfers.Any())
 {

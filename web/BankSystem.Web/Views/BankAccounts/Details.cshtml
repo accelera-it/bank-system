@@ -3,117 +3,62 @@
     ViewData["Title"] = Model.UniqueId;
 }
 
-<div class="card mb-3">
-    <div class="card-body hover-parent">
-        <h2 class="card-title text-center">
-            <span id="accountName">@Model.Name</span>
-            <i class="fas fa-pen fa-xs cursor-pointer hover-visible text-muted text-primary-hover"
-               data-toggle="modal" data-target="#editModal">
-            </i>
-        </h2>
-
-        <div class="row">
-            <div class="col-12 col-md-6 col-lg-5">
-                <h5 class="text-center">Account details</h5>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Name</p>
-                    <p class="ml-3">@Model.UserFullName</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Current balance</p>
-                    <p class="text-green ml-3">@Model.Balance UZS</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Account number</p>
-                    <p class="ml-3">@Model.UniqueId</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Date of creation</p>
-                    <p class="ml-3 auto-format-date">@Model.CreatedOn.ToString("O")</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Total transfers</p>
-                    <p class="ml-3">@Model.MoneyTransfersCount</p>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 offset-lg-2 col-lg-5">
-                <h5 class="text-center">Transfer information</h5>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Name</p>
-                    <p class="ml-3">@Model.UserFullName</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Account</p>
-                    <p class="ml-3">@Model.UniqueId</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Bank name</p>
-                    <p class="ml-3">@Model.BankName</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Bank country</p>
-                    <p class="ml-3">@Model.BankCountry</p>
-                </div>
-                <div class="d-flex flex-row justify-content-between">
-                    <p>Bank code</p>
-                    <p class="ml-3">@Model.BankCode</p>
-                </div>
-            </div>
+<div class="row">
+    <div class="col-12 col-lg-4 mb-3">
+        <div class="stat stat-primary hover-parent">
+            <span class="stat-label">
+                <span id="accountName">@Model.Name</span>
+                <i class="fas fa-pen fa-xs cursor-pointer hover-visible"
+                   data-toggle="modal" data-target="#editModal">
+                </i>
+            </span>
+            <span class="stat-value">@Model.Balance.ToString("N2") UZS</span>
+            <span class="stat-label mt-3 mb-0">@Model.UniqueId</span>
         </div>
-
+    </div>
+    <div class="col-12 col-md-6 col-lg-4 mb-3">
+        <section class="panel h-100 mb-0">
+            <h2 class="panel-title mb-2">Account details</h2>
+            <dl class="detail-list">
+                <div><dt>Name</dt><dd>@Model.UserFullName</dd></div>
+                <div><dt>Date of creation</dt><dd class="auto-format-date">@Model.CreatedOn.ToString("O")</dd></div>
+                <div><dt>Total transfers</dt><dd>@Model.MoneyTransfersCount</dd></div>
+            </dl>
+        </section>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4 mb-3">
+        <section class="panel h-100 mb-0">
+            <h2 class="panel-title mb-2">Transfer information</h2>
+            <dl class="detail-list">
+                <div><dt>Account</dt><dd>@Model.UniqueId</dd></div>
+                <div><dt>Bank name</dt><dd>@Model.BankName</dd></div>
+                <div><dt>Bank country</dt><dd>@Model.BankCountry</dd></div>
+                <div><dt>Bank code</dt><dd>@Model.BankCode</dd></div>
+            </dl>
+        </section>
     </div>
 </div>
 
-@if (!Model.MoneyTransfers.Any())
-{
-    <h5 class="text-center text-muted">No money transfers have been made yet</h5>
-}
-else
-{
-    <h3 class="text-center">Last transfers</h3>
-    <table class="table table-hover table-bordered auto-datatable">
-        <thead>
-        <tr>
-            <th data-priority="2">Date</th>
-            <th data-priority="4">Details</th>
-            <th data-priority="3">From</th>
-            <th data-priority="5">To</th>
-            <th data-priority="1">Amount</th>
-            <th class="none">Reference number</th>
+<section class="panel panel-table">
+    <div class="panel-header">
+        <h2 class="panel-title">Last transfers</h2>
+    </div>
+    @if (Model.MoneyTransfers.Any())
+    {
+        <partial name="_TransfersTable" model="@Model.MoneyTransfers" />
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+            No money transfers have been made yet.
+        </div>
+    }
+</section>
 
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var moneyTransfer in Model.MoneyTransfers)
-        {
-            <tr>
-                <td class="auto-format-date">@moneyTransfer.MadeOn.ToString("O")</td>
-                <td class="word-break-all">@moneyTransfer.Description</td>
-                <td>
-                    <p>@moneyTransfer.SenderName</p>
-                    <p>@moneyTransfer.Source</p>
-                </td>
-                <td>
-                    <p>@moneyTransfer.RecipientName</p>
-                    <p>@moneyTransfer.Destination</p>
-                </td>
-                <td>
-                    @if (moneyTransfer.Amount < 0)
-                    {
-                        <span class="text-red">@moneyTransfer.Amount UZS</span>
-                    }
-                    else
-                    {
-                        <span class="text-green">+@moneyTransfer.Amount UZS</span>
-                    }
-                </td>
-                <td>@moneyTransfer.ReferenceNumber</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-
-    <partial name="_PaginationPartial" model="@Model.MoneyTransfers"/>
+@if (Model.MoneyTransfers.Any())
+{
+    <partial name="_PaginationPartial" model="@Model.MoneyTransfers" />
 }
 
 <div id="editModal" class="modal fade" tabindex="-1" role="dialog">

@@ -4,17 +4,15 @@
     ViewData["Title"] = "Create internal money transfer";
 }
 
-<div class="my-4 w-lg-50 w-md-75">
-    <h2>@ViewData["Title"]</h2>
+<div class="panel panel-form">
     <form method="post">
-        <hr />
         <div class="form-group">
             <label asp-for="AccountId"></label>
             <select class="custom-select form-control" asp-for="AccountId">
                 <option disabled selected>Select source account...</option>
                 @foreach (var account in Model.OwnAccounts)
                 {
-                    <option value="@account.Id">@account.Name - @account.Balance.ToString("F2") UZS</option>
+                    <option value="@account.Id">@account.Name - @account.Balance.ToString("N2") UZS</option>
                 }
             </select>
             <span asp-validation-for="AccountId" class="text-danger"></span>
@@ -29,7 +27,7 @@
                     <option disabled selected>...or choose another one of your accounts</option>
                     @foreach (var account in Model.OwnAccounts)
                     {
-                        <option value="@account.UniqueId">@account.Name - @account.Balance.ToString("F2") UZS</option>
+                        <option value="@account.UniqueId">@account.Name - @account.Balance.ToString("N2") UZS</option>
                     }
                 </select>
             }

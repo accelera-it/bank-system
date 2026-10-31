@@ -1,32 +1,22 @@
 ﻿@page
 @{
-    ViewData["Title"] = "Payment types";
+    ViewData["Title"] = "New transfer";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="row mx-lg-5">
-    <div class="col-12 col-md-6 p-1">
-        <div class="card floating-card shadow m-2 background-green h-100">
-            <i class="fas fa-university fa-16x text-center my-4"></i>
-            <div class="card-body">
-                <h5 class="card-title">Internal transfer</h5>
-                <p class="card-text">Money transfer between two accounts in this bank (including your own accounts)</p>
-            </div>
-            <div class="card-footer">
-                <a asp-area="MoneyTransfers" asp-controller="Internal" asp-action="Create" class="btn btn-primary align-bottom stretched-link"><i class="fas fa-plus mr-1" aria-hidden="true"></i> Create new payment</a>
-            </div>
-        </div>
+<div class="row">
+    <div class="col-12 col-md-6 mb-3">
+        <a class="transfer-option" asp-area="MoneyTransfers" asp-controller="Internal" asp-action="Create">
+            <span class="quick-action-icon"><i class="fas fa-university" aria-hidden="true"></i></span>
+            <h5>Internal transfer</h5>
+            <p>Between two accounts in this bank, including your own accounts.</p>
+        </a>
     </div>
-    <div class="col-12 col-md-6 p-1">
-        <div class="card floating-card shadow m-2 background-blue h-100">
-            <i class="fas fa-globe-europe fa-16x text-center my-4"></i>
-            <div class="card-body">
-                <h5 class="card-title">Worldwide transfer</h5>
-                <p class="card-text">Money transfer to another bank</p>
-            </div>
-            <div class="card-footer">
-                <a asp-area="MoneyTransfers" asp-controller="Global" asp-action="Create" class="btn btn-primary align-bottom stretched-link"><i class="fas fa-plus mr-1" aria-hidden="true"></i> Create new payment</a>
-            </div>
-        </div>
+    <div class="col-12 col-md-6 mb-3">
+        <a class="transfer-option" asp-area="MoneyTransfers" asp-controller="Global" asp-action="Create">
+            <span class="quick-action-icon"><i class="fas fa-globe" aria-hidden="true"></i></span>
+            <h5>Worldwide transfer</h5>
+            <p>To an account in another bank.</p>
+        </a>
     </div>
 </div>

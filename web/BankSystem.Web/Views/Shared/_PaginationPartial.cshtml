@@ -1,5 +1,10 @@
 ﻿@model IPaginatedList
 @{
+    if (Model.TotalPages <= 1)
+    {
+        return;
+    }
+
     var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
     var nextDisabled = !Model.HasNextPage ? "disabled" : "";
     var firstDisabled = Model.PageIndex == 1 ? "disabled" : "";

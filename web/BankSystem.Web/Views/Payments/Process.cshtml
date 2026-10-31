@@ -4,12 +4,10 @@
     ViewData["Title"] = "Confirm payment";
 }
 
-<div class="w-md-75 w-lg-50 my-4 p-5 shadow">
-    <h2>@ViewData["Title"]</h2>
-    <hr/>
+<div class="panel panel-form">
 
     <h4>Amount:</h4>
-    <h2 class="font-weight-bold mb-4">@Model.Amount.ToString("f2") UZS</h2>
+    <h2 class="font-weight-bold mb-4">@Model.Amount.ToString("N2") UZS</h2>
 
     <h5>Description:</h5>
     <h4>@Model.Description</h4>
@@ -29,7 +27,7 @@
             <select id="accountPicker" class="form-control custom-select" asp-for="AccountId">
                 @foreach (var account in Model.OwnAccounts)
                 {
-                    <option value="@account.Id">@account.Name - @account.Balance.ToString("f2") UZS</option>
+                    <option value="@account.Id">@account.Name - @account.Balance.ToString("N2") UZS</option>
                 }
             </select>
         </div>
@@ -51,7 +49,7 @@
 @section Scripts
 {
     <script>
-        const payBtnText = 'Pay @Model.Amount.ToString("f2") UZS';
+        const payBtnText = 'Pay @Model.Amount.ToString("N2") UZS';
     </script>
 
     <script src="~/bundle/payments.min.js" asp-append-version="true"></script>

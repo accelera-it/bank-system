@@ -20,7 +20,8 @@ RUN dotnet publish web/CentralApi/CentralApi.csproj -c Release -o /app/publish -
 
 FROM mcr.microsoft.com/dotnet/aspnet:3.1 AS final
 WORKDIR /app
-ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_URLS=http://+:80 \
+    TZ=Asia/Tashkent
 EXPOSE 80
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "CentralApi.dll"]

@@ -23,7 +23,7 @@
                     <select class="custom-select form-control" asp-for="AccountId">
                         @foreach (var account in Model.OwnAccounts)
                         {
-                            <option value="@account.Id">@account.Name - €@account.Balance.ToString("F2")</option>
+                            <option value="@account.Id">@account.Name - @account.Balance.ToString("F2") UZS</option>
                         }
                     </select>
                     <span asp-validation-for="AccountId" class="text-danger"></span>
@@ -45,7 +45,7 @@
                     <div class="input-group mb-2">
                         <input class="form-control mr-1" asp-for="Amount" />
                         <div class="input-group-prepend">
-                            <div class="input-group-text">EUR</div>
+                            <div class="input-group-text">UZS</div>
                         </div>
                     </div>
                     <span asp-validation-for="Amount" class="text-danger"></span>

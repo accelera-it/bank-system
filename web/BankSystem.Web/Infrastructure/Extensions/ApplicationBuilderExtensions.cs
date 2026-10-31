@@ -54,7 +54,7 @@
                     {
                         new BankAccount
                         {
-                            Balance = 10000,
+                            Balance = 10_000_000,
                             CreatedOn = DateTime.UtcNow,
                             Name = "Main account",
                             UniqueId = "ABCJ98131785"

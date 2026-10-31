@@ -17,7 +17,7 @@
                                    data-toggle="modal" data-target="#editModal" data-id="@account.Id">
                                 </i>
                             </p>
-                            <p class="card-text text-green text-right ml-3">€@account.Balance</p>
+                            <p class="card-text text-green text-right ml-3">@account.Balance UZS</p>
                         </div>
                     }
 
@@ -51,11 +51,11 @@
                                 <td>
                                     @if (moneyTransfer.Amount < 0)
                                     {
-                                        <span class="text-red">@moneyTransfer.Amount EUR</span>
+                                        <span class="text-red">@moneyTransfer.Amount UZS</span>
                                     }
                                     else
                                     {
-                                        <span class="text-green">+@moneyTransfer.Amount EUR</span>
+                                        <span class="text-green">+@moneyTransfer.Amount UZS</span>
                                     }
                                 </td>
                                 <td>@moneyTransfer.ReferenceNumber</td>

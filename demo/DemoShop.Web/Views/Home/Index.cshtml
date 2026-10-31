@@ -13,7 +13,7 @@
                 <img class="card-img-top product-thumbnail-img" src="@product.ImageUrl" alt="@product.Name">
                 <div class="card-body">
                     <h4 class="card-title">@product.Name</h4>
-                    <p class="card-text">€@product.Price</p>
+                    <p class="card-text">@product.Price UZS</p>
                     @if (User.Identity.IsAuthenticated)
                     {
                         <button class="btn btn-primary" data-toggle="modal" data-target="#orderModal"
@@ -81,7 +81,7 @@
                     var price = button.data('price');
                     var modal = $(this);
                     modal.find('.modal-title').text('Order ' + name);
-                    modal.find('.modal-body').text('Price: €' + price);
+                    modal.find('.modal-body').text('Price: ' + price + ' UZS');
                     modal.find('.modal-footer input[name=productId]').val(id);
                 });
         </script>

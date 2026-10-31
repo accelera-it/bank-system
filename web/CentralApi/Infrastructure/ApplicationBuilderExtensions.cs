@@ -28,7 +28,7 @@
                 dbContext.AddRange(
                     new Bank
                     {
-                        Location = "Bulgaria",
+                        Location = "Uzbekistan",
                         Name = "Bank system",
                         SwiftCode = "ABC",
                         ApiKey =

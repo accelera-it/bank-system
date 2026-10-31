@@ -14,7 +14,7 @@
                 <option disabled selected>Select source account...</option>
                 @foreach (var account in Model.OwnAccounts)
                 {
-                    <option value="@account.Id">@account.Name - €@account.Balance.ToString("F2")</option>
+                    <option value="@account.Id">@account.Name - @account.Balance.ToString("F2") UZS</option>
                 }
             </select>
             <span asp-validation-for="AccountId" class="text-danger"></span>
@@ -29,7 +29,7 @@
                     <option disabled selected>...or choose another one of your accounts</option>
                     @foreach (var account in Model.OwnAccounts)
                     {
-                        <option value="@account.UniqueId">@account.Name - €@account.Balance.ToString("F2")</option>
+                        <option value="@account.UniqueId">@account.Name - @account.Balance.ToString("F2") UZS</option>
                     }
                 </select>
             }
@@ -38,7 +38,7 @@
             <label asp-for="Amount"></label>
             <div class="input-group mb-2">
                 <div class="input-group-prepend">
-                    <div class="input-group-text">€</div>
+                    <div class="input-group-text">UZS</div>
                 </div>
                 <input type="number" min="0.01" step="0.01" class="form-control" asp-for="Amount" />
             </div>

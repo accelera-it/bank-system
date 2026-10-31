@@ -53,7 +53,7 @@ docker compose up --build
 | **BankSystem.Web** | http://localhost:8080
 | **DemoShop** | http://localhost:8082
 
-SQL Server (`db`) and CentralApi (`api`) are only reachable inside the Docker network. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in a `.env` file.
+SQL Server (`db`, built from `data/Dockerfile`) and CentralApi (`api`) are only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in a `.env` file.
 
 ### Without Docker
 
@@ -69,7 +69,7 @@ dotnet run --project demo/DemoShop.Web
 
 ### Demo account
 
-On first start the bank creates a demo user with a €10,000 account:
+On first start the bank creates a demo user with a 10,000,000 UZS account:
 
 | Email | Password
 |-|-

@@ -1,70 +1,105 @@
-# BankSystem 
-**BankSystem** is an open-source web project where users can create bank accounts, transfer money, create payment cards, pay with them or directly through their account, etc.
-It supports connecting multiple banks together through the _CentralApi_. This allows money to be securely transferred between **separate instances of BankSystem** running on different machines.
+# BankSystem
 
-## Documentation
+**BankSystem** is a web banking application built with ASP.NET Core. Users can open bank accounts, transfer money, issue payment cards and pay online with a card or directly from their account.
 
-### [Getting started](https://github.com/banksystembg/BankSystem/wiki/Getting-started)
->**This page contains important information on how to properly configure BankSystem and CentralApi**
+Several independent BankSystem instances can be connected through **CentralApi**, which securely routes transfers and payments between banks.
 
-BankSystem consists of two base components - the bank web application and the _CentralApi_, which securely connects banks running on separate machines together to process [transfers between different banks](https://github.com/banksystembg/BankSystem/wiki/Money-transfers#Global--worldwide-transfers), [card payments](https://github.com/banksystembg/BankSystem/wiki/Cards#Purchases) and [direct payments](https://github.com/banksystembg/BankSystem/wiki/Direct-payments).
+## Features
 
-## Project links
+- **Bank accounts** – owner, balance, transaction history
+- **Money transfers** – internal (same bank) and global (between banks via CentralApi)
+- **Cards** – issue payment cards and use them for online purchases
+- **Direct payments** – pay on third-party websites straight from a bank account, without card details
+- **Administration** – bank administration area
+- **User settings** – account and security settings
 
-We have set up a network of two BankSystem instances and one [DemoShop](https://github.com/banksystembg/BankSystem/wiki/DemoShop), connected through a _CentralApi_. This network supports all BankSystem functionality, including [Global transfers](https://github.com/banksystembg/BankSystem/wiki/Money-transfers#global--worldwide-transfers), [Direct payments](https://github.com/banksystembg/BankSystem/wiki/Direct-payments) and [Card payments](https://github.com/banksystembg/BankSystem/wiki/Cards#purchases).
+## How it works
 
-|Project |Address
+```
+demo (DemoShop) ──► api (CentralApi) ──► web (BankSystem.Web)
+                          │
+                          └──► other BankSystem instances
+```
+
+| Component | Description
 |-|-
-|**DemoShop** |https://banksystem-demoshop.herokuapp.com/
-|**Test Bank 1** <br><br> **Transfer details:** <br> * Bank name - _Bank system_ <br> * Bank country - _Germany_ <br> * Bank code - _ABC_ |https://banksystem-1.herokuapp.com/
-|**Test Bank 2** <br><br> **Transfer details:** <br> * Bank name - _Bank system 2_ <br> * Bank country - _Netherlands_ <br> * Bank code - _CBA_ |https://banksystem-2.herokuapp.com/
+| **BankSystem.Web** | The bank: web UI plus API endpoints that receive transfers and card payments
+| **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
+| **DemoShop** | Sample online shop that accepts card and direct payments
 
-All of these projects have a demo account already registered:
+All traffic between components is encrypted and signed (RSA + AES hybrid encryption).
 
-| Email                 | Password 
-|-----------------	|----------
-| test@test.com         | Test123$
+## Repository structure
 
-Additionally, all bank accounts created have an initial balance of €500 for demonstration purposes.
+| Folder | Contents
+|-|-
+| `core/` | Shared library (`BankSystem.Common`) and the Models / Data / Services layers of BankSystem and CentralApi
+| `web/` | `BankSystem.Web` and `CentralApi`
+| `demo/` | `DemoShop`
+| `tests/` | Service-layer unit tests (xUnit)
 
+All projects are in `BankSystem.sln` at the repository root.
 
+## Running locally
 
-### [Bank accounts](https://github.com/banksystembg/BankSystem/wiki/Bank-accounts)
-Bank accounts hold information about their owner, balance, transactions, date of creation, etc.
+### With Docker
 
-### [Money transfers](https://github.com/banksystembg/BankSystem/wiki/Money-transfers)
-BankSystem supports two types of money transfers - internal and global / worldwide.
+```bash
+docker compose up --build
+```
 
-### [Cards](https://github.com/banksystembg/BankSystem/wiki/Cards)
-Cards are used for making purchases on other websites using the _CentralApi_.
+| Service | Address
+|-|-
+| **BankSystem.Web** | http://localhost:8080
+| **DemoShop** | http://localhost:8082
 
-### [Direct payments](https://github.com/banksystembg/BankSystem/wiki/Direct-payments)
-Direct payments are a way to securely pay on websites directly through a bank account without the need to provide card details.
+SQL Server (`db`) and CentralApi (`api`) are only reachable inside the Docker network. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in a `.env` file.
 
-### [DemoShop](https://github.com/banksystembg/BankSystem/wiki/DemoShop)
-DemoShop is an example web application implementing direct and card payments.
+### Without Docker
 
-### [User settings](https://github.com/banksystembg/BankSystem/wiki/User-settings)
+Requires the .NET Core 3.1 SDK and SQL Server (connection strings are in each app's `appsettings.json`). Databases are migrated automatically on startup.
 
-### [Bank administration](https://github.com/banksystembg/BankSystem/wiki/Bank-administration)
+```bash
+dotnet build
+dotnet test
+dotnet run --project web/CentralApi
+dotnet run --project web/BankSystem.Web
+dotnet run --project demo/DemoShop.Web
+```
 
-***
+### Demo account
 
-**Used technologies:**
-* C#
-* ASP.NET Core
-* ASP.NET Core MVC
-* ASP.NET Core Web API
-* Entity Framework Core
-* Asymmetric & hybrid encryption
-* jQuery
-* AJAX
-* HTML
-* CSS
-* Bootstrap
+On first start the bank creates a demo user with a €10,000 account:
 
-***
+| Email | Password
+|-|-
+| test@test.com | Test123$
 
-## Development Timeline Visualization
-### [Video:](https://youtu.be/3Vm7BcysBVc)
-[![](http://img.youtube.com/vi/3Vm7BcysBVc/hqdefault.jpg)](https://youtu.be/3Vm7BcysBVc)
+## Configuration
+
+Each bank is configured through the `BankConfiguration` section of `web/BankSystem.Web/appsettings.json`: bank name, unique identifier (bank code), country, first 3 card digits, its own RSA private key and the CentralApi public key and address. The app refuses to start if any value is missing.
+
+Banks known to CentralApi are stored in its database (name, code, country, public key and API addresses).
+
+### Generating RSA keys
+
+Keys use the .NET `<RSAKeyValue>` XML format. To generate a new key pair (requires `openssl`):
+
+```bash
+./rsa-keygen.sh        # 4096-bit
+./rsa-keygen.sh 2048
+```
+
+## Tech stack
+
+- C#, ASP.NET Core 3.1 (MVC, Razor Pages, Web API)
+- Entity Framework Core, SQL Server
+- ASP.NET Core Identity
+- AutoMapper
+- jQuery, Bootstrap
+- xUnit, Moq, FluentAssertions
+- Docker, Docker Compose
+
+## Acknowledgements
+
+Based on [banksystembg/BankSystem](https://github.com/banksystembg/BankSystem).

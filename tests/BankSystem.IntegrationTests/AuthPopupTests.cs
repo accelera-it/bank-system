@@ -37,7 +37,7 @@ namespace BankSystem.IntegrationTests
 
             var html = await client.GetStringAsync("/?auth=login");
 
-            html.Should().Contain("id=\"authModal\"").And.NotContain("navbar-brand");
+            html.Should().Contain("id=\"loginModal\"").And.Contain("id=\"registerModal\"").And.NotContain("navbar-brand");
         }
 
         [Fact]

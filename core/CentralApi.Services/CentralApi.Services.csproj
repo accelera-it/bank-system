@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\BankSystem.Common\BankSystem.Common.csproj" />
-    <ProjectReference Include="..\..\..\Data\CentralApi\CentralApi.Models\CentralApi.Models.csproj" />
+    <ProjectReference Include="..\CentralApi.Data\CentralApi.Data.csproj" />
+    <ProjectReference Include="..\CentralApi.Services.Models\CentralApi.Services.Models.csproj" />
   </ItemGroup>
 
 </Project>

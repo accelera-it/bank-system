@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Data\BankSystem\BankSystem.Data\BankSystem.Data.csproj" />
+    <ProjectReference Include="..\BankSystem.Data\BankSystem.Data.csproj" />
     <ProjectReference Include="..\BankSystem.Services.Models\BankSystem.Services.Models.csproj" />
   </ItemGroup>
 

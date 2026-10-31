@@ -18,12 +18,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
+  
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\BankSystem.Common\BankSystem.Common.csproj" />
-    <ProjectReference Include="..\..\Data\BankSystem\BankSystem.Data\BankSystem.Data.csproj" />
-    <ProjectReference Include="..\..\Services\BankSystem\BankSystem.Services.Models\BankSystem.Services.Models.csproj" />
-    <ProjectReference Include="..\..\Services\BankSystem\BankSystem.Services\BankSystem.Services.csproj" />
+    <ProjectReference Include="..\..\core\BankSystem.Common\BankSystem.Common.csproj" />
+    <ProjectReference Include="..\..\core\CentralApi.Data\CentralApi.Data.csproj" />
+    <ProjectReference Include="..\..\core\CentralApi.Models\CentralApi.Models.csproj" />
+    <ProjectReference Include="..\..\core\CentralApi.Services.Models\CentralApi.Services.Models.csproj" />
+    <ProjectReference Include="..\..\core\CentralApi.Services\CentralApi.Services.csproj" />
   </ItemGroup>
 
 </Project>

@@ -713,3 +713,7 @@ table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child::before {
     background-color: #e4a216;
     border-color: #e4a216;
 }
+
+body {
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}

@@ -14,8 +14,12 @@
 
     public class MoneyTransferService : BaseService, IMoneyTransferService
     {
+        // Balance is a concurrency token: a save that lost a race reloads the accounts and tries again
+        private const int MaxSaveAttempts = 3;
+        private const string RefundDescription = "Refund of a failed transfer";
+
         private readonly IMapper mapper;
-        
+
         public MoneyTransferService(BankSystemDbContext context, IMapper mapper)
             : base(context)
         {
@@ -84,24 +88,247 @@
                 return false;
             }
 
-            var dbModel = this.mapper.Map<MoneyTransfer>(model);
-            var userAccount = await this.Context
-                .Accounts
-                .Include(u => u.User)
-                .Where(u => u.Id == dbModel.AccountId)
-                .SingleOrDefaultAsync();
-            if (userAccount == null)
+            for (var attempt = 0; attempt < MaxSaveAttempts; attempt++)
             {
-                return false;
+                // A fresh entity each time: a failed save leaves the old account on the navigation
+                var dbModel = this.mapper.Map<MoneyTransfer>(model);
+                var userAccount = await this.Context
+                    .Accounts
+                    .Where(u => u.Id == dbModel.AccountId)
+                    .SingleOrDefaultAsync();
+                if (userAccount == null)
+                {
+                    return false;
+                }
+
+                userAccount.Balance += dbModel.Amount;
+                await this.Context.Transfers.AddAsync(dbModel);
+
+                if (await this.TrySaveAsync())
+                {
+                    return true;
+                }
             }
 
-            userAccount.Balance += dbModel.Amount;
-            this.Context.Update(userAccount);
+            return false;
+        }
 
-            await this.Context.Transfers.AddAsync(dbModel);
-            await this.Context.SaveChangesAsync();
+        public async Task<MoneyTransferResult> TransferAsync(
+            MoneyTransferCreateServiceModel source, MoneyTransferCreateServiceModel destination)
+        {
+            if (!this.IsEntityStateValid(source) || !this.IsEntityStateValid(destination)
+                || source.AccountId == destination.AccountId
+                || source.Amount >= 0 || destination.Amount != -source.Amount)
+            {
+                return MoneyTransferResult.Failed;
+            }
 
-            return true;
+            return await this.SaveAsync(source, destination, null);
+        }
+
+        public async Task<MoneyTransferResult> WithdrawAsync(MoneyTransferCreateServiceModel model, string payload)
+        {
+            if (!this.IsEntityStateValid(model) || model.Amount >= 0)
+            {
+                return MoneyTransferResult.Failed;
+            }
+
+            return await this.SaveAsync(model, null, payload);
+        }
+
+        public async Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
+            DateTime createdBefore, int maxAttempts, int count)
+            => await this.Context
+                .PendingTransfers
+                .AsNoTracking()
+                .Where(p => p.CreatedOn < createdBefore && p.Attempts < maxAttempts)
+                .OrderBy(p => p.CreatedOn)
+                .Take(count)
+                .Select(p => new PendingTransferServiceModel
+                {
+                    ReferenceNumber = p.ReferenceNumber,
+                    Payload = p.Payload
+                })
+                .ToArrayAsync();
+
+        public async Task CompletePendingTransferAsync(string referenceNumber)
+        {
+            var pending = await this.Context.PendingTransfers.FindAsync(referenceNumber);
+            if (pending != null)
+            {
+                this.Context.PendingTransfers.Remove(pending);
+                await this.TrySaveAsync();
+            }
+        }
+
+        public async Task<bool> RefundPendingTransferAsync(string referenceNumber)
+        {
+            for (var attempt = 0; attempt < MaxSaveAttempts; attempt++)
+            {
+                var pending = await this.Context.PendingTransfers.FindAsync(referenceNumber);
+                if (pending == null)
+                {
+                    return true;
+                }
+
+                var withdrawal = await this.Context
+                    .Transfers
+                    .AsNoTracking()
+                    .SingleAsync(t => t.ReferenceNumber == referenceNumber
+                        && t.AccountId == pending.AccountId
+                        && t.Amount < 0);
+                var account = await this.Context.Accounts.SingleAsync(a => a.Id == pending.AccountId);
+
+                account.Balance -= withdrawal.Amount;
+                await this.Context.Transfers.AddAsync(new MoneyTransfer
+                {
+                    Description = RefundDescription,
+                    Amount = -withdrawal.Amount,
+                    MadeOn = DateTime.UtcNow,
+                    AccountId = withdrawal.AccountId,
+                    Source = withdrawal.Source,
+                    Destination = withdrawal.Destination,
+                    SenderName = withdrawal.SenderName,
+                    RecipientName = withdrawal.RecipientName,
+                    ReferenceNumber = withdrawal.ReferenceNumber
+                });
+                this.Context.PendingTransfers.Remove(pending);
+
+                // The removed row makes a second refund fail here instead of paying twice
+                if (await this.TrySaveAsync())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public async Task<int> AddPendingTransferAttemptAsync(string referenceNumber)
+        {
+            var pending = await this.Context.PendingTransfers.FindAsync(referenceNumber);
+            if (pending == null)
+            {
+                return 0;
+            }
+
+            pending.Attempts++;
+            await this.TrySaveAsync();
+
+            return pending.Attempts;
+        }
+
+        public async Task<bool> ReceiveMoneyTransferAsync(MoneyTransferCreateServiceModel model)
+        {
+            var received = await this.GetReceivedAmountAsync(model);
+            if (received != null)
+            {
+                return received == model.Amount;
+            }
+
+            try
+            {
+                return await this.CreateMoneyTransferAsync(model);
+            }
+            catch (DbUpdateException ex) when (ex is not DbUpdateConcurrencyException)
+            {
+                // Two deliveries raced: the unique index let one in
+                this.Context.ChangeTracker.Clear();
+
+                received = await this.GetReceivedAmountAsync(model);
+                if (received == null)
+                {
+                    throw;
+                }
+
+                return received == model.Amount;
+            }
+        }
+
+        private async Task<decimal?> GetReceivedAmountAsync(MoneyTransferCreateServiceModel model)
+            => await this.Context
+                .Transfers
+                .AsNoTracking()
+                .Where(t => t.AccountId == model.AccountId
+                    && t.ReferenceNumber == model.ReferenceNumber
+                    && t.Amount > 0)
+                .Select(t => (decimal?)t.Amount)
+                .FirstOrDefaultAsync();
+
+        private async Task<MoneyTransferResult> SaveAsync(
+            MoneyTransferCreateServiceModel source, MoneyTransferCreateServiceModel destination, string payload)
+        {
+            for (var attempt = 0; attempt < MaxSaveAttempts; attempt++)
+            {
+                var debit = this.mapper.Map<MoneyTransfer>(source);
+                var sourceAccount = await this.Context
+                    .Accounts
+                    .SingleOrDefaultAsync(a => a.Id == debit.AccountId);
+                if (sourceAccount == null)
+                {
+                    return MoneyTransferResult.Failed;
+                }
+
+                if (sourceAccount.Balance + debit.Amount < 0)
+                {
+                    return MoneyTransferResult.InsufficientFunds;
+                }
+
+                sourceAccount.Balance += debit.Amount;
+                await this.Context.Transfers.AddAsync(debit);
+
+                if (destination != null)
+                {
+                    var credit = this.mapper.Map<MoneyTransfer>(destination);
+                    var destinationAccount = await this.Context
+                        .Accounts
+                        .SingleOrDefaultAsync(a => a.Id == credit.AccountId);
+                    if (destinationAccount == null)
+                    {
+                        this.Context.ChangeTracker.Clear();
+
+                        return MoneyTransferResult.Failed;
+                    }
+
+                    destinationAccount.Balance += credit.Amount;
+                    await this.Context.Transfers.AddAsync(credit);
+                }
+
+                if (payload != null)
+                {
+                    await this.Context.PendingTransfers.AddAsync(new PendingTransfer
+                    {
+                        ReferenceNumber = debit.ReferenceNumber,
+                        AccountId = debit.AccountId,
+                        Payload = payload,
+                        CreatedOn = DateTime.UtcNow
+                    });
+                }
+
+                // One SaveChanges is one database transaction, so the parts cannot split
+                if (await this.TrySaveAsync())
+                {
+                    return MoneyTransferResult.Succeeded;
+                }
+            }
+
+            return MoneyTransferResult.Failed;
+        }
+
+        private async Task<bool> TrySaveAsync()
+        {
+            try
+            {
+                await this.Context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                this.Context.ChangeTracker.Clear();
+
+                return false;
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace BankSystem.Web.Api.Models
 {
     using System.ComponentModel.DataAnnotations;
+    using Common;
 
     public class ReceiveMoneyTransferModel
     {
@@ -22,6 +23,7 @@
         public string SenderAccountUniqueId { get; set; }
 
         [Required]
+        [MaxLength(ModelConstants.MoneyTransfer.ReferenceNumberMaxLength)]
         public string ReferenceNumber { get; set; }
     }
 }

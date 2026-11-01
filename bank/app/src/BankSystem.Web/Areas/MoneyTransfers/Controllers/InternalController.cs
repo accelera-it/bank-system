@@ -75,14 +75,6 @@ namespace BankSystem.Web.Areas.MoneyTransfers.Controllers
                 return this.View(model);
             }
 
-            if (account.Balance < model.Amount)
-            {
-                this.ShowErrorMessage(NotificationMessages.InsufficientFunds);
-                model.OwnAccounts = await this.GetAllAccountsAsync(userId);
-
-                return this.View(model);
-            }
-
             var destinationAccount =
                 await this.bankAccountService.GetByUniqueIdAsync<BankAccountConciseServiceModel>(
                     model.DestinationBankAccountUniqueId);
@@ -102,14 +94,6 @@ namespace BankSystem.Web.Areas.MoneyTransfers.Controllers
             sourceServiceModel.RecipientName = destinationAccount.UserFullName;
             sourceServiceModel.ReferenceNumber = referenceNumber;
 
-            if (!await this.moneyTransferService.CreateMoneyTransferAsync(sourceServiceModel))
-            {
-                this.ShowErrorMessage(NotificationMessages.TryAgainLaterError);
-                model.OwnAccounts = await this.GetAllAccountsAsync(userId);
-
-                return this.View(model);
-            }
-
             var destinationServiceModel = this.Mapper.Map<MoneyTransferCreateServiceModel>(model);
             destinationServiceModel.Source = account.UniqueId;
             destinationServiceModel.AccountId = destinationAccount.Id;
@@ -117,9 +101,12 @@ namespace BankSystem.Web.Areas.MoneyTransfers.Controllers
             destinationServiceModel.RecipientName = destinationAccount.UserFullName;
             destinationServiceModel.ReferenceNumber = referenceNumber;
 
-            if (!await this.moneyTransferService.CreateMoneyTransferAsync(destinationServiceModel))
+            var result = await this.moneyTransferService.TransferAsync(sourceServiceModel, destinationServiceModel);
+            if (result != MoneyTransferResult.Succeeded)
             {
-                this.ShowErrorMessage(NotificationMessages.TryAgainLaterError);
+                this.ShowErrorMessage(result == MoneyTransferResult.InsufficientFunds
+                    ? NotificationMessages.InsufficientFunds
+                    : NotificationMessages.TryAgainLaterError);
                 model.OwnAccounts = await this.GetAllAccountsAsync(userId);
 
                 return this.View(model);

@@ -40,6 +40,7 @@
         public string Destination { get; set; }
 
         [Required]
+        [MaxLength(ModelConstants.MoneyTransfer.ReferenceNumberMaxLength)]
         public string ReferenceNumber { get; set; }
     }
 }

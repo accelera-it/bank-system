@@ -7,6 +7,7 @@ namespace BankSystem.Web
     using Common.Utils;
     using Data;
     using Infrastructure.Extensions;
+    using Infrastructure.Helpers.GlobalTransferHelpers;
     using Infrastructure.Middleware;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -29,6 +30,8 @@ namespace BankSystem.Web
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHostedService<PendingTransferRetryService>();
+
             services.AddHealthChecks();
 
             services.AddDbContextPool<BankSystemDbContext>(options =>

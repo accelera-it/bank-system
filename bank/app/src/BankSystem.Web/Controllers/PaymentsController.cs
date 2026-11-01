@@ -164,9 +164,12 @@ namespace BankSystem.Web.Controllers
 
                 if (result != GlobalTransferResult.Succeeded)
                 {
-                    return this.PaymentFailed(result == GlobalTransferResult.InsufficientFunds
-                        ? NotificationMessages.InsufficientFunds
-                        : NotificationMessages.TryAgainLaterError);
+                    return this.PaymentFailed(result switch
+                    {
+                        GlobalTransferResult.InsufficientFunds => NotificationMessages.InsufficientFunds,
+                        GlobalTransferResult.Pending => NotificationMessages.TransferPending,
+                        _ => NotificationMessages.TryAgainLaterError
+                    });
                 }
 
                 // delete cookie to prevent accidental duplicate payments

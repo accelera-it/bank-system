@@ -4,6 +4,9 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers.Models
     {
         Succeeded,
         InsufficientFunds,
-        GeneralFailure
+        GeneralFailure,
+
+        // The money is held: it will reach the recipient or come back without further action
+        Pending
     }
 }

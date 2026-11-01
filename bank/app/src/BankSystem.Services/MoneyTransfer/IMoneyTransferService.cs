@@ -1,5 +1,6 @@
 ﻿namespace BankSystem.Services.MoneyTransfer
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Models.MoneyTransfer;
@@ -17,6 +18,44 @@
 
         Task<bool> CreateMoneyTransferAsync<T>(T model)
             where T : MoneyTransferBaseServiceModel;
+
+        /// <summary>
+        /// Moves money between two accounts of this bank: both sides are saved or neither is.
+        /// The source model carries a negative amount, the destination model a positive one.
+        /// </summary>
+        Task<MoneyTransferResult> TransferAsync(
+            MoneyTransferCreateServiceModel source, MoneyTransferCreateServiceModel destination);
+
+        /// <summary>
+        /// Takes money out of an account unless that would overdraw it and, in the same database transaction,
+        /// records what still has to be delivered. The model carries a negative amount.
+        /// </summary>
+        Task<MoneyTransferResult> WithdrawAsync(MoneyTransferCreateServiceModel model, string payload);
+
+        Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
+            DateTime createdBefore, int maxAttempts, int count);
+
+        /// <summary>
+        /// Delivery was confirmed: the transfer is no longer pending.
+        /// </summary>
+        Task CompletePendingTransferAsync(string referenceNumber);
+
+        /// <summary>
+        /// Delivery was refused: returns the money and ends the pending transfer in one database transaction.
+        /// Safe to call twice. Returns false if the refund could not be saved.
+        /// </summary>
+        Task<bool> RefundPendingTransferAsync(string referenceNumber);
+
+        /// <summary>
+        /// Counts a delivery with an unknown outcome and returns the number of attempts so far.
+        /// </summary>
+        Task<int> AddPendingTransferAttemptAsync(string referenceNumber);
+
+        /// <summary>
+        /// Credits an incoming transfer once: delivering the same reference number again changes nothing
+        /// and succeeds, unless the amount differs.
+        /// </summary>
+        Task<bool> ReceiveMoneyTransferAsync(MoneyTransferCreateServiceModel model);
 
         Task<IEnumerable<T>> GetMoneyTransferAsync<T>(string referenceNumber)
             where T : MoneyTransferBaseServiceModel;

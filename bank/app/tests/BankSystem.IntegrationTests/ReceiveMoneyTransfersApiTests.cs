@@ -26,7 +26,8 @@ namespace BankSystem.IntegrationTests
         private static object Transfer(
             decimal amount = 100,
             string account = BankWebFactory.SeededAccountUniqueId,
-            string recipient = BankWebFactory.SeededUserFullName)
+            string recipient = BankWebFactory.SeededUserFullName,
+            string referenceNumber = null)
             => new
             {
                 Description = "Integration transfer",
@@ -35,7 +36,7 @@ namespace BankSystem.IntegrationTests
                 SenderName = "Sender",
                 RecipientName = recipient,
                 SenderAccountUniqueId = "XYZ00000001",
-                ReferenceNumber = Guid.NewGuid().ToString("N").Substring(0, 20)
+                ReferenceNumber = referenceNumber ?? Guid.NewGuid().ToString("N").Substring(0, 20)
             };
 
         private Task<HttpResponseMessage> PostAsync(object model, string signedWith = null, DateTime? timestamp = null)
@@ -64,6 +65,33 @@ namespace BankSystem.IntegrationTests
             var recorded = await this.factory.WithDbAsync(
                 db => db.Transfers.AnyAsync(t => t.ReferenceNumber == reference));
             recorded.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task Post_DeliveredTwice_ShouldCreditOnceAndSucceedBothTimes()
+        {
+            var before = (await this.factory.GetSeededAccountAsync()).Balance;
+            var transfer = Transfer(amount: 25);
+
+            var first = await this.PostAsync(transfer);
+            var second = await this.PostAsync(transfer);
+
+            first.StatusCode.Should().Be(HttpStatusCode.OK);
+            second.StatusCode.Should().Be(HttpStatusCode.OK);
+            (await this.factory.GetSeededAccountAsync()).Balance.Should().Be(before + 25);
+        }
+
+        [Fact]
+        public async Task Post_SameReferenceWithOtherAmount_ShouldNotCredit()
+        {
+            var reference = Guid.NewGuid().ToString("N").Substring(0, 20);
+            await this.PostAsync(Transfer(amount: 25, referenceNumber: reference));
+            var before = (await this.factory.GetSeededAccountAsync()).Balance;
+
+            var response = await this.PostAsync(Transfer(amount: 40, referenceNumber: reference));
+
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            (await this.factory.GetSeededAccountAsync()).Balance.Should().Be(before);
         }
 
         [Fact]

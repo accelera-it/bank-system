@@ -3,12 +3,14 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using BankSystem.Models;
     using Common;
     using Data;
     using FluentAssertions;
     using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Diagnostics;
     using Models.MoneyTransfer;
     using MoneyTransfer;
     using Moq;
@@ -33,6 +35,7 @@
 
         private const string SampleBankAccountName = "Test bank account name";
         private const string SampleBankAccountId = "1";
+        private const string SampleDestinationAccountId = "2";
         private const string SampleBankAccountUniqueId = "UniqueId";
         private const string SampleReferenceNumber = "18832258557125540";
 
@@ -478,6 +481,221 @@
         }
 
         [Fact]
+        public async Task TransferAsync_WithValidModels_Should_MoveMoneyAndInsertBothTransfers()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+
+            // Act
+            var result = await this.moneyTransferService.TransferAsync(
+                PrepareCreateModel(amount: -30), PrepareCreateModel(amount: 30, accountId: SampleDestinationAccountId));
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Succeeded);
+            await this.AssertBalancesAsync(this.dbContext, 70, 35);
+            this.dbContext.Transfers.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public async Task TransferAsync_WithInsufficientFunds_Should_ChangeNothing()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 20, 5);
+
+            // Act
+            var result = await this.moneyTransferService.TransferAsync(
+                PrepareCreateModel(amount: -30), PrepareCreateModel(amount: 30, accountId: SampleDestinationAccountId));
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.InsufficientFunds);
+            await this.AssertBalancesAsync(this.dbContext, 20, 5);
+            this.dbContext.Transfers.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task TransferAsync_WithMissingDestinationAccount_Should_ChangeNothing()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+
+            // Act
+            var result = await this.moneyTransferService.TransferAsync(
+                PrepareCreateModel(amount: -30), PrepareCreateModel(amount: 30, accountId: "missing"));
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Failed);
+            await this.AssertBalancesAsync(this.dbContext, 100, 5);
+            this.dbContext.Transfers.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task TransferAsync_WithInvalidDestinationModel_Should_ChangeNothing()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+
+            // Act
+            var result = await this.moneyTransferService.TransferAsync(
+                PrepareCreateModel(amount: -30),
+                PrepareCreateModel(amount: 30, accountId: SampleDestinationAccountId, recipientName: null));
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Failed);
+            await this.AssertBalancesAsync(this.dbContext, 100, 5);
+            this.dbContext.Transfers.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task TransferAsync_WhenBalanceChangesDuringSave_Should_RetryOnFreshBalance()
+        {
+            // Arrange: another request takes 80 of the 100 just before the first save.
+            // Transfers are not asserted: InMemory has no transactions, so a refused save keeps its rows.
+            var (context, rival) = this.CreateRacingContexts(context => context.Accounts.Find(SampleBankAccountId).Balance -= 80);
+            await this.SeedTransferAccountsAsync(rival, 100, 5);
+            var service = new MoneyTransferService(context, this.Mapper);
+
+            // Act
+            var result = await service.TransferAsync(
+                PrepareCreateModel(amount: -10), PrepareCreateModel(amount: 10, accountId: SampleDestinationAccountId));
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Succeeded);
+            await this.AssertBalancesAsync(rival, 10, 15);
+        }
+
+        [Fact]
+        public async Task TransferAsync_WhenRaceLeavesTooLittleMoney_Should_ReturnInsufficientFunds()
+        {
+            // Arrange: both requests want 80 of the 100, and the rival saves first
+            var (context, rival) = this.CreateRacingContexts(context => context.Accounts.Find(SampleBankAccountId).Balance -= 80);
+            await this.SeedTransferAccountsAsync(rival, 100, 5);
+            var service = new MoneyTransferService(context, this.Mapper);
+
+            // Act
+            var result = await service.TransferAsync(
+                PrepareCreateModel(amount: -80), PrepareCreateModel(amount: 80, accountId: SampleDestinationAccountId));
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.InsufficientFunds);
+            await this.AssertBalancesAsync(rival, 20, 5);
+        }
+
+        [Fact]
+        public async Task WithdrawAsync_WithEnoughMoney_Should_DebitAccount()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+
+            // Act
+            var result = await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Succeeded);
+            await this.AssertBalancesAsync(this.dbContext, 70, 5);
+            this.dbContext.Transfers.Should().HaveCount(1);
+            this.dbContext.PendingTransfers.Should().ContainSingle(p => p.Payload == "payload");
+        }
+
+        [Fact]
+        public async Task WithdrawAsync_WithInsufficientFunds_Should_ChangeNothing()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 20, 5);
+
+            // Act
+            var result = await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.InsufficientFunds);
+            await this.AssertBalancesAsync(this.dbContext, 20, 5);
+            this.dbContext.Transfers.Should().BeEmpty();
+            this.dbContext.PendingTransfers.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task RefundPendingTransferAsync_CalledTwice_Should_RefundOnce()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Act
+            var first = await this.moneyTransferService.RefundPendingTransferAsync(SampleReferenceNumber);
+            var second = await this.moneyTransferService.RefundPendingTransferAsync(SampleReferenceNumber);
+
+            // Assert
+            first.Should().BeTrue();
+            second.Should().BeTrue();
+            await this.AssertBalancesAsync(this.dbContext, 100, 5);
+            this.dbContext.PendingTransfers.Should().BeEmpty();
+            this.dbContext.Transfers.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public async Task CompletePendingTransferAsync_Should_KeepWithdrawalAndEndPending()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Act
+            await this.moneyTransferService.CompletePendingTransferAsync(SampleReferenceNumber);
+
+            // Assert
+            await this.AssertBalancesAsync(this.dbContext, 70, 5);
+            this.dbContext.PendingTransfers.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetPendingTransfersAsync_Should_SkipNewAndExhaustedTransfers()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+            await this.moneyTransferService.AddPendingTransferAttemptAsync(SampleReferenceNumber);
+
+            // Act
+            var tooNew = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(-1), 5, 10);
+            var exhausted = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), 1, 10);
+            var due = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), 5, 10);
+
+            // Assert
+            tooNew.Should().BeEmpty();
+            exhausted.Should().BeEmpty();
+            due.Should().ContainSingle(p => p.ReferenceNumber == SampleReferenceNumber);
+        }
+
+        [Fact]
+        public async Task WithdrawAsync_WithPositiveAmount_Should_ReturnFailed()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+
+            // Act
+            var result = await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: 30), "payload");
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Failed);
+            await this.AssertBalancesAsync(this.dbContext, 100, 5);
+        }
+
+        [Fact]
+        public async Task CreateMoneyTransferAsync_WhenBalanceChangesDuringSave_Should_KeepBothChanges()
+        {
+            // Arrange
+            var (context, rival) = this.CreateRacingContexts(context => context.Accounts.Find(SampleBankAccountId).Balance += 50);
+            await this.SeedTransferAccountsAsync(rival, 100, 5);
+            var service = new MoneyTransferService(context, this.Mapper);
+
+            // Act
+            var result = await service.CreateMoneyTransferAsync(PrepareCreateModel(amount: 10));
+
+            // Assert
+            result.Should().BeTrue();
+            await this.AssertBalancesAsync(rival, 160, 5);
+        }
+
+        [Fact]
         public async Task CreateMoneyTransferAsync_WithValidModel_Should_InsertInDatabase()
         {
             // Arrange
@@ -760,6 +978,82 @@
             };
 
             return model;
+        }
+
+        private (BankSystemDbContext Context, BankSystemDbContext Rival) CreateRacingContexts(
+            Action<BankSystemDbContext> rivalChange)
+        {
+            var databaseName = Guid.NewGuid().ToString();
+            var rival = new BankSystemDbContext(new DbContextOptionsBuilder<BankSystemDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .Options);
+            var context = new BankSystemDbContext(new DbContextOptionsBuilder<BankSystemDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .AddInterceptors(new RivalSaveInterceptor(databaseName, rivalChange))
+                .Options);
+
+            return (context, rival);
+        }
+
+        private async Task SeedTransferAccountsAsync(BankSystemDbContext context, decimal source, decimal destination)
+        {
+            await context.Accounts.AddRangeAsync(
+                new BankAccount
+                {
+                    Id = SampleBankAccountId,
+                    Name = SampleBankAccountName,
+                    UniqueId = SampleBankAccountUniqueId,
+                    UserId = SampleUserId,
+                    Balance = source
+                },
+                new BankAccount
+                {
+                    Id = SampleDestinationAccountId,
+                    Name = SampleBankAccountName,
+                    UniqueId = SampleDestination,
+                    UserId = SampleUserId,
+                    Balance = destination
+                });
+            await context.SaveChangesAsync();
+        }
+
+        private async Task AssertBalancesAsync(BankSystemDbContext context, decimal source, decimal destination)
+        {
+            context.ChangeTracker.Clear();
+            (await context.Accounts.FindAsync(SampleBankAccountId)).Balance.Should().Be(source);
+            (await context.Accounts.FindAsync(SampleDestinationAccountId)).Balance.Should().Be(destination);
+        }
+
+        private sealed class RivalSaveInterceptor : SaveChangesInterceptor
+        {
+            private readonly string databaseName;
+            private readonly Action<BankSystemDbContext> rivalChange;
+            private bool done;
+
+            public RivalSaveInterceptor(string databaseName, Action<BankSystemDbContext> rivalChange)
+            {
+                this.databaseName = databaseName;
+                this.rivalChange = rivalChange;
+            }
+
+            public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+                DbContextEventData eventData,
+                InterceptionResult<int> result,
+                CancellationToken cancellationToken = default)
+            {
+                if (!this.done)
+                {
+                    this.done = true;
+
+                    using var rival = new BankSystemDbContext(new DbContextOptionsBuilder<BankSystemDbContext>()
+                        .UseInMemoryDatabase(this.databaseName)
+                        .Options);
+                    this.rivalChange(rival);
+                    rival.SaveChanges();
+                }
+
+                return ValueTask.FromResult(result);
+            }
         }
 
         private async Task<MoneyTransfer> SeedMoneyTransfersAsync()

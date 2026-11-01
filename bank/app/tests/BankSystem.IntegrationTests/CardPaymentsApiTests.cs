@@ -2,12 +2,14 @@ namespace BankSystem.IntegrationTests
 {
     using System;
     using System.Globalization;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Threading.Tasks;
     using BankSystem.Models;
     using BankSystem.Tests.Shared;
     using FluentAssertions;
+    using Microsoft.EntityFrameworkCore;
     using Xunit;
 
     public class CardPaymentsApiTests : IClassFixture<BankWebFactory>
@@ -110,6 +112,62 @@ namespace BankSystem.IntegrationTests
             {
                 this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
             }
+        }
+
+        [Fact]
+        public async Task Post_WhenCentralApiRefuses_ShouldRecordWithdrawalAndRefund()
+        {
+            await this.EnsureCardAsync();
+            this.factory.CentralApi.ResponseStatus = HttpStatusCode.BadRequest;
+            var accountId = (await this.factory.GetSeededAccountAsync()).Id;
+            var before = await this.factory.WithDbAsync(db => db.Transfers.CountAsync(t => t.AccountId == accountId));
+
+            try
+            {
+                await this.PostAsync(this.Payment(amount: 7));
+
+                var transfers = await this.factory.WithDbAsync(db => db.Transfers
+                    .Where(t => t.AccountId == accountId && (t.Amount == 7 || t.Amount == -7))
+                    .ToListAsync());
+                transfers.Should().HaveCount(2);
+                transfers.Sum(t => t.Amount).Should().Be(0);
+                (await this.factory.WithDbAsync(db => db.Transfers.CountAsync(t => t.AccountId == accountId)))
+                    .Should().Be(before + 2);
+            }
+            finally
+            {
+                this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
+            }
+        }
+
+        [Fact]
+        public async Task Post_WhenCentralApiIsDown_ShouldHoldMoneyAsPending()
+        {
+            using var factory = new BankWebFactory();
+            var tests = new CardPaymentsApiTests(factory);
+            await tests.EnsureCardAsync();
+            factory.CentralApi.Dispose();
+            var before = (await factory.GetSeededAccountAsync()).Balance;
+
+            var response = await tests.PostAsync(tests.Payment());
+
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            (await factory.GetSeededAccountAsync()).Balance.Should().Be(before - 50);
+            (await factory.WithDbAsync(db => db.PendingTransfers.CountAsync())).Should().Be(1);
+        }
+
+        [Fact]
+        public async Task Post_WithInsufficientFunds_ShouldNotContactCentralApi()
+        {
+            await this.EnsureCardAsync();
+            var balance = (await this.factory.GetSeededAccountAsync()).Balance;
+            var requests = this.factory.CentralApi.Requests.Count;
+
+            var response = await this.PostAsync(this.Payment(amount: balance + 1));
+
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            this.factory.CentralApi.Requests.Should().HaveCount(requests);
+            (await this.factory.GetSeededAccountAsync()).Balance.Should().Be(balance);
         }
 
         [Fact]

@@ -8,6 +8,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
     using MapsterMapper;
     using Common.Configuration;
     using Common.Utils;
+    using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Models;
     using Newtonsoft.Json;
@@ -18,22 +19,36 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
 
     public class GlobalTransferHelper : IGlobalTransferHelper
     {
+        private enum DeliveryOutcome
+        {
+            Accepted,
+            Refused,
+            Unknown
+        }
+
         private const string CentralApiTransferSubmitUrlFormat = "{0}api/ReceiveTransactions";
+
+        // Once a minute, so a transfer gets a day of retries before it needs a person
+        private const int MaxDeliveryAttempts = 1440;
+        private const int RetryBatchSize = 50;
 
         private readonly IBankAccountService bankAccountService;
         private readonly BankConfiguration bankConfiguration;
         private readonly IMoneyTransferService moneyTransferService;
         private readonly IMapper mapper;
+        private readonly ILogger<GlobalTransferHelper> logger;
 
         public GlobalTransferHelper(
             IBankAccountService bankAccountService,
             IMoneyTransferService moneyTransferService,
             IOptions<BankConfiguration> bankConfigurationOptions,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<GlobalTransferHelper> logger)
         {
             this.bankAccountService = bankAccountService;
             this.moneyTransferService = moneyTransferService;
             this.mapper = mapper;
+            this.logger = logger;
             this.bankConfiguration = bankConfigurationOptions.Value;
         }
 
@@ -53,24 +68,12 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
                 return GlobalTransferResult.GeneralFailure;
             }
 
-            // verify there is enough money in the account
-            if (account.Balance < model.Amount)
-            {
-                return GlobalTransferResult.InsufficientFunds;
-            }
-
-            // contact the CentralApi to execute the transfer
             var submitDto = this.mapper.Map<CentralApiSubmitTransferDto>(model);
             submitDto.SenderName = account.UserFullName;
             submitDto.SenderAccountUniqueId = account.UniqueId;
 
-            bool remoteSuccess = await this.ContactCentralApiAsync(submitDto);
-            if (!remoteSuccess)
-            {
-                return GlobalTransferResult.GeneralFailure;
-            }
-
-            // remove money from source account
+            // remove money from source account first: it cannot be spent twice while CentralApi works,
+            // and the pending row saved with it means a crash cannot lose the transfer
             var serviceModel = new MoneyTransferCreateServiceModel
             {
                 Amount = -model.Amount,
@@ -83,20 +86,102 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
                 ReferenceNumber = submitDto.ReferenceNumber
             };
 
-            bool success = await this.moneyTransferService.CreateMoneyTransferAsync(serviceModel);
-            return !success ? GlobalTransferResult.GeneralFailure : GlobalTransferResult.Succeeded;
+            var withdrawal = await this.moneyTransferService.WithdrawAsync(
+                serviceModel, JsonConvert.SerializeObject(submitDto));
+            if (withdrawal != MoneyTransferResult.Succeeded)
+            {
+                return withdrawal == MoneyTransferResult.InsufficientFunds
+                    ? GlobalTransferResult.InsufficientFunds
+                    : GlobalTransferResult.GeneralFailure;
+            }
+
+            // contact the CentralApi to execute the transfer
+            switch (await this.ContactCentralApiAsync(submitDto))
+            {
+                case DeliveryOutcome.Accepted:
+                    await this.FinishSafelyAsync(submitDto.ReferenceNumber, DeliveryOutcome.Accepted);
+                    return GlobalTransferResult.Succeeded;
+                case DeliveryOutcome.Refused:
+                    await this.FinishSafelyAsync(submitDto.ReferenceNumber, DeliveryOutcome.Refused);
+                    return GlobalTransferResult.GeneralFailure;
+                default:
+                    return GlobalTransferResult.Pending;
+            }
         }
 
-        private async Task<bool> ContactCentralApiAsync(CentralApiSubmitTransferDto model)
+        public async Task RetryPendingTransfersAsync(TimeSpan minimumAge)
+        {
+            var pendingTransfers = await this.moneyTransferService.GetPendingTransfersAsync(
+                DateTime.UtcNow - minimumAge, MaxDeliveryAttempts, RetryBatchSize);
+
+            foreach (var pending in pendingTransfers)
+            {
+                var model = JsonConvert.DeserializeObject<CentralApiSubmitTransferDto>(pending.Payload);
+                var outcome = await this.ContactCentralApiAsync(model);
+                if (outcome != DeliveryOutcome.Unknown)
+                {
+                    await this.FinishSafelyAsync(pending.ReferenceNumber, outcome);
+                    continue;
+                }
+
+                var attempts = await this.moneyTransferService.AddPendingTransferAttemptAsync(pending.ReferenceNumber);
+                if (attempts >= MaxDeliveryAttempts)
+                {
+                    this.logger.LogCritical(
+                        "Transfer {ReferenceNumber} still has no answer after {Attempts} attempts: it needs a person",
+                        pending.ReferenceNumber, attempts);
+                }
+            }
+        }
+
+        // The pending row survives a failure here, so the retry service finishes the job
+        private async Task FinishSafelyAsync(string referenceNumber, DeliveryOutcome outcome)
+        {
+            try
+            {
+                if (outcome == DeliveryOutcome.Accepted)
+                {
+                    await this.moneyTransferService.CompletePendingTransferAsync(referenceNumber);
+                }
+                else if (!await this.moneyTransferService.RefundPendingTransferAsync(referenceNumber))
+                {
+                    this.logger.LogError("Refund of transfer {ReferenceNumber} will be retried", referenceNumber);
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Finishing transfer {ReferenceNumber} will be retried", referenceNumber);
+            }
+        }
+
+        private async Task<DeliveryOutcome> ContactCentralApiAsync(CentralApiSubmitTransferDto model)
         {
             var encryptedData = this.SignAndEncryptData(model);
 
-            var client = new HttpClient();
-            var response = await client.PostAsJsonAsync(
-                string.Format(CentralApiTransferSubmitUrlFormat, this.bankConfiguration.CentralApiAddress),
-                encryptedData);
+            try
+            {
+                var client = new HttpClient();
+                var response = await client.PostAsJsonAsync(
+                    string.Format(CentralApiTransferSubmitUrlFormat, this.bankConfiguration.CentralApiAddress),
+                    encryptedData);
 
-            return response != null && response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode)
+                {
+                    return DeliveryOutcome.Accepted;
+                }
+
+                // Gateway and server errors say nothing about whether the other bank got the money
+                var status = (int)response.StatusCode;
+                return status >= 500 || status == 408 || status == 429
+                    ? DeliveryOutcome.Unknown
+                    : DeliveryOutcome.Refused;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            {
+                this.logger.LogError(ex, "CentralApi did not answer for transfer {ReferenceNumber}", model.ReferenceNumber);
+
+                return DeliveryOutcome.Unknown;
+            }
         }
 
         private string SignAndEncryptData(CentralApiSubmitTransferDto model)

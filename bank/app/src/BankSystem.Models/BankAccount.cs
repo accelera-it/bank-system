@@ -16,6 +16,7 @@
         public string Name { get; set; }
 
         [Required]
+        [ConcurrencyCheck]
         public decimal Balance { get; set; }
 
         [Required]
@@ -33,5 +34,7 @@
         public ICollection<Card> Cards { get; set; }
 
         public ICollection<MoneyTransfer> Transfers { get; set; }
+
+        public ICollection<PendingTransfer> PendingTransfers { get; set; }
     }
 }

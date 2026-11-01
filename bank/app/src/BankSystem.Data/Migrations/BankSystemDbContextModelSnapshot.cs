@@ -29,6 +29,7 @@ namespace BankSystem.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal>("Balance")
+                        .IsConcurrencyToken()
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -201,7 +202,8 @@ namespace BankSystem.Data.Migrations
 
                     b.Property<string>("ReferenceNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("SenderName")
                         .IsRequired()
@@ -217,7 +219,38 @@ namespace BankSystem.Data.Migrations
 
                     b.HasIndex("AccountId");
 
+                    b.HasIndex("AccountId", "ReferenceNumber")
+                        .IsUnique()
+                        .HasFilter("[Amount] > 0");
+
                     b.ToTable("Transfers");
+                });
+
+            modelBuilder.Entity("BankSystem.Models.PendingTransfer", b =>
+                {
+                    b.Property<string>("ReferenceNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("AccountId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ReferenceNumber");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("PendingTransfers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -393,6 +426,17 @@ namespace BankSystem.Data.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("BankSystem.Models.PendingTransfer", b =>
+                {
+                    b.HasOne("BankSystem.Models.BankAccount", "Account")
+                        .WithMany("PendingTransfers")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -447,6 +491,8 @@ namespace BankSystem.Data.Migrations
             modelBuilder.Entity("BankSystem.Models.BankAccount", b =>
                 {
                     b.Navigation("Cards");
+
+                    b.Navigation("PendingTransfers");
 
                     b.Navigation("Transfers");
                 });

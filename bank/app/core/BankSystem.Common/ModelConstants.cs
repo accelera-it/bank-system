@@ -40,6 +40,7 @@
         public static class MoneyTransfer
         {
             public const int DescriptionMaxLength = 150;
+            public const int ReferenceNumberMaxLength = 64;
             public const string MinStartingPrice = "0.01";
             public const string MaxStartingPrice = "79228162514264337593543950335";
         }

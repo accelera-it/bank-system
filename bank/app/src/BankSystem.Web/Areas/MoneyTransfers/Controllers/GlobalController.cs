@@ -94,7 +94,9 @@
                     return this.View(model);
                 }
 
-                this.ShowErrorMessage(NotificationMessages.TryAgainLaterError);
+                this.ShowErrorMessage(result == GlobalTransferResult.Pending
+                    ? NotificationMessages.TransferPending
+                    : NotificationMessages.TryAgainLaterError);
                 return this.RedirectToHome();
             }
 

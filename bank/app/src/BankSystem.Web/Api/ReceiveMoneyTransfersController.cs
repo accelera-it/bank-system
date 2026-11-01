@@ -59,7 +59,7 @@
                 ReferenceNumber = model.ReferenceNumber
             };
 
-            var isSuccessful = await this.moneyTransferService.CreateMoneyTransferAsync(serviceModel);
+            var isSuccessful = await this.moneyTransferService.ReceiveMoneyTransferAsync(serviceModel);
             if (!isSuccessful)
             {
                 return this.NoContent();

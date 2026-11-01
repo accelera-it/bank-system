@@ -16,6 +16,9 @@ namespace BankSystem.Common
         public const string TryAgainLaterError =
             "Oops! Something went wrong! Please try again later. If this error continues to occur, please contact our support center";
 
+        public const string TransferPending =
+            "Your transfer is being processed. The money is on hold and will be delivered or returned automatically.";
+
         public const string InsufficientFunds = "Insufficient account balance. Please choose another account.";
 
         public const string NoAccountsError =

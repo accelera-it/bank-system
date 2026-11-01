@@ -16,6 +16,8 @@ namespace BankSystem.Data
 
         public DbSet<MoneyTransfer> Transfers { get; set; }
 
+        public DbSet<PendingTransfer> PendingTransfers { get; set; }
+
         public DbSet<Card> Cards { get; set; }
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -26,6 +28,15 @@ namespace BankSystem.Data
             builder.ApplyConfiguration(new UserConfiguration());
 
             base.OnModelCreating(builder);
+
+            // The filtered index below covers only credits, so account history needs its own
+            builder.Entity<MoneyTransfer>().HasIndex(t => t.AccountId);
+
+            // A bank must credit an incoming transfer once, however many times it is delivered
+            builder.Entity<MoneyTransfer>()
+                .HasIndex(t => new { t.AccountId, t.ReferenceNumber })
+                .IsUnique()
+                .HasFilter("[Amount] > 0");
         }
     }
 }

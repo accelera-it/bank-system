@@ -42,7 +42,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-failur
 docker compose -f docker-compose.test.yml run --rm --build api-unit   # one project: {web,api,demo}-{unit,integration}
 ```
 
-Every service has a Docker `HEALTHCHECK`: the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
+Every service has a `healthcheck` in `docker-compose.yml` (not in the Dockerfiles): the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
 
 Every `docker-compose.yml` service loads `locale.env` through `env_file`, which overrides connection strings and inter-service URLs (`Section__Key`, one connection string per app: `ConnectionStrings__BankSystem`, `__CentralApi`, `__DemoShop`). `API_PORT`, `WEB_PORT` and `DEMO_PORT` from that file also set the published ports, so all `docker-compose.yml` commands need `--env-file locale.env`.
 

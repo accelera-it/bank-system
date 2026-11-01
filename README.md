@@ -9,7 +9,7 @@ Several independent BankSystem instances can be connected through **CentralApi**
 ```
 browser ──► bank_nginx :8081 ──► bank_web (BankSystem.Web)
                   │
-                  └─ /api ──► bank_api (Ocelot) ──► bank_central (CentralApi)
+                  └─ /api ──► bank_api (Kong) ──► bank_central (CentralApi)
                                    ▲    │
                         shop_api ──┘    └──► bank_web, other BankSystem instances
 
@@ -23,7 +23,7 @@ The bank and the shop have no login or register pages: users sign in at Keycloak
 | Folder | Contents | Docs
 | - | - | -
 | `kyc/` | Keycloak, the central identity system for the bank and the shop, on H2 behind nginx | [kyc/README.md](kyc/README.md)
-| `bank/` | BankSystem.Web and CentralApi on SQL Server and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
+| `bank/` | BankSystem.Web and CentralApi on SQL Server and Redis, behind nginx and Kong | [bank/README.md](bank/README.md)
 | `shop/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [shop/README.md](shop/README.md)
 
 Each has its own compose files and env file. The .NET projects are in `bank/BankSystem.sln`. `docs/` holds the [architecture diagram](docs/infra.png), the [technical overview](docs/tech.pdf) and the [slide](docs/slide.pdf).
@@ -62,7 +62,7 @@ dotnet test
 - Entity Framework Core, SQL Server
 - Python, FastAPI, SQLAlchemy, PostgreSQL, MinIO
 - React, TypeScript, Vite, Tailwind CSS, Ant Design
-- Keycloak, Ocelot, nginx
+- Keycloak, Kong, nginx
 - Redis (login sessions, cache)
 - ASP.NET Core Identity, OpenID Connect
 - Mapster

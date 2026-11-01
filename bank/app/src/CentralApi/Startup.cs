@@ -49,7 +49,7 @@ namespace CentralApi
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // Only Ocelot can reach this app in Docker. It sends the /api prefix of the pay pages, so links keep it.
+            // Only Kong can reach this app in Docker. nginx sends the /api prefix of the pay pages through it, so links keep it.
             var forwardedHeaders = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedPrefix };
             forwardedHeaders.KnownIPNetworks.Clear();
             forwardedHeaders.KnownProxies.Clear();

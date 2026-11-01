@@ -1,0 +1,33 @@
+_format_version: "3.0"
+
+services:
+  - name: central-pages
+    url: http://bank_central:5000
+    routes:
+      - name: central-pages
+        paths:
+          - ~/api/(?P<page>pay(/continue)?|(static|swagger)(/.*)?)$
+        strip_path: false
+        preserve_host: true
+        plugins:
+          - name: request-transformer
+            config:
+              replace:
+                uri: /$(uri_captures["page"])
+
+  - name: central-api
+    url: http://bank_central:5000
+    routes:
+      - name: central-api
+        paths:
+          - /api/
+        strip_path: false
+        preserve_host: true
+
+  - name: bank-api
+    url: http://bank_web:5000/api
+    routes:
+      - name: bank-api
+        paths:
+          - /bank/api
+        preserve_host: true

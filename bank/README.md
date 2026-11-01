@@ -6,8 +6,8 @@ The bank and the hub that connects banks.
 | - | -
 | **BankSystem.Web** | The bank: web UI plus API endpoints that receive transfers and card payments
 | **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
-| **nginx** | The only public entry, on port 8081: `/api/` goes to Ocelot and everything else to BankSystem.Web
-| **Ocelot** | Gateway for every API call, to CentralApi and to the bank; limits each client IP to 60 calls a minute
+| **nginx** | The only public entry, on port 8081: `/api/` goes to Kong and everything else to BankSystem.Web; limits `/api/` to 60 calls a minute per client IP
+| **Kong** | Gateway for every API call, to CentralApi and to the bank; DB-less, with its routes in `gateway/kong.yml`
 
 ## Features
 
@@ -24,12 +24,12 @@ The bank and the hub that connects banks.
 | - | -
 | `app/src/` | The Models / Data / Services layers and web projects of BankSystem and CentralApi
 | `app/core/` | `BankSystem.Common`, used by both apps
-| `app/src/CentralApi.Gateway/` | Ocelot gateway; routes are in its `appsettings.json`
+| `gateway/` | Kong gateway; routes are in `kong.yml`
 | `proxy/` | nginx, the public entry for both apps
 | `app/tests/` | Unit and integration tests (xUnit) and their Dockerfile
 | `data/mssql/` | SQL Server image; each app creates its own database
 | `data/redis/` | Redis image, for the bank's login sessions and cache
-| `docker-compose.yml` | SQL Server, Redis, CentralApi, BankSystem.Web, Ocelot and nginx
+| `docker-compose.yml` | SQL Server, Redis, CentralApi, BankSystem.Web, Kong and nginx
 | `docker-compose.test.yml` | The four test projects, one service each
 | `bank.env` | Environment of `docker-compose.yml`
 
@@ -50,9 +50,9 @@ docker compose -f bank/docker-compose.yml up -d --build
 
 CentralApi serves Swagger at <http://localhost:8081/api/swagger/index.html> in the Development environment. It lists the endpoints only: the API bodies are encrypted and signed, so "Try it out" returns 403.
 
-Only nginx publishes a port. Above the limit in the gateway's `appsettings.json`, public `/api/` calls get `429`. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
+Only nginx publishes a port. Above the limit in `proxy/nginx.conf`, public `/api/` calls get `429`. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
 
-The bank and the shop call CentralApi through Ocelot (`bank_api`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret. SQL Server runs as `linux/amd64`, so it is slower under emulation on Apple Silicon.
+The bank and the shop call CentralApi through Kong (`bank_api`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret. SQL Server runs as `linux/amd64`, so it is slower under emulation on Apple Silicon.
 
 ### Without Docker
 

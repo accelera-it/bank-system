@@ -69,9 +69,13 @@ services:
 
   bank_api:
     build:
-      context: .
-      dockerfile: app/src/CentralApi.Gateway/Dockerfile
-    healthcheck: *app-healthcheck
+      context: gateway
+    healthcheck:
+      test: [ "CMD", "kong", "health" ]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
     depends_on:
       bank_central:
         condition: service_healthy

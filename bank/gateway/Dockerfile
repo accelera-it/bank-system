@@ -1,0 +1,14 @@
+FROM kong:3.9.4
+ENV TZ=Asia/Tashkent \
+    KONG_DATABASE=off \
+    KONG_DECLARATIVE_CONFIG=/kong/kong.yml \
+    KONG_PROXY_LISTEN=0.0.0.0:5000 \
+    KONG_ADMIN_LISTEN=off \
+    KONG_PROXY_ACCESS_LOG=/dev/stdout \
+    KONG_PROXY_ERROR_LOG=/dev/stderr \
+    KONG_HEADERS=off \
+    KONG_TRUSTED_IPS=0.0.0.0/0,::/0 \
+    KONG_REAL_IP_HEADER=X-Real-IP \
+    KONG_NGINX_HTTP_LARGE_CLIENT_HEADER_BUFFERS="8 32k"
+COPY kong.yml /kong/kong.yml
+EXPOSE 5000

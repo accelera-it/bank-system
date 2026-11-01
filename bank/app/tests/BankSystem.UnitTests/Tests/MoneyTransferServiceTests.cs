@@ -723,8 +723,27 @@
             await this.moneyTransferService.ResetPendingTransferAttemptsAsync(SampleReferenceNumber);
 
             // Assert
-            (await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), 1, 10))
+            (await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(1), 1, 10))
                 .Should().ContainSingle();
+        }
+
+        [Fact]
+        public async Task GetPendingTransfersAsync_Should_SkipTransfersTriedWithinTheGap()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+            await this.moneyTransferService.AddPendingTransferAttemptAsync(SampleReferenceNumber);
+
+            // Act
+            var future = DateTime.UtcNow.AddHours(1);
+            var justTried = await this.moneyTransferService.GetPendingTransfersAsync(
+                future, DateTime.UtcNow.AddMinutes(-2), 5, 10);
+            var quietForLong = await this.moneyTransferService.GetPendingTransfersAsync(future, future, 5, 10);
+
+            // Assert
+            justTried.Should().BeEmpty();
+            quietForLong.Should().ContainSingle();
         }
 
         [Fact]
@@ -736,9 +755,9 @@
             await this.moneyTransferService.AddPendingTransferAttemptAsync(SampleReferenceNumber);
 
             // Act
-            var tooNew = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(-1), 5, 10);
-            var exhausted = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), 1, 10);
-            var due = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), 5, 10);
+            var tooNew = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddHours(1), 5, 10);
+            var exhausted = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(1), 1, 10);
+            var due = await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(1), 5, 10);
 
             // Assert
             tooNew.Should().BeEmpty();

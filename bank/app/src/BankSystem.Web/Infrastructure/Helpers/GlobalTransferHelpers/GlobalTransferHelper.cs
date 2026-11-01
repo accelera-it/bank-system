@@ -30,8 +30,8 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
 
         private const string CentralApiTransferSubmitUrlFormat = "{0}api/ReceiveTransactions";
 
-        // Once a minute, so a transfer gets a day of retries before it needs a person
-        public const int MaxDeliveryAttempts = 1440;
+        // Every 30 seconds through the queue, so a transfer gets a day of retries before it needs a person
+        public const int MaxDeliveryAttempts = 2880;
 
         // Delivering again is safe, so a brief failure need not leave the customer with an open question
         private const int RequestDeliveryAttempts = 3;
@@ -140,10 +140,11 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
             }
         }
 
-        public async Task RetryPendingTransfersAsync(TimeSpan minimumAge)
+        public async Task RetryPendingTransfersAsync(TimeSpan minimumAge, TimeSpan attemptGap)
         {
+            var now = DateTime.UtcNow;
             var pendingTransfers = await this.moneyTransferService.GetPendingTransfersAsync(
-                DateTime.UtcNow - minimumAge, MaxDeliveryAttempts, RetryBatchSize);
+                now - minimumAge, now - attemptGap, MaxDeliveryAttempts, RetryBatchSize);
 
             foreach (var pending in pendingTransfers)
             {

@@ -49,20 +49,14 @@
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
-      "arguments": {
-        "x-message-ttl": 30000,
-        "x-dead-letter-exchange": "",
-        "x-dead-letter-routing-key": "transfers.deliver"
-      }
+      "arguments": {}
     },
     {
       "name": "shop.payments",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
-      "arguments": {
-        "x-message-ttl": 86400000
-      }
+      "arguments": {}
     }
   ],
   "exchanges": [
@@ -84,6 +78,30 @@
       "destination_type": "queue",
       "routing_key": "",
       "arguments": {}
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "transfers-retry",
+      "pattern": "^transfers\\.retry$",
+      "apply-to": "queues",
+      "priority": 0,
+      "definition": {
+        "message-ttl": 30000,
+        "dead-letter-exchange": "",
+        "dead-letter-routing-key": "transfers.deliver"
+      }
+    },
+    {
+      "vhost": "/",
+      "name": "shop-payments",
+      "pattern": "^shop\\.payments$",
+      "apply-to": "queues",
+      "priority": 0,
+      "definition": {
+        "message-ttl": 86400000
+      }
     }
   ]
 }

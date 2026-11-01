@@ -92,7 +92,7 @@ Each bank is configured through the `BankConfiguration__*` variables in `bank.en
 
 Banks known to CentralApi are stored in its database (name, code, country, public key and API addresses).
 
-`ConnectionStrings__RabbitMq` connects the bank to RabbitMQ. Without it, as in the tests and a plain `dotnet run`, pending transfers are retried from the database alone. The queues and users are in `data/rabbitmq/definitions.json`, whose password hashes must match this value and `RABBIT_URL` in `shop/shop.env`, and it is read when the broker starts on an empty volume.
+`ConnectionStrings__RabbitMq` connects the bank to RabbitMQ. Without it, as in the tests and a plain `dotnet run`, pending transfers are retried from the database alone. The queues and users are in `data/rabbitmq/definitions.json`, whose password hashes must match this value and `RABBIT_URL` in `shop/shop.env`. It is applied on every start of the broker, and queue settings such as the retry delay are policies, so a restart picks them up.
 
 ### Generating RSA keys
 

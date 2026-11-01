@@ -17,6 +17,9 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
         // Longer than a request may take, to leave transfers in progress to their own request
         private static readonly TimeSpan MinimumAge = TimeSpan.FromMinutes(5);
 
+        // Longer than the retry queue's 30 seconds, so this only acts when the queue is not delivering
+        private static readonly TimeSpan AttemptGap = TimeSpan.FromMinutes(2);
+
         private readonly IServiceScopeFactory scopeFactory;
         private readonly ILogger<PendingTransferRetryService> logger;
 
@@ -41,7 +44,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
                         using var scope = this.scopeFactory.CreateScope();
                         await scope.ServiceProvider
                             .GetRequiredService<IGlobalTransferHelper>()
-                            .RetryPendingTransfersAsync(MinimumAge);
+                            .RetryPendingTransfersAsync(MinimumAge, AttemptGap);
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {

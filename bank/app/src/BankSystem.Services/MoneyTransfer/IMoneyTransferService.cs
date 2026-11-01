@@ -52,7 +52,7 @@
         Task<PendingTransferServiceModel> GetPendingTransferAsync(string referenceNumber, int maxAttempts);
 
         Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
-            DateTime createdBefore, int maxAttempts, int count);
+            DateTime createdBefore, DateTime lastAttemptBefore, int maxAttempts, int count);
 
         /// <summary>
         /// Delivery was confirmed: the transfer is no longer pending.

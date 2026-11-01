@@ -71,7 +71,7 @@ namespace BankSystem.IntegrationTests
 
             return this.WithHelperAsync(async helper =>
             {
-                await helper.RetryPendingTransfersAsync(TimeSpan.Zero);
+                await helper.RetryPendingTransfersAsync(TimeSpan.Zero, TimeSpan.Zero);
                 return true;
             });
         }
@@ -196,7 +196,7 @@ namespace BankSystem.IntegrationTests
             var moneyTransfers = new Mock<IMoneyTransferService>();
             var logger = new Mock<ILogger<GlobalTransferHelper>>();
             moneyTransfers
-                .Setup(s => s.GetPendingTransfersAsync(It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>()))
+                .Setup(s => s.GetPendingTransfersAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>()))
                 .ReturnsAsync(new[]
                 {
                     new PendingTransferServiceModel
@@ -207,7 +207,7 @@ namespace BankSystem.IntegrationTests
                 });
             moneyTransfers.Setup(s => s.AddPendingTransferAttemptAsync("1")).ReturnsAsync(int.MaxValue);
 
-            await this.CreateHelper(moneyTransfers, logger).RetryPendingTransfersAsync(TimeSpan.Zero);
+            await this.CreateHelper(moneyTransfers, logger).RetryPendingTransfersAsync(TimeSpan.Zero, TimeSpan.Zero);
 
             logger.Verify(
                 l => l.Log(

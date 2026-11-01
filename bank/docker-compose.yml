@@ -39,6 +39,8 @@ services:
   bank_rabbit:
     build:
       context: data/rabbitmq
+    # RabbitMQ keeps its data under the host name, which would change with each new container
+    hostname: bank-rabbit
     volumes:
       - rabbit_data:/var/lib/rabbitmq
     healthcheck:

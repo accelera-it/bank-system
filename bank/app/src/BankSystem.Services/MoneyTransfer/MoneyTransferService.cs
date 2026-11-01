@@ -151,11 +151,13 @@
                 .FirstOrDefaultAsync();
 
         public async Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
-            DateTime createdBefore, int maxAttempts, int count)
+            DateTime createdBefore, DateTime lastAttemptBefore, int maxAttempts, int count)
             => await this.Context
                 .PendingTransfers
                 .AsNoTracking()
-                .Where(p => p.CreatedOn < createdBefore && p.Attempts < maxAttempts)
+                .Where(p => p.CreatedOn < createdBefore
+                    && p.Attempts < maxAttempts
+                    && (p.LastAttemptOn == null || p.LastAttemptOn < lastAttemptBefore))
                 .OrderBy(p => p.CreatedOn)
                 .Take(count)
                 .Select(p => new PendingTransferServiceModel
@@ -277,6 +279,7 @@
             }
 
             pending.Attempts++;
+            pending.LastAttemptOn = DateTime.UtcNow;
             await this.TrySaveAsync();
 
             return pending.Attempts;

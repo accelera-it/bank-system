@@ -25,5 +25,7 @@ namespace BankSystem.Models
         public DateTime CreatedOn { get; set; }
 
         public int Attempts { get; set; }
+
+        public DateTime? LastAttemptOn { get; set; }
     }
 }

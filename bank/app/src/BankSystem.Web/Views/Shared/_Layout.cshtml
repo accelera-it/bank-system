@@ -77,9 +77,7 @@
                         <i class="fas fa-search" aria-hidden="true"></i> Look up transfer
                     </a>
                 }
-            </nav>
 
-            <div class="app-sidebar-footer">
                 <div class="app-nav-heading">Settings</div>
                 <a class="app-nav-link" href="@account/@referrer">
                     <i class="fas fa-user-edit" aria-hidden="true"></i> Edit profile
@@ -87,7 +85,10 @@
                 <a class="app-nav-link" href="@account/account-security/signing-in@(referrer)">
                     <i class="fas fa-key" aria-hidden="true"></i> Change password
                 </a>
-                <p class="text-white font-weight-bold text-truncate mt-3 mb-2 px-2">@fullName</p>
+            </nav>
+
+            <div class="app-sidebar-footer">
+                <p class="text-white font-weight-bold text-truncate mb-2 px-2">@fullName</p>
                 <form asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new {area = ""})">
                     <button type="submit" class="btn btn-danger btn-block">
                         <i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i> Log out

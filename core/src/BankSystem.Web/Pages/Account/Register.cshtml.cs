@@ -8,7 +8,6 @@ namespace BankSystem.Web.Pages.Account
     using Microsoft.Extensions.Logging;
     using Models;
     using System.ComponentModel.DataAnnotations;
-    using System.Linq;
     using System.Threading.Tasks;
 
     [AllowAnonymous]
@@ -31,16 +30,17 @@ namespace BankSystem.Web.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
+        public string ReturnUrl { get; private set; }
+
         public IActionResult OnGet(string returnUrl = null)
         {
-            returnUrl = returnUrl ?? this.Url.Content("~/");
-
             if (this.User.Identity.IsAuthenticated)
             {
-                return this.LocalRedirect(returnUrl);
+                return this.LocalRedirect(returnUrl ?? this.Url.Content("~/"));
             }
 
-            return this.RedirectToAuthModal(returnUrl);
+            this.ReturnUrl = returnUrl;
+            return this.Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -54,10 +54,7 @@ namespace BankSystem.Web.Pages.Account
 
             if (!this.ModelState.IsValid)
             {
-                this.ShowErrorMessage(string.Join(" ", this.ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)));
-                return this.RedirectToAuthModal(returnUrl);
+                return this.Page();
             }
 
             var user = new BankUser
@@ -71,8 +68,12 @@ namespace BankSystem.Web.Pages.Account
             var result = await this.userManager.CreateAsync(user, this.Input.Password);
             if (!result.Succeeded)
             {
-                this.ShowErrorMessage(string.Join(" ", result.Errors.Select(e => e.Description)));
-                return this.RedirectToAuthModal(returnUrl);
+                foreach (var error in result.Errors)
+                {
+                    this.ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return this.Page();
             }
 
             this.logger.LogInformation("User created a new account with password.");
@@ -81,14 +82,6 @@ namespace BankSystem.Web.Pages.Account
 
             return this.LocalRedirect(returnUrl);
         }
-
-        private IActionResult RedirectToAuthModal(string returnUrl)
-            => this.RedirectToAction("Index", "Home", new
-            {
-                area = string.Empty,
-                auth = "register",
-                returnUrl = returnUrl == this.Url.Content("~/") ? null : returnUrl
-            });
 
         public class InputModel
         {

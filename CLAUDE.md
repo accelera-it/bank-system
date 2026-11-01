@@ -71,6 +71,7 @@ Add mappings by implementing these interfaces on the DTO/view model.
 All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`core/src/BankSystem.Common/Utils/SignatureVerificationUtil.cs`, `CryptographyExtensions.cs`, `RsaExtensions.cs`):
 - Sender signs with its private key and encrypts an AES key/IV with the recipient's public key; the payload is a Base64 JSON `{ EncryptedKey, EncryptedIv, Data, Signature }`.
 - Receivers use a `[DecryptAndVerifyRequest]` action filter (one in BankSystem.Web, one in CentralApi) that decrypts, verifies, and **replaces the action's first argument** with the decrypted JSON string, returning 403 on failure. API actions therefore take `[FromBody] string data` and deserialize it themselves.
+- CentralApi serves Swagger at `/swagger` in Development only; it lists endpoints, and unsigned calls still get 403.
 - Bank API endpoints: `core/src/BankSystem.Web/Api/` (`ReceiveMoneyTransfers`, `CardPayments`). CentralApi endpoints: `ReceiveTransactions`, `CardPayments`, `Payments`.
 
 ### Configuration and multi-bank setup

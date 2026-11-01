@@ -43,6 +43,8 @@ docker compose -f core/docker-compose.yml up -d --build
 | **BankSystem.Web** | <http://localhost:8081>
 | **CentralApi** | <http://localhost:8080>
 
+CentralApi serves Swagger at <http://localhost:8080/swagger> in the Development environment. It lists the endpoints only: the API bodies are encrypted and signed, so "Try it out" returns 403.
+
 Oracle and Redis are only reachable inside the Docker network. Passwords are in `bank.env`. A new database password needs a fresh volume, because Oracle keeps the one it was created with.
 
 ### Without Docker

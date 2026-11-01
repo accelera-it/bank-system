@@ -10,34 +10,39 @@ namespace BankSystem.IntegrationTests
     using Microsoft.Extensions.DependencyInjection;
     using Xunit;
 
-    public class AuthPopupTests : IClassFixture<BankWebFactory>
+    public class AuthPagesTests : IClassFixture<BankWebFactory>
     {
         private readonly BankWebFactory factory;
 
-        public AuthPopupTests(BankWebFactory factory) => this.factory = factory;
+        public AuthPagesTests(BankWebFactory factory) => this.factory = factory;
 
         [Theory]
-        [InlineData("/account/login", "auth=login")]
-        [InlineData("/account/register", "auth=register")]
-        public async Task AccountPages_RedirectToLandingPopup(string url, string expectedQuery)
-        {
-            using var client = this.factory.CreateClient(
-                new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-            var response = await client.GetAsync(url);
-
-            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-            response.Headers.Location.ToString().Should().Contain(expectedQuery);
-        }
-
-        [Fact]
-        public async Task Landing_HasPopupFormsAndNoNavbar()
+        [InlineData("/account/login", "Log in")]
+        [InlineData("/account/register", "Open an account")]
+        public async Task AccountPages_ShouldRenderTheirOwnForm(string url, string title)
         {
             using var client = this.factory.CreateClient();
 
-            var html = await client.GetStringAsync("/?auth=login");
+            var response = await client.GetAsync(url);
 
-            html.Should().Contain("id=\"loginModal\"").And.Contain("id=\"registerModal\"").And.NotContain("navbar-brand");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var html = await response.Content.ReadAsStringAsync();
+            html.Should().Contain($"<title>{title} - Bank System</title>")
+                .And.Contain("name=\"Input.Password\"")
+                .And.NotContain("class=\"modal");
+        }
+
+        [Fact]
+        public async Task Landing_LinksToAccountPagesWithoutPopups()
+        {
+            using var client = this.factory.CreateClient();
+
+            var html = await client.GetStringAsync("/");
+
+            html.Should().Contain("href=\"/account/login\"")
+                .And.Contain("href=\"/account/register\"")
+                .And.NotContain("loginModal")
+                .And.NotContain("registerModal");
         }
 
         [Fact]

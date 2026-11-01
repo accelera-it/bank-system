@@ -29,6 +29,8 @@
         [BindProperty]
         public InputModel Input { get; set; }
 
+        public string ReturnUrl { get; private set; }
+
         public async Task<IActionResult> OnGetAsync(string returnUrl = null)
         {
             // Session has expired
@@ -37,17 +39,16 @@
                 this.ShowErrorMessage(NotificationMessages.SessionExpired);
             }
 
-            returnUrl ??= this.Url.Content("~/");
-
             if (this.User.Identity.IsAuthenticated)
             {
-                return this.LocalRedirect(returnUrl);
+                return this.LocalRedirect(returnUrl ?? this.Url.Content("~/"));
             }
 
             // Clear the existing external cookie to ensure a clean login process
             await this.HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            return this.RedirectToAuthModal(returnUrl);
+            this.ReturnUrl = returnUrl;
+            return this.Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -61,8 +62,7 @@
 
             if (!this.ModelState.IsValid)
             {
-                this.ShowErrorMessage(NotificationMessages.InvalidCredentials);
-                return this.RedirectToAuthModal(returnUrl);
+                return this.Page();
             }
 
             var result = await this.signInManager.PasswordSignInAsync(this.Input.Email, this.Input.Password,
@@ -77,12 +77,12 @@
 
                 if (result.IsLockedOut)
                 {
-                    this.ShowErrorMessage(NotificationMessages.LoginLockedOut);
-                    return this.RedirectToAuthModal(returnUrl);
+                    this.ModelState.AddModelError(string.Empty, NotificationMessages.LoginLockedOut);
+                    return this.Page();
                 }
 
-                this.ShowErrorMessage(NotificationMessages.InvalidCredentials);
-                return this.RedirectToAuthModal(returnUrl);
+                this.ModelState.AddModelError(string.Empty, NotificationMessages.InvalidCredentials);
+                return this.Page();
             }
 
             var user = await this.signInManager.UserManager.FindByNameAsync(this.Input.Email);
@@ -107,14 +107,6 @@
             };
             this.User.AddIdentity(new ClaimsIdentity(claims));
         }
-
-        private IActionResult RedirectToAuthModal(string returnUrl)
-            => this.RedirectToAction("Index", "Home", new
-            {
-                area = string.Empty,
-                auth = "login",
-                returnUrl = returnUrl == this.Url.Content("~/") ? null : returnUrl
-            });
 
         public class InputModel
         {

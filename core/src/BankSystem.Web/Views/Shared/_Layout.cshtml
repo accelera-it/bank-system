@@ -102,7 +102,7 @@
             </div>
         }
 
-        @if (ViewData["AuthModal"] == null && TempData.ContainsKey(GlobalConstants.TempDataSuccessMessageKey))
+        @if (TempData.ContainsKey(GlobalConstants.TempDataSuccessMessageKey))
         {
             <div class="alert alert-primary fade show mb-0" role="alert">
                 <div class="container d-flex flex-row">
@@ -117,7 +117,7 @@
             </div>
         }
 
-        @if (ViewData["AuthModal"] == null && TempData.ContainsKey(GlobalConstants.TempDataErrorMessageKey))
+        @if (TempData.ContainsKey(GlobalConstants.TempDataErrorMessageKey))
         {
             <div class="alert alert-danger fade show mb-0" role="alert">
                 <div class="container d-flex flex-row">

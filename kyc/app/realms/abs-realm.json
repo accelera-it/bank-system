@@ -1,0 +1,129 @@
+{
+  "realm": "abs",
+  "displayName": "ABS ID",
+  "enabled": true,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": true,
+  "verifyEmail": false,
+  "sslRequired": "none",
+  "clients": [
+    {
+      "clientId": "bank",
+      "name": "Bank System",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${BANK_CLIENT_SECRET}",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "baseUrl": "http://localhost:8081/",
+      "redirectUris": [
+        "http://localhost:8081/signin-oidc"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8081/"
+      }
+    },
+    {
+      "clientId": "shop",
+      "name": "Shop",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${SHOP_CLIENT_SECRET}",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "baseUrl": "http://localhost:8082/",
+      "redirectUris": [
+        "http://localhost:8082/api/auth/callback"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8082/"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "demo@abs.uz",
+      "email": "demo@abs.uz",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Demo User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123456",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\": [{\"name\": \"username\", \"displayName\": \"${username}\", \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"validations\": {\"length\": {\"min\": 3, \"max\": 255}, \"up-username-not-idn-homograph\": {}}, \"multivalued\": false}, {\"name\": \"email\", \"displayName\": \"${email}\", \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"validations\": {\"email\": {}, \"length\": {\"max\": 255}}, \"multivalued\": false}, {\"name\": \"firstName\", \"displayName\": \"Full Name\", \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"validations\": {\"length\": {\"max\": 100}, \"person-name-prohibited-characters\": {}}, \"multivalued\": false}], \"groups\": []}"
+          ]
+        }
+      }
+    ]
+  },
+  "registrationFlow": "abs registration",
+  "authenticationFlows": [
+    {
+      "alias": "abs registration",
+      "description": "Registration with the terms of the agreement",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "registration-page-form",
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "authenticatorFlow": true,
+          "flowAlias": "abs registration form",
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "alias": "abs registration form",
+      "description": "Fields of the registration page",
+      "providerId": "form-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "registration-user-creation",
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "authenticatorFlow": false,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "registration-password-action",
+          "requirement": "REQUIRED",
+          "priority": 50,
+          "authenticatorFlow": false,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "registration-terms-and-conditions",
+          "requirement": "REQUIRED",
+          "priority": 70,
+          "authenticatorFlow": false,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+x-app-healthcheck: &app-healthcheck
+  test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q ' 200 ' <&3" ]
+  interval: 10s
+  timeout: 5s
+  start_period: 30s
+  retries: 5
+
+services:
+  oracle:
+    build:
+      context: data/oracle
+    env_file: bank.env
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh" ]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 20
+    networks:
+      - bank_lan
+
+  bank-redis:
+    build:
+      context: data/redis
+    env_file: bank.env
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - bank_lan
+
+  api:
+    build:
+      context: .
+      dockerfile: app/CentralApi/Dockerfile
+    env_file: bank.env
+    healthcheck: *app-healthcheck
+    depends_on:
+      oracle:
+        condition: service_healthy
+    networks:
+      - bank_lan
+
+  web:
+    build:
+      context: .
+      dockerfile: app/BankSystem.Web/Dockerfile
+    env_file: bank.env
+    healthcheck: *app-healthcheck
+    depends_on:
+      oracle:
+        condition: service_healthy
+      bank-redis:
+        condition: service_healthy
+      ocelot:
+        condition: service_healthy
+    networks:
+      - bank_lan
+
+  ocelot:
+    build:
+      context: .
+      dockerfile: app/CentralApi.Gateway/Dockerfile
+    healthcheck: *app-healthcheck
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - bank_lan
+
+  nginx:
+    build:
+      context: proxy
+    ports:
+      - "8081:5000"
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+    depends_on:
+      web:
+        condition: service_healthy
+      ocelot:
+        condition: service_healthy
+    networks:
+      - bank_lan
+
+volumes:
+  oracle-data:
+  redis-data:
+
+networks:
+  bank_lan:
+    name: bank_lan

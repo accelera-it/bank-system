@@ -492,9 +492,13 @@ bundle/
 # Local configuration overrides
 appsettings.*.local.json
 
-# Demo
-demo/app/dist/
+# Shop
+shop/app/dist/
 .pytest_cache/
 .venv/
-demo/app/test-results/
-demo/app/playwright-report/
+shop/app/test-results/
+shop/app/playwright-report/
+kyc/app/tests/target/
+
+# Local secrets of the kyc stack; kyc.env.example lists the settings
+kyc/kyc.env

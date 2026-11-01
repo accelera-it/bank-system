@@ -11,7 +11,7 @@ browser ──► nginx :8081 ──► web (BankSystem.Web)
                  │
                  └─ /api ──► ocelot ──► api (CentralApi) ──► web, other BankSystem instances
                                 ▲
-                  demo (shop-api)
+                  shop (shop-api)
 ```
 
 All traffic between components is encrypted and signed (RSA + AES hybrid encryption).
@@ -20,22 +20,24 @@ All traffic between components is encrypted and signed (RSA + AES hybrid encrypt
 
 | Folder | Contents | Docs
 | - | - | -
-| `core/` | BankSystem.Web and CentralApi on Oracle and Redis, behind nginx and Ocelot | [core/README.md](core/README.md)
-| `demo/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [demo/README.md](demo/README.md)
+| `kyc/` | Keycloak, the central identity system, on PostgreSQL behind nginx | [kyc/README.md](kyc/README.md)
+| `bank/` | BankSystem.Web and CentralApi on Oracle and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
+| `shop/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [shop/README.md](shop/README.md)
 
-Each has its own `data/`, compose files and env file. The .NET projects are in `core/BankSystem.sln`.
+Each has its own `data/`, compose files and env file. The .NET projects are in `bank/BankSystem.sln`.
 
 ## Quick start
 
-Start `core` first, because it creates the network the shop joins:
+Start `bank` first, because it creates the network the shop joins:
 
 ```bash
-docker compose -f core/docker-compose.yml up -d --build
-docker compose -f demo/docker-compose.yml up -d --build
+docker compose -f bank/docker-compose.yml up -d --build
+docker compose -f shop/docker-compose.yml up -d --build
 ```
 
 | Service | Address
 |-|-
+| **Keycloak** | <http://localhost:8080>
 | **BankSystem.Web** | <http://localhost:8081>
 | **CentralApi** | <http://localhost:8081/api>
 | **Shop** | <http://localhost:8082>
@@ -46,7 +48,7 @@ All containers use the `Asia/Tashkent` timezone.
 To build and test the .NET projects (no database needed), with the .NET 10 SDK:
 
 ```bash
-cd core
+cd bank
 dotnet build
 dotnet test
 ```

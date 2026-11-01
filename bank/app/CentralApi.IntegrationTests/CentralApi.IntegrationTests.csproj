@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\TestDatabase.cs" LinkBase="Shared" />
+    <Compile Include="..\Shared\TestAuthHandler.cs" LinkBase="Shared" />
+    <Compile Include="..\Shared\StubHttpServer.cs" LinkBase="Shared" />
+    <Compile Include="..\Shared\SecureRequestBuilder.cs" LinkBase="Shared" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CentralApi\CentralApi.csproj" />
+  </ItemGroup>
+
+</Project>

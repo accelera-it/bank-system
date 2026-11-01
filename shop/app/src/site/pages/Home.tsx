@@ -21,12 +21,15 @@ export default function Home() {
   return (
     <>
       <section className="bg-gradient-to-r from-brand-soft via-[#fdf3d0] to-[#ffe27d]">
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:py-24">
-          <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">Everything you need, one click away</h1>
-          <p className="max-w-xl text-lg text-slate-700">Choose a product, pay safely through your bank and follow your order from the cabinet.</p>
-          <Link to="/products" className="rounded-lg bg-brand px-6 py-3 font-semibold text-slate-900 hover:bg-brand-dark">
-            Shop now
-          </Link>
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-10 px-4 py-16 sm:py-24">
+          <div className="flex flex-col items-start gap-6">
+            <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">Everything you need, one click away</h1>
+            <p className="max-w-xl text-lg text-slate-700">Choose a product, pay safely through your bank and follow your order from the cabinet.</p>
+            <Link to="/products" className="rounded-lg bg-brand px-6 py-3 font-semibold text-slate-900 hover:bg-brand-dark">
+              Shop now
+            </Link>
+          </div>
+          <img src="/img/logo.svg" alt="" className="hidden h-64 w-64 shrink-0 md:block" />
         </div>
       </section>
 

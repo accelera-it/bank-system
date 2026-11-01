@@ -4,71 +4,111 @@
 
 @section UnderNavbar
 {
-    <section class="hero" style="background-image: url('/img/home-1.jpg')">
+    <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <img class="hero-logo" src="~/img/logo.svg" alt="Bank System" width="64" height="64" asp-append-version="true" />
                 <h1>Banking that keeps up with you</h1>
                 <p class="hero-lead">Manage accounts, issue cards and send money to any connected bank from one secure place.</p>
                 <div class="hero-actions">
-                    <a class="btn btn-light btn-lg" asp-page="/Account/Login"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Log in</a>
+                    <a class="btn btn-outline-light btn-lg" asp-page="/Account/Login"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Log in</a>
                 </div>
             </div>
+            <img class="hero-art" src="~/img/hero-bank.svg" alt="" asp-append-version="true" />
         </div>
     </section>
+
+    <div class="trust">
+        <ul class="container">
+            <li><i class="fas fa-lock" aria-hidden="true"></i> Encrypted bank traffic</li>
+            <li><i class="fas fa-mobile-alt" aria-hidden="true"></i> Two-factor sign-in</li>
+            <li><i class="fas fa-university" aria-hidden="true"></i> Connected banks</li>
+            <li><i class="fas fa-coins" aria-hidden="true"></i> Accounts in UZS</li>
+        </ul>
+    </div>
 }
 
-<section class="features">
+<section class="landing-section">
+    <header class="section-heading">
+        <h2>Everything your money needs, in one place</h2>
+    </header>
     <div class="row">
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="feature">
-                <span class="feature-icon"><i class="fas fa-wallet" aria-hidden="true"></i></span>
-                <h3>Bank accounts</h3>
-                <p>Open as many accounts as you need and follow every balance in UZS.</p>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <article class="feature">
+                    <span class="feature-icon"><i class="fas fa-wallet" aria-hidden="true"></i></span>
+                    <h3>Bank accounts</h3>
+                    <p>Open as many accounts as you need and follow every balance in UZS.</p>
+                </article>
             </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="feature">
-                <span class="feature-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
-                <h3>Cards</h3>
-                <p>Issue a card for any account and pay at connected online shops.</p>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <article class="feature">
+                    <span class="feature-icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
+                    <h3>Payment cards</h3>
+                    <p>Issue a card for any account and pay at connected online shops.</p>
+                </article>
             </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="feature">
-                <span class="feature-icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
-                <h3>Money transfers</h3>
-                <p>Move money between your accounts, to other customers or to another bank.</p>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <article class="feature">
+                    <span class="feature-icon"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                    <h3>Money transfers</h3>
+                    <p>Move money between your accounts, to other customers or to another bank.</p>
+                </article>
             </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="feature">
-                <span class="feature-icon"><i class="fas fa-shopping-cart" aria-hidden="true"></i></span>
-                <h3>Online payments</h3>
-                <p>Confirm direct and card payments from merchants in a few clicks.</p>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <article class="feature">
+                    <span class="feature-icon"><i class="fas fa-shopping-cart" aria-hidden="true"></i></span>
+                    <h3>Online payments</h3>
+                    <p>Confirm direct and card payments from merchants in a few clicks.</p>
+                </article>
             </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="feature">
-                <span class="feature-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
-                <h3>Two-factor security</h3>
-                <p>Protect your sign-in with a code from an authenticator app.</p>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <article class="feature">
+                    <span class="feature-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
+                    <h3>Two-factor security</h3>
+                    <p>Protect your sign-in with a code from an authenticator app.</p>
+                </article>
             </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
-            <div class="feature">
-                <span class="feature-icon"><i class="fas fa-history" aria-hidden="true"></i></span>
-                <h3>Full history</h3>
-                <p>Review every transfer with its date, amount and reference number.</p>
+            <div class="col-12 col-md-6 col-lg-4 mb-4">
+                <article class="feature">
+                    <span class="feature-icon"><i class="fas fa-history" aria-hidden="true"></i></span>
+                    <h3>Full history</h3>
+                    <p>Review every transfer with its date, amount and reference number.</p>
+                </article>
             </div>
-        </div>
     </div>
 </section>
 
+<section class="landing-section">
+    <header class="section-heading">
+        <h2>Get started in three steps</h2>
+    </header>
+    <ol class="steps">
+            <li class="step">
+                <span class="step-number">1</span>
+                <h3>Open an account</h3>
+                <p>Register with your email and sign in straight away.</p>
+            </li>
+            <li class="step">
+                <span class="step-number">2</span>
+                <h3>Issue a card</h3>
+                <p>Create a bank account and add a payment card to it.</p>
+            </li>
+            <li class="step">
+                <span class="step-number">3</span>
+                <h3>Send and pay</h3>
+                <p>Transfer money and pay at connected online shops.</p>
+            </li>
+    </ol>
+</section>
+
 <section class="cta">
-    <h2>Ready to get started?</h2>
+    <div>
+        <h2>Ready to get started?</h2>
+        <p>Open your account and start using it right away.</p>
+    </div>
     <a class="btn btn-light btn-lg" asp-page="/Account/Register"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i> Open an account</a>
 </section>
+
+<footer class="landing-footer">&copy; @DateTime.Now.Year Bank System</footer>
 
 @section CustomCss
 {

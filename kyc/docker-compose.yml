@@ -19,6 +19,7 @@ services:
   kyc_proxy:
     build:
       context: proxy
+    restart: on-failure
     ports:
       - "8080:5000"
     healthcheck:
@@ -40,3 +41,4 @@ volumes:
 
 networks:
   kyc_lan:
+    name: kyc_lan

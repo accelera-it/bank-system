@@ -79,6 +79,7 @@ services:
       - kyc_lan
 
   shop_ui:
+    restart: on-failure
     build:
       context: app
     ports:

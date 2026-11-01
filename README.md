@@ -13,6 +13,8 @@ browser ──► bank_proxy :8081 ──► bank_web (BankSystem.Web)
                                    ▲    │
                         shop_api ──┘    └──► bank_web, other BankSystem instances
 
+bank_web ──► bank_rabbit (RabbitMQ) ──► bank_web, shop_api
+
 browser, bank_web, shop_api ──► kyc_proxy :8080 ──► kyc_app (Keycloak)
 ```
 

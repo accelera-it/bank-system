@@ -8,6 +8,7 @@ The bank and the hub that connects banks.
 | **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
 | **nginx** | The only public entry, on port 8081: `/api/` goes to Kong and everything else to BankSystem.Web; limits `/api/` to 60 calls a minute per client IP
 | **Kong** | Gateway for every API call, to CentralApi and to the bank; DB-less, with its routes in `gateway/kong.yml`
+| **RabbitMQ** | Retries transfers with no clear answer and tells the shop when a payment settles; internal only, and the bank works without it
 
 ## Features
 
@@ -16,7 +17,7 @@ The bank and the hub that connects banks.
 - **Reliable delivery** – internal transfers are atomic; a global transfer with no clear answer holds the money and is delivered again in the background, and a bank credits each reference number once. Administrators see these transfers under Pending transfers, and a merchant can ask how a payment ended
 - **Cards** – issue payment cards and use them for online purchases
 - **Direct payments** – pay on third-party websites straight from a bank account, without card details
-- **Administration** – bank administration area
+- **Administration** – all accounts, transfer lookup and pending transfers, which an administrator can retry or refund
 - **Sign-in** – login, register, Edit profile and Change password run at Keycloak, see [kyc/README.md](../kyc/README.md)
 
 ## Structure
@@ -90,6 +91,8 @@ Anyone else gets their bank user on the first sign-in.
 Each bank is configured through the `BankConfiguration__*` variables in `bank.env`: bank name, unique identifier (bank code), country, first 3 card digits, its own RSA private key and the CentralApi public key and address. The app refuses to start if any value is missing.
 
 Banks known to CentralApi are stored in its database (name, code, country, public key and API addresses).
+
+`ConnectionStrings__RabbitMq` connects the bank to RabbitMQ. Without it, as in the tests and a plain `dotnet run`, pending transfers are retried from the database alone. The queues and users are in `data/rabbitmq/definitions.json`, whose password hashes must match this value and `RABBIT_URL` in `shop/shop.env`, and it is read when the broker starts on an empty volume.
 
 ### Generating RSA keys
 

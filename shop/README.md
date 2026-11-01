@@ -4,7 +4,7 @@ Sample online shop, DemoShop, that accepts card and direct payments through Cent
 
 | Component | Description
 | - | -
-| **Shop API** | FastAPI middleware: accounts, products, orders and the calls to CentralApi
+| **Shop API** | FastAPI middleware: accounts, products, orders, the calls to CentralApi and the bank's messages from RabbitMQ
 | **Sign-in** | Login, register, Edit profile and Change password run at Keycloak and come back, see [kyc/README.md](../kyc/README.md)
 | **UI** | One React, TypeScript and Vite app: the public shop in Tailwind CSS and, under `/cabinet`, the customer cabinet in Ant Design, with a dashboard, orders and products
 
@@ -34,7 +34,7 @@ docker compose -f shop/docker-compose.yml up -d --build
 | **Shop** | <http://localhost:8082>
 | **Cabinet** | <http://localhost:8082/cabinet>
 
-A payment the bank has not confirmed shows as Processing and cannot be repeated. The shop asks CentralApi how it ended, and the order becomes paid, or payable again after a refund.
+A payment the bank has not confirmed shows as Processing and cannot be repeated. The shop asks CentralApi how it ended when the bank's message arrives (`RABBIT_URL`), and every `RECONCILE_INTERVAL_SECONDS` in case one is lost, and the order becomes paid, or payable again after a refund.
 
 Products take images uploaded to MinIO, and a product with orders cannot be deleted. The API, PostgreSQL, Redis and MinIO are only reachable inside the Docker network. Passwords and RSA keys are in `shop.env`. A new database password needs a fresh volume, because PostgreSQL keeps the one it was created with.
 

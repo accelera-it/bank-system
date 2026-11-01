@@ -6,8 +6,8 @@ The bank and the hub that connects banks.
 | - | -
 | **BankSystem.Web** | The bank: web UI plus API endpoints that receive transfers and card payments
 | **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
-| **nginx** | The only public entry, on port 8081: `/api/` goes to Ocelot, rate limited per client IP, and everything else to BankSystem.Web
-| **Ocelot** | Gateway for every API call, to CentralApi and to the bank
+| **nginx** | The only public entry, on port 8081: `/api/` goes to Ocelot and everything else to BankSystem.Web
+| **Ocelot** | Gateway for every API call, to CentralApi and to the bank; limits each client IP to 60 calls a minute
 
 ## Features
 
@@ -50,7 +50,7 @@ docker compose -f bank/docker-compose.yml up -d --build
 
 CentralApi serves Swagger at <http://localhost:8081/api/swagger/index.html> in the Development environment. It lists the endpoints only: the API bodies are encrypted and signed, so "Try it out" returns 403.
 
-Only nginx publishes a port. It allows each client IP one `/api/` call a second, with bursts of 60, and answers `429` above that. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
+Only nginx publishes a port. Above the limit in the gateway's `appsettings.json`, public `/api/` calls get `429`. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
 
 The bank and the shop call CentralApi through Ocelot (`bank_api`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. The `client.env` file of `kyc` holds the bank's client secret.
 

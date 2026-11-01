@@ -136,6 +136,8 @@ namespace BankSystem.IntegrationTests
             response.Headers.Location!.ToString().Should()
                 .StartWith("http://kyc.test/realms/abs/auth")
                 .And.Contain(action);
+            response.Headers.Location!.ToString().Contains("max_age=0").Should()
+                .Be(url == "/account/password");
         }
 
         [Fact]

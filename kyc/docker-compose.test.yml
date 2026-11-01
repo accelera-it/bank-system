@@ -13,20 +13,6 @@ services:
     depends_on:
       kyc_proxy:
         condition: service_healthy
-      kyc_redis:
-        condition: service_healthy
-
-  kyc_redis:
-    build:
-      context: data/redis
-    env_file: app/tests/test.env
-    networks:
-      default:
-        aliases:
-          - kyc-redis
-    healthcheck:
-      <<: *healthcheck
-      test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
 
   kyc_app:
     build:

@@ -21,7 +21,7 @@ from src.config import Settings, get_settings
 from src.db import Base, get_db
 from src.main import app
 from src.models import Product
-from src.routers.orders import get_http_client
+from src.http_client import get_http_client
 from src.storage import get_storage
 
 
@@ -90,7 +90,7 @@ def id_token(claims: dict) -> str:
 @pytest.fixture
 def kyc() -> dict:
     """The claims the fake Keycloak answers with, and its status."""
-    return {"status": 200, "claims": {}}
+    return {"status": 200, "claims": {}, "requests": [], "refresh_error": None}
 
 
 async def sign_in(client, kyc, *, email="buyer@abs.uz", name="Buyer", query="", **overrides) -> httpx.Response:
@@ -158,7 +158,14 @@ async def client(db_factory, redis, settings, central_api, storage, kyc) -> Asyn
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/token"):
-            return httpx.Response(kyc["status"], json={"id_token": id_token(kyc["claims"])})
+            kyc["requests"].append(parse_qs(request.content.decode()))
+            if kyc["refresh_error"] is not None:
+                if isinstance(kyc["refresh_error"], Exception):
+                    raise kyc["refresh_error"]
+                if "refresh_token" in parse_qs(request.content.decode()):
+                    return httpx.Response(kyc["refresh_error"])
+            answer = {"id_token": id_token(kyc["claims"]), "refresh_token": "refresh", "expires_in": 300}
+            return httpx.Response(kyc["status"], json=answer)
         central_api["requests"].append(request)
         return httpx.Response(central_api["status"])
 

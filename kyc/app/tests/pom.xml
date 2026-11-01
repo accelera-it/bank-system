@@ -26,12 +26,6 @@
       <version>2.18.2</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>redis.clients</groupId>
-      <artifactId>jedis</artifactId>
-      <version>5.2.0</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>

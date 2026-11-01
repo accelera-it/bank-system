@@ -1,4 +1,7 @@
+import json
 from urllib.parse import parse_qs, urlparse
+
+import httpx
 
 from conftest import KYC, sign_in
 from src.security import COOKIE_NAME
@@ -66,6 +69,39 @@ async def test_second_login_takes_the_full_name_from_keycloak(signed_in, kyc):
 async def test_profile_and_password_forms_run_at_keycloak(client):
     for action in ("UPDATE_PROFILE", "UPDATE_PASSWORD"):
         assert query_of(await client.get(f"/api/auth/login?action={action}"))["kc_action"] == action
+
+
+async def test_change_password_asks_for_the_current_password(client):
+    assert query_of(await client.get("/api/auth/login?action=UPDATE_PASSWORD"))["max_age"] == "0"
+    assert "max_age" not in query_of(await client.get("/api/auth/login?action=UPDATE_PROFILE"))
+
+
+async def test_saved_form_ends_the_session_for_a_new_login(signed_in, kyc, redis):
+    location = (await signed_in.get("/api/auth/login?action=UPDATE_PROFILE")).headers["location"]
+    params = query_of_url(location)
+    kyc["claims"] = {"iss": KYC, "aud": "shop", "nonce": params["nonce"], "exp": 9999999999, "email": "buyer@abs.uz", "name": "New"}
+
+    response = await signed_in.get(
+        "/api/auth/callback", params={"state": params["state"], "code": "code", "kc_action_status": "success"}
+    )
+
+    assert response.headers["location"].startswith(f"{KYC}/protocol/openid-connect/logout?")
+    assert "relogin.html" in response.headers["location"]
+    assert (await signed_in.get("/api/auth/me")).status_code == 401
+    assert await redis.dbsize() == 0
+
+
+async def test_cancelled_form_keeps_the_user_signed_in(signed_in, kyc):
+    location = (await signed_in.get("/api/auth/login?action=UPDATE_PROFILE&next=/updated.html")).headers["location"]
+    params = query_of_url(location)
+    kyc["claims"] = {"iss": KYC, "aud": "shop", "nonce": params["nonce"], "exp": 9999999999, "email": "buyer@abs.uz", "name": "Buyer"}
+
+    response = await signed_in.get(
+        "/api/auth/callback", params={"state": params["state"], "code": "code", "kc_action_status": "cancelled"}
+    )
+
+    assert response.headers["location"] == "http://shop.test/updated.html"
+    assert (await signed_in.get("/api/auth/me")).status_code == 200
 
 
 async def test_unknown_action_is_refused(client):
@@ -153,3 +189,47 @@ async def test_session_cookie_is_set(signed_in):
 
 async def test_me_needs_a_session(client):
     assert (await client.get("/api/auth/me")).status_code == 401
+
+
+async def expire_tokens(redis) -> None:
+    key = next(key for key in await redis.keys("session_tokens:*"))
+    tokens = json.loads(await redis.get(key))
+    await redis.set(key, json.dumps({**tokens, "expires_at": 0}))
+
+
+async def test_live_tokens_are_not_renewed(signed_in, kyc):
+    kyc["requests"].clear()
+
+    await signed_in.get("/api/auth/me")
+
+    assert kyc["requests"] == []
+
+
+async def test_expired_tokens_are_renewed_without_a_new_login(signed_in, kyc, redis):
+    await expire_tokens(redis)
+    kyc["requests"].clear()
+    kyc["claims"]["name"] = "Renamed In Keycloak"
+
+    response = await signed_in.get("/api/auth/me")
+
+    assert response.json()["name"] == "Renamed In Keycloak"
+    assert kyc["requests"][0]["grant_type"] == ["refresh_token"]
+
+    kyc["requests"].clear()
+    await signed_in.get("/api/auth/me")
+    assert kyc["requests"] == []
+
+
+async def test_refused_refresh_ends_the_session(signed_in, kyc, redis):
+    await expire_tokens(redis)
+    kyc["refresh_error"] = 400
+
+    assert (await signed_in.get("/api/auth/me")).status_code == 401
+    assert await redis.dbsize() == 0
+
+
+async def test_keycloak_being_away_keeps_the_session(signed_in, kyc, redis):
+    await expire_tokens(redis)
+    kyc["refresh_error"] = httpx.ConnectError("Keycloak is away")
+
+    assert (await signed_in.get("/api/auth/me")).status_code == 200

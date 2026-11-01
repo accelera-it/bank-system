@@ -1,4 +1,4 @@
-﻿namespace CentralApi
+namespace CentralApi
 {
     using System;
     using BankSystem.Common.Mapping;
@@ -26,7 +26,7 @@
             services.AddHealthChecks();
 
             services.AddDbContext<CentralApiDbContext>(options =>
-                options.UseOracle(
+                options.UseSqlServer(
                     this.Configuration.GetConnectionString("CentralApi")));
             services.AddScoped<IBanksService, BanksService>();
 

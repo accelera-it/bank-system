@@ -7,6 +7,7 @@ ENV KC_DB=dev-file TZ=Asia/Tashkent
 COPY --from=build /opt/keycloak/lib/quarkus/ /opt/keycloak/lib/quarkus/
 COPY realms/ /opt/keycloak/data/import/
 COPY themes/ /opt/keycloak/themes/
+COPY setup.sh /opt/keycloak/setup.sh
 RUN mkdir -p /opt/keycloak/data/h2
 EXPOSE 8080
 CMD ["start", "--optimized", "--import-realm"]

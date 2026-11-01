@@ -17,9 +17,9 @@ from src.cache import get_redis
 from src.config import Settings, get_settings
 from src.db import get_db
 from src.models import Order, Product, User
-from src.routers.orders import get_http_client
+from src.http_client import get_http_client
 from src.schemas import LogoutOut, UserOut
-from src.security import COOKIE_NAME, current_user, end_session, id_token_of, start_session
+from src.security import COOKIE_NAME, claims_of, current_user, end_session, id_token_of, start_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -36,12 +36,6 @@ def _local_path(next_path: str | None) -> str:
     if next_path and next_path.startswith("/") and not next_path.startswith(("//", "/\\")):
         return next_path
     return "/cabinet"
-
-
-def _claims(id_token: str) -> dict:
-    """The token comes straight from Keycloak over the back channel, so its claims are read, not re-verified."""
-    payload = id_token.split(".")[1]
-    return json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
 
 
 @router.get("/login", include_in_schema=False)
@@ -77,6 +71,9 @@ async def login(
         query["prompt"] = "create"
     if action:
         query["kc_action"] = action
+    if action == "UPDATE_PASSWORD":
+        # Keycloak's password form has no current password: this asks for it first
+        query["max_age"] = "0"
 
     url = f"{settings.kyc_public_authority}/protocol/openid-connect/auth?{urlencode(query)}"
     return RedirectResponse(url, status.HTTP_302_FOUND)
@@ -86,6 +83,7 @@ async def login(
 async def callback(
     state: str = Query(),
     code: str | None = None,
+    kc_action_status: str | None = None,
     token: str | None = Cookie(default=None, alias=COOKIE_NAME),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
@@ -112,8 +110,8 @@ async def callback(
     if response.status_code != status.HTTP_200_OK:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "The login could not be completed")
 
-    id_token = response.json()["id_token"]
-    claims = _claims(id_token)
+    tokens = response.json()
+    claims = claims_of(tokens["id_token"])
     if (
         claims.get("iss") != settings.kyc_public_authority
         or claims.get("aud") != settings.kyc_client_id
@@ -130,6 +128,17 @@ async def callback(
     user.name = claims.get("name", "")
     await db.flush()
 
+    # A changed profile or password ends the session everywhere, so the user signs in again
+    if kc_action_status == "success":
+        await db.commit()
+        query = urlencode(
+            {"id_token_hint": tokens["id_token"], "post_logout_redirect_uri": settings.site_url + "relogin.html"}
+        )
+        logout_url = f"{settings.kyc_public_authority}/protocol/openid-connect/logout?{query}"
+        redirect = RedirectResponse(logout_url, status.HTTP_303_SEE_OTHER)
+        await end_session(redirect, redis, token)
+        return redirect
+
     target = _local_path(login_data["next"])
     product_id = login_data["buy"]
     if product_id and await db.get(Product, product_id) is not None:
@@ -141,7 +150,7 @@ async def callback(
 
     redirect = RedirectResponse(settings.site_url + target.lstrip("/"), status.HTTP_303_SEE_OTHER)
     await end_session(redirect, redis, token)
-    await start_session(redirect, redis, user.id, id_token)
+    await start_session(redirect, redis, user.id, tokens)
     return redirect
 
 

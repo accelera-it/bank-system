@@ -23,7 +23,7 @@ The bank and the shop have no login or register pages: users sign in at Keycloak
 | Folder | Contents | Docs
 | - | - | -
 | `kyc/` | Keycloak, the central identity system for the bank and the shop, on H2 behind nginx | [kyc/README.md](kyc/README.md)
-| `bank/` | BankSystem.Web and CentralApi on Oracle and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
+| `bank/` | BankSystem.Web and CentralApi on SQL Server and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
 | `shop/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [shop/README.md](shop/README.md)
 
 Each has its own `data/`, compose files and env file. The .NET projects are in `bank/BankSystem.sln`.
@@ -59,7 +59,7 @@ dotnet test
 ## Tech stack
 
 - C#, ASP.NET Core 10 (MVC, Razor Pages, Web API)
-- Entity Framework Core, Oracle
+- Entity Framework Core, SQL Server
 - Python, FastAPI, SQLAlchemy, PostgreSQL, MinIO
 - React, TypeScript, Vite, Tailwind CSS, Ant Design
 - Keycloak, Ocelot, nginx

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import Settings, get_settings
 from src.db import get_db
+from src.http_client import get_http_client
 from src.models import Order, PaymentStatus, Product, User
 from src.payments import generate_payment_request, process_payment_result
 from src.schemas import CardPaymentIn, DirectPaymentOut, OrderIn, OrderOut
@@ -17,11 +18,6 @@ router = APIRouter(prefix="/api", tags=["orders"])
 
 RETURN_PATH = "api/payments/direct/confirmation"
 PAYMENT_FAILED = "Payment failed. Please check your card details and try again."
-
-
-async def get_http_client() -> AsyncIterator[httpx.AsyncClient]:
-    async with httpx.AsyncClient(timeout=30) as client:
-        yield client
 
 
 def _destination(settings: Settings) -> dict[str, str]:

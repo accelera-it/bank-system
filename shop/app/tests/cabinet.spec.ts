@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Page } from "@playwright/test";
 
-import { expect, fillRegistration, LAPTOP, test } from "./fixtures";
+import { expect, fillLogin, fillRegistration, LAPTOP, PASSWORD, test } from "./fixtures";
 
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
@@ -48,7 +48,7 @@ test("sidebar shows the full name as plain text", async ({ signedIn: page }) => 
   await expect(sidebar.getByRole("link", { name: "Test User" })).toHaveCount(0);
 });
 
-test("edit profile opens a keycloak window and updates the cabinet", async ({ signedIn: page }) => {
+test("edit profile opens a keycloak window and updates the cabinet", async ({ signedIn: page, email }) => {
   const opened = page.waitForEvent("popup");
   await page.getByRole("menuitem", { name: "Edit profile" }).click();
   const popup = await opened;
@@ -56,23 +56,31 @@ test("edit profile opens a keycloak window and updates the cabinet", async ({ si
   await expect(popup).toHaveURL(/localhost:8080\/realms\/abs/);
   await expect(popup.locator("#phone")).toHaveAttribute("type", "tel");
   await expect(popup.locator("textarea#address")).toBeVisible();
+  await expect(popup.locator("#email")).toHaveValue(email);
+  await expect(popup.locator("#email")).not.toBeEditable();
   await popup.locator("#firstName").fill("New Name");
   await popup.locator("form [type=submit]").first().click();
 
   await popup.waitForEvent("close");
+  await expect(page).toHaveURL(/localhost:8080\/realms\/abs/);
+  await fillLogin(page, email);
   await expect(page.getByRole("complementary").getByText("New Name")).toBeVisible();
 });
 
-test("change password opens a keycloak window and comes back", async ({ signedIn: page }) => {
+test("change password asks for the current one and signs in again", async ({ signedIn: page, email }) => {
   const opened = page.waitForEvent("popup");
   await page.getByRole("menuitem", { name: "Change password" }).click();
   const popup = await opened;
 
+  await popup.locator("#password").fill(PASSWORD);
+  await popup.locator("#kc-login").click();
   await popup.locator("#password-new").fill("New-Passw0rd");
   await popup.locator("#password-confirm").fill("New-Passw0rd");
   await popup.locator("form [type=submit]").first().click();
 
   await popup.waitForEvent("close");
+  await expect(page).toHaveURL(/localhost:8080\/realms\/abs/);
+  await fillLogin(page, email, "New-Passw0rd");
   await expect(page).toHaveURL("/cabinet/dashboard");
 });
 

@@ -32,7 +32,7 @@ namespace BankSystem.Web
             services.AddHealthChecks();
 
             services.AddDbContextPool<BankSystemDbContext>(options =>
-                options.UseOracle(
+                options.UseSqlServer(
                     this.Configuration.GetConnectionString("BankSystem")));
 
             services.AddDatabaseDeveloperPageExceptionFilter();

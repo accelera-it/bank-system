@@ -15,10 +15,10 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Name = table.Column<string>(type: "NVARCHAR2(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "NVARCHAR2(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -29,22 +29,22 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    FullName = table.Column<string>(type: "NVARCHAR2(50)", maxLength: 50, nullable: false),
-                    UserName = table.Column<string>(type: "NVARCHAR2(256)", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "NVARCHAR2(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "NVARCHAR2(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "NVARCHAR2(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "BOOLEAN", nullable: false),
-                    PasswordHash = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "BOOLEAN", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "BOOLEAN", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "TIMESTAMP(7) WITH TIME ZONE", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "BOOLEAN", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "NUMBER(10)", nullable: false)
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -55,11 +55,11 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "NUMBER(10)", nullable: false)
-                        .Annotation("Oracle:Identity", "START WITH 1 INCREMENT BY 1"),
-                    RoleId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    ClaimType = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -76,12 +76,12 @@ namespace BankSystem.Data.Migrations
                 name: "Accounts",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Name = table.Column<string>(type: "NVARCHAR2(35)", maxLength: 35, nullable: false),
-                    Balance = table.Column<decimal>(type: "DECIMAL(18, 2)", nullable: false),
-                    UniqueId = table.Column<string>(type: "NVARCHAR2(34)", maxLength: 34, nullable: false),
-                    CreatedOn = table.Column<DateTime>(type: "TIMESTAMP(7)", nullable: false),
-                    UserId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false)
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(35)", maxLength: 35, nullable: false),
+                    Balance = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    UniqueId = table.Column<string>(type: "nvarchar(34)", maxLength: 34, nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -98,11 +98,11 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "NUMBER(10)", nullable: false)
-                        .Annotation("Oracle:Identity", "START WITH 1 INCREMENT BY 1"),
-                    UserId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    ClaimType = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -119,10 +119,10 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true),
-                    UserId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false)
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -139,8 +139,8 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false)
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,10 +163,10 @@ namespace BankSystem.Data.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Name = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Value = table.Column<string>(type: "NVARCHAR2(2000)", nullable: true)
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -183,13 +183,13 @@ namespace BankSystem.Data.Migrations
                 name: "Cards",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Number = table.Column<string>(type: "NVARCHAR2(2000)", nullable: false),
-                    Name = table.Column<string>(type: "NVARCHAR2(50)", maxLength: 50, nullable: false),
-                    ExpiryDate = table.Column<string>(type: "NVARCHAR2(5)", maxLength: 5, nullable: false),
-                    SecurityCode = table.Column<string>(type: "NVARCHAR2(3)", maxLength: 3, nullable: false),
-                    UserId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    AccountId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false)
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Number = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ExpiryDate = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
+                    SecurityCode = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -211,16 +211,16 @@ namespace BankSystem.Data.Migrations
                 name: "Transfers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Description = table.Column<string>(type: "NVARCHAR2(150)", maxLength: 150, nullable: true),
-                    Amount = table.Column<decimal>(type: "DECIMAL(18, 2)", nullable: false),
-                    MadeOn = table.Column<DateTime>(type: "TIMESTAMP(7)", nullable: false),
-                    AccountId = table.Column<string>(type: "NVARCHAR2(450)", nullable: false),
-                    Source = table.Column<string>(type: "NVARCHAR2(34)", maxLength: 34, nullable: false),
-                    SenderName = table.Column<string>(type: "NVARCHAR2(50)", maxLength: 50, nullable: false),
-                    RecipientName = table.Column<string>(type: "NVARCHAR2(50)", maxLength: 50, nullable: false),
-                    Destination = table.Column<string>(type: "NVARCHAR2(34)", maxLength: 34, nullable: false),
-                    ReferenceNumber = table.Column<string>(type: "NVARCHAR2(2000)", nullable: false)
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    MadeOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Source = table.Column<string>(type: "nvarchar(34)", maxLength: 34, nullable: false),
+                    SenderName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    RecipientName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Destination = table.Column<string>(type: "nvarchar(34)", maxLength: 34, nullable: false),
+                    ReferenceNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -248,7 +248,7 @@ namespace BankSystem.Data.Migrations
                 table: "AspNetRoles",
                 column: "NormalizedName",
                 unique: true,
-                filter: "\"NormalizedName\" IS NOT NULL");
+                filter: "[NormalizedName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
@@ -275,7 +275,7 @@ namespace BankSystem.Data.Migrations
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true,
-                filter: "\"NormalizedUserName\" IS NOT NULL");
+                filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Cards_AccountId",

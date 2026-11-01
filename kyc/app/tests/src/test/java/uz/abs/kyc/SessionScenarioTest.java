@@ -4,39 +4,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import redis.clients.jedis.JedisPooled;
-import redis.clients.jedis.params.SetParams;
 
-/** What the bank and the shop do with a login: keep it in Redis, use it, renew it and end it. */
+/** What the bank and the shop do with a login: keep it, use it, renew it and end it. */
 class SessionScenarioTest {
-    private final JedisPooled redis = new JedisPooled(URI.create(System.getenv("REDIS_URL")));
+    private final Map<String, JsonNode> sessions = new HashMap<>();
     private final Kyc browser = new Kyc();
     private final String email = Kyc.newEmail();
 
-    @AfterEach
-    void closeRedis() {
-        redis.close();
-    }
-
     private String start(JsonNode tokens) {
         var session = UUID.randomUUID().toString();
-        redis.set("session:" + session, tokens.toString(), SetParams.setParams().ex(60));
+        sessions.put(session, tokens);
         return session;
     }
 
     private JsonNode read(String session) {
-        var value = redis.get("session:" + session);
-        return value == null ? null : new Kyc.Response(200, value, "").json();
+        return sessions.get(session);
     }
 
     private void replace(String session, JsonNode tokens) {
-        redis.set("session:" + session, tokens.toString(), SetParams.setParams().keepTtl());
+        sessions.put(session, tokens);
     }
 
     @ParameterizedTest
@@ -45,7 +37,7 @@ class SessionScenarioTest {
         // Register, and keep the login the way an app does
         var session = start(browser.exchange(client, Kyc.codeOf(browser.register(client, email))).json());
 
-        // A later request finds the user through Redis
+        // A later request finds the user through the session
         var info = browser.get(Kyc.USERINFO, read(session).get("access_token").asText()).json();
         assertEquals(email, info.get("email").asText());
 
@@ -55,10 +47,10 @@ class SessionScenarioTest {
         replace(session, renewed.json());
         assertEquals(email, Kyc.claims(read(session).get("id_token").asText()).get("email").asText());
 
-        // Logout ends it in Keycloak and in Redis
+        // Logout ends it in Keycloak and in the app
         var refreshToken = read(session).get("refresh_token").asText();
         assertEquals(204, browser.endSession(client, refreshToken).status());
-        redis.del("session:" + session);
+        sessions.remove(session);
 
         assertNull(read(session));
         assertEquals(400, browser.refresh(client, refreshToken).status());

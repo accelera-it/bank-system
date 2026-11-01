@@ -16,7 +16,7 @@ The bank and the hub that connects banks.
 - **Cards** – issue payment cards and use them for online purchases
 - **Direct payments** – pay on third-party websites straight from a bank account, without card details
 - **Administration** – bank administration area
-- **Sign-in** – through Keycloak, see [kyc/README.md](../kyc/README.md)
+- **Sign-in** – login, register, Edit profile and Change password run at Keycloak, see [kyc/README.md](../kyc/README.md)
 
 ## Structure
 
@@ -27,9 +27,9 @@ The bank and the hub that connects banks.
 | `app/src/CentralApi.Gateway/` | Ocelot gateway; routes are in its `appsettings.json`
 | `proxy/` | nginx, the public entry for both apps
 | `app/tests/` | Unit and integration tests (xUnit) and their Dockerfile
-| `data/oracle/` | Oracle image, with one schema per app
+| `data/mssql/` | SQL Server image; each app creates its own database
 | `data/redis/` | Redis image, for the bank's login sessions and cache
-| `docker-compose.yml` | Oracle, Redis, CentralApi, BankSystem.Web, Ocelot and nginx
+| `docker-compose.yml` | SQL Server, Redis, CentralApi, BankSystem.Web, Ocelot and nginx
 | `docker-compose.test.yml` | The four test projects, one service each
 | `bank.env` | Environment of `docker-compose.yml`
 
@@ -56,7 +56,7 @@ The bank and the shop call CentralApi through Ocelot (`bank_api`), and CentralAp
 
 ### Without Docker
 
-Requires the .NET 10 SDK and Oracle. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
+Requires the .NET 10 SDK and SQL Server. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
 dotnet run --project app/src/CentralApi

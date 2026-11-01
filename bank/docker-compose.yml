@@ -6,18 +6,19 @@ x-app-healthcheck: &app-healthcheck
   retries: 5
 
 services:
-  bank_oracle:
+  bank_mssql:
     build:
-      context: data/oracle
+      context: data/mssql
+    platform: linux/amd64
     env_file: bank.env
     volumes:
-      - oracle_data:/opt/oracle/oradata
+      - mssql_data:/var/opt/mssql
     healthcheck:
-      test: [ "CMD", "healthcheck.sh" ]
+      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b" ]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       start_period: 60s
-      retries: 20
+      retries: 18
     networks:
       - bank_lan
 
@@ -42,7 +43,7 @@ services:
     env_file: bank.env
     healthcheck: *app-healthcheck
     depends_on:
-      bank_oracle:
+      bank_mssql:
         condition: service_healthy
     networks:
       - bank_lan
@@ -56,7 +57,7 @@ services:
       - ../kyc/client.env
     healthcheck: *app-healthcheck
     depends_on:
-      bank_oracle:
+      bank_mssql:
         condition: service_healthy
       bank_redis:
         condition: service_healthy
@@ -97,7 +98,7 @@ services:
       - bank_lan
 
 volumes:
-  oracle_data:
+  mssql_data:
   redis_data:
 
 networks:

@@ -22,10 +22,11 @@ The bank and the hub that connects banks.
 
 | Path | Contents
 | - | -
-| `app/` | `BankSystem.Common` and the Models / Data / Services layers and web projects of BankSystem and CentralApi
-| `app/CentralApi.Gateway/` | Ocelot gateway for CentralApi; routes are in `ocelot.json`
+| `app/src/` | The Models / Data / Services layers and web projects of BankSystem and CentralApi
+| `app/core/` | `BankSystem.Common`, used by both apps
+| `app/src/CentralApi.Gateway/` | Ocelot gateway for CentralApi; routes are in `ocelot.json`
 | `proxy/` | nginx, the public entry for both apps
-| `tests/` | Dockerfile of the test run; the xUnit test projects are in `app/`
+| `app/tests/` | Unit and integration tests (xUnit) and their Dockerfile
 | `data/oracle/` | Oracle image, with one schema per app
 | `data/redis/` | Redis image, for the bank's login sessions and cache
 | `docker-compose.yml` | Oracle, Redis, CentralApi, BankSystem.Web, Ocelot and nginx
@@ -56,8 +57,8 @@ Only nginx publishes a port. CentralApi's `/pay` page is public as `/api/pay`, b
 Requires the .NET 10 SDK and Oracle. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
-dotnet run --project app/CentralApi
-dotnet run --project app/BankSystem.Web
+dotnet run --project app/src/CentralApi
+dotnet run --project app/src/BankSystem.Web
 ```
 
 ### Tests
@@ -65,7 +66,7 @@ dotnet run --project app/BankSystem.Web
 The tests run on EF Core InMemory and need no database.
 
 ```bash
-dotnet test app/BankSystem.UnitTests
+dotnet test app/tests/BankSystem.UnitTests
 docker compose -f bank/docker-compose.test.yml up --build --abort-on-container-failure
 docker compose -f bank/docker-compose.test.yml run --rm --build api-unit   # one project: {web,api}-{unit,integration}
 ```

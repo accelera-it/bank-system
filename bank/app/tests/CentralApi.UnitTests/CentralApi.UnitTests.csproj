@@ -18,19 +18,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Mapster" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Shared\TestDatabase.cs" LinkBase="Shared" />
-    <Compile Include="..\Shared\TestAuthHandler.cs" LinkBase="Shared" />
-    <Compile Include="..\Shared\StubHttpServer.cs" LinkBase="Shared" />
-    <Compile Include="..\Shared\SecureRequestBuilder.cs" LinkBase="Shared" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\BankSystem.Web\BankSystem.Web.csproj" />
+    <ProjectReference Include="..\..\src\CentralApi\CentralApi.csproj" />
   </ItemGroup>
 
 </Project>

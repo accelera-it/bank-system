@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BankSystem.Common\BankSystem.Common.csproj" />
+    <ProjectReference Include="..\..\core\BankSystem.Common\BankSystem.Common.csproj" />
   </ItemGroup>
 
 </Project>

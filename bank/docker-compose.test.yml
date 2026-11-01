@@ -2,21 +2,21 @@ x-tests: &tests
   image: bank-tests
   build:
     context: .
-    dockerfile: tests/Dockerfile
+    dockerfile: app/tests/Dockerfile
 
 services:
   web-unit:
     <<: *tests
-    command: app/BankSystem.UnitTests
+    command: app/tests/BankSystem.UnitTests
 
   web-integration:
     <<: *tests
-    command: app/BankSystem.IntegrationTests
+    command: app/tests/BankSystem.IntegrationTests
 
   api-unit:
     <<: *tests
-    command: app/CentralApi.UnitTests
+    command: app/tests/CentralApi.UnitTests
 
   api-integration:
     <<: *tests
-    command: app/CentralApi.IntegrationTests
+    command: app/tests/CentralApi.IntegrationTests

@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BankSystem.Common\BankSystem.Common.csproj" />
+    <ProjectReference Include="..\..\core\BankSystem.Common\BankSystem.Common.csproj" />
     <ProjectReference Include="..\CentralApi.Data\CentralApi.Data.csproj" />
     <ProjectReference Include="..\CentralApi.Services\CentralApi.Services.csproj" />
   </ItemGroup>

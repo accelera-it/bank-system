@@ -38,7 +38,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: app/CentralApi/Dockerfile
+      dockerfile: app/src/CentralApi/Dockerfile
     env_file: bank.env
     healthcheck: *app-healthcheck
     depends_on:
@@ -50,7 +50,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: app/BankSystem.Web/Dockerfile
+      dockerfile: app/src/BankSystem.Web/Dockerfile
     env_file: bank.env
     healthcheck: *app-healthcheck
     depends_on:
@@ -66,7 +66,7 @@ services:
   ocelot:
     build:
       context: .
-      dockerfile: app/CentralApi.Gateway/Dockerfile
+      dockerfile: app/src/CentralApi.Gateway/Dockerfile
     healthcheck: *app-healthcheck
     depends_on:
       api:

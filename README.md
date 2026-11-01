@@ -20,7 +20,7 @@ All traffic between components is encrypted and signed (RSA + AES hybrid encrypt
 
 | Folder | Contents | Docs
 | - | - | -
-| `kyc/` | Keycloak, the central identity system, on PostgreSQL behind nginx | [kyc/README.md](kyc/README.md)
+| `kyc/` | Keycloak, the central identity system, on H2 behind nginx | [kyc/README.md](kyc/README.md)
 | `bank/` | BankSystem.Web and CentralApi on Oracle and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
 | `shop/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [shop/README.md](shop/README.md)
 

@@ -1,4 +1,4 @@
-# Build context: bank (see docker-compose.test.yml); the test projects are in app/
+# Build context: bank (see docker-compose.test.yml)
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 WORKDIR /src
 

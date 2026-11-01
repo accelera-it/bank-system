@@ -3,11 +3,11 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
-COPY app/CentralApi.Gateway/CentralApi.Gateway.csproj app/CentralApi.Gateway/
-RUN dotnet restore app/CentralApi.Gateway/CentralApi.Gateway.csproj
+COPY app/src/CentralApi.Gateway/CentralApi.Gateway.csproj app/src/CentralApi.Gateway/
+RUN dotnet restore app/src/CentralApi.Gateway/CentralApi.Gateway.csproj
 
-COPY app/CentralApi.Gateway/ app/CentralApi.Gateway/
-RUN dotnet publish app/CentralApi.Gateway/CentralApi.Gateway.csproj -c Debug -o /app/publish --no-restore
+COPY app/src/CentralApi.Gateway/ app/src/CentralApi.Gateway/
+RUN dotnet publish app/src/CentralApi.Gateway/CentralApi.Gateway.csproj -c Debug -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app

@@ -33,10 +33,8 @@ All traffic between components is encrypted and signed (RSA + AES hybrid encrypt
 
 | Folder | Contents
 | - | -
-| `core/` | Shared library (`BankSystem.Common`) and the Models / Data / Services layers of BankSystem and CentralApi
-| `web/` | `BankSystem.Web` and `CentralApi`
-| `demo/` | `DemoShop`
-| `tests/` | Unit and integration tests for each app (xUnit) |
+| `core/` | BankSystem and CentralApi: `src/`, `tests/`, `data/` (Oracle, Redis), compose files, `bank.env`
+| `demo/` | DemoShop: `src/`, `tests/`, `data/` (PostgreSQL, Redis), compose files, `shop.env`
 
 All projects are in `BankSystem.sln` at the repository root.
 
@@ -45,7 +43,8 @@ All projects are in `BankSystem.sln` at the repository root.
 ### With Docker
 
 ```bash
-docker compose --env-file locale.env up --build
+docker compose -f core/docker-compose.yml up -d --build   # start first, creates the bank_lan network
+docker compose -f demo/docker-compose.yml up -d --build
 ```
 
 | Service | Address
@@ -54,11 +53,11 @@ docker compose --env-file locale.env up --build
 | **CentralApi** | <http://localhost:8080>
 | **DemoShop** | <http://localhost:8082>
 
-SQL Server (`db`, built from `core/data/oracle/Dockerfile`) is only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in `locale.env`.
+Oracle, PostgreSQL and Redis (built from each side's `data/` folder) are only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. Passwords are in `core/bank.env` and `demo/shop.env`; a new password needs a fresh volume, because the databases keep the one they were created with.
 
 ### Without Docker
 
-Requires the .NET 10 SDK and SQL Server (connection strings are in each app's `appsettings.json`). Databases are migrated automatically on startup.
+Requires the .NET 10 SDK, Oracle for BankSystem and CentralApi, and PostgreSQL for DemoShop (connection strings are in each app's `appsettings.json`). Databases are migrated automatically on startup.
 
 ```bash
 dotnet build
@@ -70,11 +69,12 @@ dotnet run --project demo/src/DemoShop.Web
 
 ### Tests
 
-`dotnet test` runs all six test projects without a database. To run them in Docker, on EF Core InMemory with no SQL Server (services `web-`, `api-` and `demo-` + `unit` or `integration`):
+`dotnet test` runs all six test projects without a database. To run them in Docker, on EF Core InMemory with no database (services `web-`, `api-` and `demo-` + `unit` or `integration`):
 
 ```bash
-docker compose -f docker-compose.test.yml up --build --abort-on-container-failure
-docker compose -f docker-compose.test.yml run --rm --build api-unit   # one project
+docker compose -f core/docker-compose.test.yml up --build --abort-on-container-failure
+docker compose -f demo/docker-compose.test.yml up --build --abort-on-container-failure
+docker compose -f core/docker-compose.test.yml run --rm --build api-unit   # one project
 ```
 
 ### Demo account
@@ -103,7 +103,8 @@ Keys use the .NET `<RSAKeyValue>` XML format. To generate a new key pair (requir
 ## Tech stack
 
 - C#, ASP.NET Core 10 (MVC, Razor Pages, Web API)
-- Entity Framework Core, SQL Server
+- Entity Framework Core, Oracle, PostgreSQL
+- Redis (login sessions, cache)
 - ASP.NET Core Identity
 - Mapster
 - jQuery, Bootstrap

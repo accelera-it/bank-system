@@ -58,6 +58,5 @@ volumes:
 networks:
   shop_lan:
     name: shop_lan
-  # Created by core/docker-compose.yml: start core first, CentralApi is reached through it
   bank_lan:
     external: true

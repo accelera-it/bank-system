@@ -126,7 +126,6 @@ namespace BankSystem.Web
             app.UseResponseCompression();
             app.UseStatusCodePages();
 
-            app.UseHttpsRedirection();
             app.UseStaticFiles(
                 new StaticFileOptions
                 {

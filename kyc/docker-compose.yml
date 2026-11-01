@@ -35,21 +35,8 @@ services:
         aliases:
           - kyc-proxy
 
-  kyc_setup:
-    build:
-      context: app
-    env_file: kyc.env
-    entrypoint: [ "bash", "/opt/keycloak/setup.sh" ]
-    restart: "no"
-    depends_on:
-      kyc_proxy:
-        condition: service_healthy
-    networks:
-      - kyc_lan
-
 volumes:
   kyc_data:
 
 networks:
   kyc_lan:
-    name: kyc_lan

@@ -56,7 +56,6 @@ services:
     healthcheck: *minio-healthcheck
     networks:
       shop_lan:
-        # MinIO refuses "_" in a host name
         aliases:
           - shop-minio
 
@@ -98,7 +97,6 @@ volumes:
 
 networks:
   shop_lan:
-    name: shop_lan
   bank_lan:
     external: true
   kyc_lan:

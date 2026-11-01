@@ -17,4 +17,5 @@ COPY themes/ /opt/keycloak/themes/
 COPY setup.sh /opt/keycloak/setup.sh
 RUN mkdir -p /opt/keycloak/data/h2
 EXPOSE 8080
+ENTRYPOINT ["bash", "/opt/keycloak/setup.sh"]
 CMD ["start", "--optimized", "--import-realm"]

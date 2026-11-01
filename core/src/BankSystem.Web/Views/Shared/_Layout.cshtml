@@ -47,11 +47,11 @@
                 </a>
 
                 <div class="app-nav-heading">Cards</div>
+                <a class="app-nav-link" data-card-modal="New card" asp-area="Cards" asp-controller="Cards" asp-action="Create">
+                    <i class="fas fa-plus" aria-hidden="true"></i> New card
+                </a>
                 <a class="app-nav-link @NavClass("Cards", "Cards", "Index")" asp-area="Cards" asp-controller="Cards" asp-action="Index">
                     <i class="fas fa-credit-card" aria-hidden="true"></i> Your cards
-                </a>
-                <a class="app-nav-link @NavClass("Cards", "Cards", "Create")" asp-area="Cards" asp-controller="Cards" asp-action="Create">
-                    <i class="fas fa-plus" aria-hidden="true"></i> New card
                 </a>
 
                 <div class="app-nav-heading">Transfers</div>
@@ -195,9 +195,39 @@
 
     @if (authenticated)
     {
+        <div class="modal fade" id="cardModal" tabindex="-1" role="dialog" aria-labelledby="cardModalTitle">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cardModalTitle"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="cardModalBody"></div>
+                </div>
+            </div>
+        </div>
+
         <script>
             $('#appSidebarToggle').click(function () {
                 $('#appSidebar').toggleClass('open');
+            });
+
+            $(document).on('click', '[data-card-modal]', function (event) {
+                event.preventDefault();
+
+                var url = this.href;
+                $('#cardModalTitle').text($(this).data('cardModal'));
+                $('#cardModalBody').load(url, function (response, status) {
+                    if (status === 'error') {
+                        window.location.href = url;
+                        return;
+                    }
+
+                    $('#appSidebar').removeClass('open');
+                    $('#cardModal').modal('show');
+                });
             });
         </script>
     }

@@ -54,6 +54,12 @@
 
         public async Task<IActionResult> Create()
         {
+            // The form only exists as the content of the new card popup
+            if (this.Request.Headers.XRequestedWith != "XMLHttpRequest")
+            {
+                return this.RedirectToAction(nameof(this.Index));
+            }
+
             var userAccounts = await this.GetAllAccountsAsync(this.GetCurrentUserId());
 
             var model = new CardCreateViewModel
@@ -61,7 +67,7 @@
                 BankAccounts = userAccounts
             };
 
-            return this.View(model);
+            return this.PartialView(model);
         }
 
         [HttpPost]
@@ -70,9 +76,9 @@
             var userId = this.GetCurrentUserId();
             if (!this.ModelState.IsValid)
             {
-                model.BankAccounts = await this.GetAllAccountsAsync(userId);
+                this.ShowErrorMessage(NotificationMessages.CardCreateError);
 
-                return this.View(model);
+                return this.RedirectToAction(nameof(this.Index));
             }
 
             var account = await this.bankAccountService.GetByIdAsync<BankAccountDetailsServiceModel>(model.AccountId);
@@ -96,6 +102,63 @@
             }
 
             this.ShowSuccessMessage(NotificationMessages.CardCreatedSuccessfully);
+
+            return this.RedirectToAction(nameof(this.Index));
+        }
+
+        public async Task<IActionResult> Edit(string id)
+        {
+            if (this.Request.Headers.XRequestedWith != "XMLHttpRequest")
+            {
+                return this.RedirectToAction(nameof(this.Index));
+            }
+
+            var userId = this.GetCurrentUserId();
+            var card = await this.cardService.GetAsync<CardDetailsServiceModel>(id);
+            if (card == null || card.UserId != userId)
+            {
+                return this.NotFound();
+            }
+
+            return this.PartialView(new CardEditViewModel
+            {
+                Id = card.Id,
+                AccountName = card.AccountName,
+                Name = card.Name,
+                Number = card.Number,
+                ExpiryDate = card.ExpiryDate,
+                SecurityCode = card.SecurityCode
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(CardEditViewModel model)
+        {
+            var card = await this.cardService.GetAsync<CardDetailsServiceModel>(model.Id);
+            if (card == null || card.UserId != this.GetCurrentUserId())
+            {
+                this.ShowErrorMessage(NotificationMessages.CardDoesNotExist);
+
+                return this.RedirectToAction(nameof(this.Index));
+            }
+
+            var isUpdated = this.ModelState.IsValid && await this.cardService.UpdateAsync(new CardUpdateServiceModel
+            {
+                Id = card.Id,
+                Name = model.Name,
+                Number = model.Number,
+                ExpiryDate = model.ExpiryDate,
+                SecurityCode = model.SecurityCode
+            });
+
+            if (isUpdated)
+            {
+                this.ShowSuccessMessage(NotificationMessages.CardUpdatedSuccessfully);
+            }
+            else
+            {
+                this.ShowErrorMessage(NotificationMessages.CardUpdateError);
+            }
 
             return this.RedirectToAction(nameof(this.Index));
         }

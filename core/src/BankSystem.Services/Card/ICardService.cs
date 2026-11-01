@@ -13,6 +13,8 @@
 
         Task<bool> DeleteAsync(string id);
 
+        Task<bool> UpdateAsync(CardUpdateServiceModel model);
+
         Task<T> GetAsync<T>(
             string cardNumber,
             string cardExpiryDate,

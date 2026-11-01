@@ -52,6 +52,48 @@ namespace BankSystem.IntegrationTests
         }
 
         [Fact]
+        public async Task NewCard_WhenRequestedByThePopup_ShouldReturnOnlyTheForm()
+        {
+            var account = await this.factory.GetSeededAccountAsync();
+            var client = this.Client();
+            TestAuthHandler.SignIn(client, BankWebFactory.SeededUserName, account.UserId);
+            client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+
+            var response = await client.GetAsync("/cards/create");
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            (await response.Content.ReadAsStringAsync()).Should().Contain("name=\"AccountId\"")
+                .And.Contain(account.Name)
+                .And.NotContain("<html");
+        }
+
+        [Fact]
+        public async Task NewCard_WhenOpenedDirectly_ShouldRedirectToCards()
+        {
+            var account = await this.factory.GetSeededAccountAsync();
+            var client = this.Client();
+            TestAuthHandler.SignIn(client, BankWebFactory.SeededUserName, account.UserId);
+
+            var response = await client.GetAsync("/cards/create");
+
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location.ToString().Should().Contain("/cards/index");
+        }
+
+        [Fact]
+        public async Task EditCard_WhenCardIsUnknown_ShouldReturnNotFoundToThePopup()
+        {
+            var account = await this.factory.GetSeededAccountAsync();
+            var client = this.Client();
+            TestAuthHandler.SignIn(client, BankWebFactory.SeededUserName, account.UserId);
+            client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+
+            var response = await client.GetAsync("/cards/edit/missing");
+
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        [Fact]
         public async Task AccountDetails_OfAnotherUser_ShouldBeRefused()
         {
             var account = await this.factory.GetSeededAccountAsync();

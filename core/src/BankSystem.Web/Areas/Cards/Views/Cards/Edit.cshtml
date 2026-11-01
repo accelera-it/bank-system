@@ -1,0 +1,31 @@
+@model CardEditViewModel
+
+<form asp-area="Cards" asp-controller="Cards" asp-action="Edit" method="post">
+    <input asp-for="Id" type="hidden" />
+    <div class="form-group">
+        <label asp-for="AccountName"></label>
+        <input class="form-control" value="@Model.AccountName" id="AccountName" readonly />
+    </div>
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input class="form-control" asp-for="Name" maxlength="@ModelConstants.Card.NameMaxLength" required />
+    </div>
+    <div class="form-group">
+        <label asp-for="Number"></label>
+        <input class="form-control" asp-for="Number" inputmode="numeric" maxlength="@ModelConstants.Card.NumberLength" pattern="\d{16}"
+               title="16 digits, starting with the same 3 digits" autocomplete="off" required />
+    </div>
+    <div class="form-row">
+        <div class="form-group col-6">
+            <label asp-for="ExpiryDate"></label>
+            <input class="form-control" asp-for="ExpiryDate" placeholder="MM/YY" maxlength="@ModelConstants.Card.ExpiryDateMaxLength"
+                   pattern="(0[1-9]|1[0-2])/\d{2}" title="MM/YY" autocomplete="off" required />
+        </div>
+        <div class="form-group col-6">
+            <label asp-for="SecurityCode"></label>
+            <input class="form-control" asp-for="SecurityCode" inputmode="numeric" maxlength="@ModelConstants.Card.SecurityCodeMaxLength"
+                   pattern="\d{3}" title="3 digits" autocomplete="off" required />
+        </div>
+    </div>
+    <button class="btn btn-primary btn-block" type="submit"><i class="fas fa-save mr-1" aria-hidden="true"></i> Save</button>
+</form>

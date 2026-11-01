@@ -29,6 +29,12 @@
 
             public const int ExpiryDateMaxLength = 5;
             public const int SecurityCodeMaxLength = 3;
+
+            public const int NumberLength = 16;
+            public const int BankDigitsLength = 3;
+            public const string NumberRegex = @"^\d{16}$";
+            public const string ExpiryDateRegex = @"^(0[1-9]|1[0-2])/\d{2}$";
+            public const string SecurityCodeRegex = @"^\d{3}$";
         }
 
         public static class MoneyTransfer

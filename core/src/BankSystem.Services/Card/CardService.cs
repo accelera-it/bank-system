@@ -6,6 +6,7 @@
     using Mapster;
     using MapsterMapper;
     using BankSystem.Models;
+    using Common;
     using Data;
     using Microsoft.EntityFrameworkCore;
     using Models.Card;
@@ -90,6 +91,37 @@
                 .Take(count)
                 .ProjectToType<T>(this.mapper.Config)
                 .ToArrayAsync();
+
+        public async Task<bool> UpdateAsync(CardUpdateServiceModel model)
+        {
+            if (!this.IsEntityStateValid(model))
+            {
+                return false;
+            }
+
+            var card = await this.Context
+                .Cards
+                .Where(c => c.Id == model.Id)
+                .SingleOrDefaultAsync();
+
+            // CentralApi routes card payments to the bank by the first digits of the number
+            if (card == null ||
+                !model.Number.StartsWith(card.Number.Substring(0, ModelConstants.Card.BankDigitsLength)) ||
+                await this.Context.Cards.AnyAsync(c => c.Id != model.Id
+                    && c.Number == model.Number
+                    && c.SecurityCode == model.SecurityCode))
+            {
+                return false;
+            }
+
+            card.Number = model.Number;
+            card.Name = model.Name;
+            card.ExpiryDate = model.ExpiryDate;
+            card.SecurityCode = model.SecurityCode;
+            await this.Context.SaveChangesAsync();
+
+            return true;
+        }
 
         public async Task<bool> DeleteAsync(string id)
         {

@@ -406,6 +406,100 @@
         }
 
 
+        [Fact]
+        public async Task UpdateAsync_WithValidModel_Should_UpdateCardInfo()
+        {
+            // Arrange
+            await this.SeedCardAsync();
+
+            // Act
+            var result = await this.cardService.UpdateAsync(this.UpdateModel("1012223334445556"));
+
+            // Assert
+            result.Should().BeTrue();
+            var card = await this.dbContext.Cards.SingleAsync();
+            card.Number.Should().Be("1012223334445556");
+            card.Name.Should().Be("new name");
+            card.ExpiryDate.Should().Be("12/30");
+            card.SecurityCode.Should().Be("123");
+        }
+
+        [Theory]
+        [InlineData("2012223334445556")]
+        [InlineData("10122233344455")]
+        [InlineData("10122233344455ab")]
+        public async Task UpdateAsync_WithInvalidNumber_Should_ReturnFalse(string number)
+        {
+            // Arrange
+            await this.SeedCardAsync();
+
+            // Act
+            var result = await this.cardService.UpdateAsync(this.UpdateModel(number));
+
+            // Assert
+            result.Should().BeFalse();
+            (await this.dbContext.Cards.SingleAsync()).Number.Should().Be(SampleNumber);
+        }
+
+        [Theory]
+        [InlineData("13/30")]
+        [InlineData("1230")]
+        public async Task UpdateAsync_WithInvalidExpiryDate_Should_ReturnFalse(string expiryDate)
+        {
+            // Arrange
+            await this.SeedCardAsync();
+            var model = this.UpdateModel("1012223334445556");
+            model.ExpiryDate = expiryDate;
+
+            // Act
+            var result = await this.cardService.UpdateAsync(model);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WithNumberAndCodeOfAnotherCard_Should_ReturnFalse()
+        {
+            // Arrange
+            var card = await this.SeedCardAsync();
+            await this.dbContext.Cards.AddAsync(new Card
+            {
+                Name = "other",
+                Number = "1012223334445556",
+                SecurityCode = "123",
+                ExpiryDate = SampleExpiryDate,
+                UserId = card.UserId,
+                AccountId = card.AccountId
+            });
+            await this.dbContext.SaveChangesAsync();
+
+            // Act
+            var result = await this.cardService.UpdateAsync(this.UpdateModel("1012223334445556"));
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task UpdateAsync_WithUnknownCard_Should_ReturnFalse()
+        {
+            // Act
+            var result = await this.cardService.UpdateAsync(this.UpdateModel("1012223334445556"));
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        private CardUpdateServiceModel UpdateModel(string number) => new CardUpdateServiceModel
+        {
+            Id = SampleCardId,
+            Name = "new name",
+            Number = number,
+            ExpiryDate = "12/30",
+            SecurityCode = "123"
+        };
+
         private async Task<Card> SeedCardAsync()
         {
             await this.SeedUserAsync();

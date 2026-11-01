@@ -1,0 +1,52 @@
+@using BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
+@model IEnumerable<BankSystem.Services.Models.MoneyTransfer.PendingTransferListingServiceModel>
+@{
+    ViewData["Title"] = "Pending transfers";
+}
+
+<section class="panel panel-table">
+    @if (Model.Any())
+    {
+        <table class="table table-hover table-clean">
+            <thead>
+                <tr>
+                    <th>Reference number</th>
+                    <th>Account number</th>
+                    <th>Amount</th>
+                    <th>Created</th>
+                    <th>Attempts</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transfer in Model)
+                {
+                    <tr>
+                        <td>@transfer.ReferenceNumber</td>
+                        <td>@transfer.AccountUniqueId</td>
+                        <td><span class="amount">@transfer.Amount.ToString("N2") UZS</span></td>
+                        <td class="auto-format-date">@transfer.CreatedOn.ToString("O")</td>
+                        <td>@transfer.Attempts @(transfer.Attempts >= GlobalTransferHelper.MaxDeliveryAttempts ? "(stopped)" : "")</td>
+                        <td>
+                            <form asp-action="Retry" method="post" class="d-inline">
+                                <input type="hidden" name="referenceNumber" value="@transfer.ReferenceNumber" />
+                                <button type="submit" class="btn btn-sm btn-secondary">Retry</button>
+                            </form>
+                            <form asp-action="Refund" method="post" class="d-inline">
+                                <input type="hidden" name="referenceNumber" value="@transfer.ReferenceNumber" />
+                                <button type="submit" class="btn btn-sm btn-secondary">Refund</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fas fa-check" aria-hidden="true"></i>
+            No transfers are waiting for an answer.
+        </div>
+    }
+</section>

@@ -1,4 +1,4 @@
-import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, ClockCircleOutlined, SyncOutlined } from "@ant-design/icons";
 import { Tag } from "antd";
 import type { ReactNode } from "react";
 
@@ -6,6 +6,7 @@ import type { PaymentStatus } from "../types";
 
 const STATUS: Record<PaymentStatus, { color: string; icon: ReactNode; label: string }> = {
   pending: { color: "gold", icon: <ClockCircleOutlined />, label: "Pending" },
+  processing: { color: "blue", icon: <SyncOutlined />, label: "Processing" },
   completed: { color: "green", icon: <CheckCircleOutlined />, label: "Paid" },
 };
 

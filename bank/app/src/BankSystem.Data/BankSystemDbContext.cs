@@ -31,6 +31,7 @@ namespace BankSystem.Data
 
             // The filtered index below covers only credits, so account history needs its own
             builder.Entity<MoneyTransfer>().HasIndex(t => t.AccountId);
+            builder.Entity<MoneyTransfer>().HasIndex(t => t.ReferenceNumber);
 
             // A bank must credit an incoming transfer once, however many times it is delivered
             builder.Entity<MoneyTransfer>()

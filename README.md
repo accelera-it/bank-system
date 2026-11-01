@@ -2,7 +2,7 @@
 
 **BankSystem** is a web banking application built with ASP.NET Core, with a sample shop and one central sign-in through Keycloak. Users can open bank accounts, transfer money, issue payment cards and pay online with a card or directly from their account.
 
-Several independent BankSystem instances can be connected through **CentralApi**, which securely routes transfers and payments between banks.
+Several independent BankSystem instances can be connected through **CentralApi**, which securely routes transfers and payments between banks. A transfer moves once: it is held and delivered again when a call gets no clear answer, and a shop payment follows it to the end.
 
 ## How it works
 

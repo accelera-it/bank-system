@@ -9,8 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import Settings, get_settings
 from src.db import get_db
 from src.http_client import get_http_client
-from src.models import Order, PaymentStatus, Product, User
+from src.models import Order, PaymentAttempt, PaymentMethod, PaymentStatus, Product, User
 from src.payments import generate_payment_request, process_payment_result
+from src.reconcile import complete_order, reconcile_order
 from src.schemas import CardPaymentIn, DirectPaymentOut, OrderIn, OrderOut
 from src.security import current_user
 
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/api", tags=["orders"])
 
 RETURN_PATH = "api/payments/direct/confirmation"
 PAYMENT_FAILED = "Payment failed. Please check your card details and try again."
+PAYMENT_PROCESSING = "A payment for this order is still being processed"
 
 
 def _destination(settings: Settings) -> dict[str, str]:
@@ -37,15 +39,37 @@ async def _own_order(order_id: str, user: User, db: AsyncSession) -> Order:
     return order
 
 
-async def _pending_order(order_id: str, user: User, db: AsyncSession) -> Order:
+async def _pending_order(
+    order_id: str, user: User, db: AsyncSession, client: httpx.AsyncClient, settings: Settings
+) -> Order:
     order = await _own_order(order_id, user, db)
+    # Paying again while an earlier payment may still arrive would charge the customer twice
+    await reconcile_order(order, db, client, settings)
+    if order.payment_status == PaymentStatus.processing:
+        raise HTTPException(status.HTTP_409_CONFLICT, PAYMENT_PROCESSING)
     if order.payment_status != PaymentStatus.pending:
         raise HTTPException(status.HTTP_409_CONFLICT, "This order has already been paid")
     return order
 
 
+async def _new_attempt(order: Order, method: PaymentMethod, db: AsyncSession) -> PaymentAttempt:
+    attempt = PaymentAttempt(order_id=order.id, method=method)
+    db.add(attempt)
+    await db.commit()
+    return attempt
+
+
 @router.get("/orders", response_model=list[OrderOut])
-async def list_orders(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)) -> list[Order]:
+async def list_orders(
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    client: httpx.AsyncClient = Depends(get_http_client),
+) -> list[Order]:
+    open_orders = select(Order).join(PaymentAttempt, PaymentAttempt.order_id == Order.id).where(Order.user_id == user.id)
+    for order in list((await db.scalars(open_orders)).unique().all()):
+        await reconcile_order(order, db, client, settings)
+
     query = select(Order).where(Order.user_id == user.id).order_by(Order.created_at.desc())
     return list((await db.scalars(query)).unique().all())
 
@@ -69,13 +93,21 @@ async def start_direct_payment(
     user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
+    client: httpx.AsyncClient = Depends(get_http_client),
 ) -> DirectPaymentOut:
-    order = await _pending_order(order_id, user, db)
+    order = await _pending_order(order_id, user, db, client, settings)
+    # The same reference number in a second tab makes the bank refuse the second payment
+    attempt = await db.scalar(
+        select(PaymentAttempt).where(
+            PaymentAttempt.order_id == order.id, PaymentAttempt.method == PaymentMethod.direct
+        )
+    ) or await _new_attempt(order, PaymentMethod.direct, db)
     payment_info = {
         "Amount": float(order.product.price),
         "Description": order.product.name,
         **_destination(settings),
         "OrderId": order.id,
+        "ReferenceNumber": attempt.reference,
     }
     data = generate_payment_request(payment_info, settings.site_key, settings.site_url + RETURN_PATH)
     return DirectPaymentOut(url=settings.central_api_payment_url, field="data", data=data)
@@ -93,9 +125,8 @@ async def receive_confirmation(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid payment result")
 
     order = await db.get(Order, order_id)
-    if order is not None and order.payment_status == PaymentStatus.pending:
-        order.payment_status = PaymentStatus.completed
-        await db.commit()
+    if order is not None and order.payment_status != PaymentStatus.completed:
+        await complete_order(order, db)
 
     return RedirectResponse(settings.site_url + "cabinet/orders", status.HTTP_303_SEE_OTHER)
 
@@ -109,7 +140,8 @@ async def pay_by_card(
     settings: Settings = Depends(get_settings),
     client: httpx.AsyncClient = Depends(get_http_client),
 ) -> Order:
-    order = await _pending_order(order_id, user, db)
+    order = await _pending_order(order_id, user, db, client, settings)
+    attempt = await _new_attempt(order, PaymentMethod.card, db)
     submission = {
         "Number": card.number,
         "Name": card.name,
@@ -117,17 +149,25 @@ async def pay_by_card(
         "SecurityCode": card.security_code,
         "Amount": float(order.product.price),
         "Description": order.product.name,
+        "ReferenceNumber": attempt.reference,
         **_destination(settings),
     }
 
     try:
         response = await client.post(settings.central_api_card_payments_url, json=submission)
-    except httpx.HTTPError as error:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, PAYMENT_FAILED) from error
+    except httpx.HTTPError:
+        response = None
 
-    if response.status_code != status.HTTP_200_OK:
-        raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, PAYMENT_FAILED)
+    if response is not None and response.status_code == status.HTTP_200_OK:
+        await complete_order(order, db)
+        return order
 
-    order.payment_status = PaymentStatus.completed
+    # A timeout, a server error and 202 all mean the money may yet move, so the attempt stays open
+    if response is None or response.status_code == status.HTTP_202_ACCEPTED or response.status_code >= 500:
+        order.payment_status = PaymentStatus.processing
+        await db.commit()
+        return order
+
+    await db.delete(attempt)
     await db.commit()
-    return order
+    raise HTTPException(status.HTTP_402_PAYMENT_REQUIRED, PAYMENT_FAILED)

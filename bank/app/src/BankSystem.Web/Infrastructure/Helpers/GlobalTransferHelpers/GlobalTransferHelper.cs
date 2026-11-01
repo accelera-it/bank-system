@@ -1,6 +1,7 @@
 namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
 {
     using System;
+    using System.Diagnostics;
     using System.Net.Http;
     using System.Security.Cryptography;
     using System.Text;
@@ -29,7 +30,13 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
         private const string CentralApiTransferSubmitUrlFormat = "{0}api/ReceiveTransactions";
 
         // Once a minute, so a transfer gets a day of retries before it needs a person
-        private const int MaxDeliveryAttempts = 1440;
+        public const int MaxDeliveryAttempts = 1440;
+
+        // Delivering again is safe, so a brief failure need not leave the customer with an open question
+        private const int RequestDeliveryAttempts = 3;
+        private static readonly TimeSpan RequestRetryDelay = TimeSpan.FromMilliseconds(500);
+        private static readonly TimeSpan RequestRetryWindow = TimeSpan.FromSeconds(20);
+
         private const int RetryBatchSize = 50;
 
         private readonly IBankAccountService bankAccountService;
@@ -71,6 +78,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
             var submitDto = this.mapper.Map<CentralApiSubmitTransferDto>(model);
             submitDto.SenderName = account.UserFullName;
             submitDto.SenderAccountUniqueId = account.UniqueId;
+            submitDto.ReferenceNumber = model.ReferenceNumber ?? ReferenceNumberGenerator.GenerateReferenceNumber();
 
             // remove money from source account first: it cannot be spent twice while CentralApi works,
             // and the pending row saved with it means a crash cannot lose the transfer
@@ -96,7 +104,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
             }
 
             // contact the CentralApi to execute the transfer
-            switch (await this.ContactCentralApiAsync(submitDto))
+            switch (await this.DeliverWithinRequestAsync(submitDto))
             {
                 case DeliveryOutcome.Accepted:
                     await this.FinishSafelyAsync(submitDto.ReferenceNumber, DeliveryOutcome.Accepted);
@@ -106,6 +114,24 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
                     return GlobalTransferResult.GeneralFailure;
                 default:
                     return GlobalTransferResult.Pending;
+            }
+        }
+
+        private async Task<DeliveryOutcome> DeliverWithinRequestAsync(CentralApiSubmitTransferDto model)
+        {
+            var started = Stopwatch.StartNew();
+
+            for (var attempt = 1; ; attempt++)
+            {
+                var outcome = await this.ContactCentralApiAsync(model);
+                if (outcome != DeliveryOutcome.Unknown
+                    || attempt == RequestDeliveryAttempts
+                    || started.Elapsed > RequestRetryWindow)
+                {
+                    return outcome;
+                }
+
+                await Task.Delay(RequestRetryDelay);
             }
         }
 

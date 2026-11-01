@@ -163,6 +163,14 @@ test("declined card keeps order pending", async ({ pendingOrder: page }) => {
   await expect(page.getByRole("cell", { name: "Pending" })).toBeVisible();
 });
 
+test("unconfirmed card payment shows processing and cannot be paid again", async ({ pendingOrder: page }) => {
+  await fillCard(page, "2222000000000000");
+
+  await expect(page.getByText("Payment is being processed")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Processing" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay" })).toHaveCount(0);
+});
+
 test("card form validates before sending", async ({ pendingOrder: page }) => {
   await fillCard(page, "123");
 

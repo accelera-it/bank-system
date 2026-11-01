@@ -13,6 +13,7 @@
     using Newtonsoft.Json;
     using Services.Card;
     using Services.Models.Card;
+    using Services.MoneyTransfer;
 
     [Route("api/[controller]")]
     [IgnoreAntiforgeryToken]
@@ -23,9 +24,15 @@
         private readonly ICardService cardService;
         private readonly IGlobalTransferHelper globalTransferHelper;
         private readonly IMapper mapper;
-        
-        public CardPaymentsController(IGlobalTransferHelper globalTransferHelper, ICardService cardService, IMapper mapper)
+        private readonly IMoneyTransferService moneyTransferService;
+
+        public CardPaymentsController(
+            IGlobalTransferHelper globalTransferHelper,
+            ICardService cardService,
+            IMapper mapper,
+            IMoneyTransferService moneyTransferService)
         {
+            this.moneyTransferService = moneyTransferService;
             this.globalTransferHelper = globalTransferHelper;
             this.cardService = cardService;
             this.mapper = mapper;
@@ -69,12 +76,27 @@
 
             var result = await this.globalTransferHelper.TransferMoneyAsync(serviceModel);
 
+            if (result == GlobalTransferResult.Pending)
+            {
+                return this.Accepted();
+            }
+
             if (result != GlobalTransferResult.Succeeded)
             {
                 return this.BadRequest();
             }
 
             return this.Ok();
+        }
+
+        // POST: api/CardPayments/status
+        [HttpPost("status")]
+        public async Task<IActionResult> Status([FromBody] string data)
+        {
+            var model = JsonConvert.DeserializeObject<PaymentStatusModel>(data);
+            var state = await this.moneyTransferService.GetTransferStateAsync(model?.ReferenceNumber);
+
+            return this.Ok(new PaymentStatusResponse { State = state.ToString() });
         }
     }
 }

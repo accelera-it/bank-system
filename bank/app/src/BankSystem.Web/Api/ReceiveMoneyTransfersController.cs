@@ -41,8 +41,19 @@
             var account =
                 await this.bankAccountService.GetByUniqueIdAsync<BankAccountConciseServiceModel>(
                     model.DestinationBankAccountUniqueId);
-            if (account == null || !string.Equals(account.UserFullName, model.RecipientName,
-                StringComparison.InvariantCulture))
+            if (account == null)
+            {
+                return this.BadRequest();
+            }
+
+            // A redelivery must succeed even if the recipient has changed their name since the first one
+            var received = await this.moneyTransferService.GetReceivedAmountAsync(account.Id, model.ReferenceNumber);
+            if (received == model.Amount)
+            {
+                return this.Ok();
+            }
+
+            if (!string.Equals(account.UserFullName, model.RecipientName, StringComparison.InvariantCulture))
             {
                 return this.BadRequest();
             }

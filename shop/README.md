@@ -34,6 +34,8 @@ docker compose -f shop/docker-compose.yml up -d --build
 | **Shop** | <http://localhost:8082>
 | **Cabinet** | <http://localhost:8082/cabinet>
 
+A payment the bank has not confirmed shows as Processing and cannot be repeated. The shop asks CentralApi how it ended, and the order becomes paid, or payable again after a refund.
+
 Products take images uploaded to MinIO, and a product with orders cannot be deleted. The API, PostgreSQL, Redis and MinIO are only reachable inside the Docker network. Passwords and RSA keys are in `shop.env`. A new database password needs a fresh volume, because PostgreSQL keeps the one it was created with.
 
 ### Tests

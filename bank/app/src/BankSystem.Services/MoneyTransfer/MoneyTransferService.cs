@@ -128,7 +128,9 @@
 
         public async Task<MoneyTransferResult> WithdrawAsync(MoneyTransferCreateServiceModel model, string payload)
         {
-            if (!this.IsEntityStateValid(model) || model.Amount >= 0)
+            // A merchant chooses this reference number, so it cannot be trusted to be new
+            if (!this.IsEntityStateValid(model) || model.Amount >= 0
+                || await this.Context.Transfers.AnyAsync(t => t.ReferenceNumber == model.ReferenceNumber && t.Amount < 0))
             {
                 return MoneyTransferResult.Failed;
             }
@@ -204,6 +206,56 @@
             return false;
         }
 
+        public async Task<TransferState> GetTransferStateAsync(string referenceNumber)
+        {
+            if (await this.Context.PendingTransfers.AnyAsync(p => p.ReferenceNumber == referenceNumber))
+            {
+                return TransferState.Pending;
+            }
+
+            var accountId = await this.Context
+                .Transfers
+                .Where(t => t.ReferenceNumber == referenceNumber && t.Amount < 0)
+                .Select(t => t.AccountId)
+                .FirstOrDefaultAsync();
+            if (accountId == null)
+            {
+                return TransferState.NotFound;
+            }
+
+            var refunded = await this.GetReceivedAmountAsync(accountId, referenceNumber) != null;
+
+            return refunded ? TransferState.Refunded : TransferState.Completed;
+        }
+
+        public async Task<IEnumerable<PendingTransferListingServiceModel>> GetAllPendingTransfersAsync()
+            => await this.Context
+                .PendingTransfers
+                .AsNoTracking()
+                .OrderBy(p => p.CreatedOn)
+                .Select(p => new PendingTransferListingServiceModel
+                {
+                    ReferenceNumber = p.ReferenceNumber,
+                    AccountUniqueId = p.Account.UniqueId,
+                    Amount = this.Context.Transfers
+                        .Where(t => t.ReferenceNumber == p.ReferenceNumber && t.AccountId == p.AccountId && t.Amount < 0)
+                        .Select(t => -t.Amount)
+                        .FirstOrDefault(),
+                    CreatedOn = p.CreatedOn,
+                    Attempts = p.Attempts
+                })
+                .ToArrayAsync();
+
+        public async Task ResetPendingTransferAttemptsAsync(string referenceNumber)
+        {
+            var pending = await this.Context.PendingTransfers.FindAsync(referenceNumber);
+            if (pending != null)
+            {
+                pending.Attempts = 0;
+                await this.TrySaveAsync();
+            }
+        }
+
         public async Task<int> AddPendingTransferAttemptAsync(string referenceNumber)
         {
             var pending = await this.Context.PendingTransfers.FindAsync(referenceNumber);
@@ -220,7 +272,7 @@
 
         public async Task<bool> ReceiveMoneyTransferAsync(MoneyTransferCreateServiceModel model)
         {
-            var received = await this.GetReceivedAmountAsync(model);
+            var received = await this.GetReceivedAmountAsync(model.AccountId, model.ReferenceNumber);
             if (received != null)
             {
                 return received == model.Amount;
@@ -235,7 +287,7 @@
                 // Two deliveries raced: the unique index let one in
                 this.Context.ChangeTracker.Clear();
 
-                received = await this.GetReceivedAmountAsync(model);
+                received = await this.GetReceivedAmountAsync(model.AccountId, model.ReferenceNumber);
                 if (received == null)
                 {
                     throw;
@@ -245,12 +297,12 @@
             }
         }
 
-        private async Task<decimal?> GetReceivedAmountAsync(MoneyTransferCreateServiceModel model)
+        public async Task<decimal?> GetReceivedAmountAsync(string accountId, string referenceNumber)
             => await this.Context
                 .Transfers
                 .AsNoTracking()
-                .Where(t => t.AccountId == model.AccountId
-                    && t.ReferenceNumber == model.ReferenceNumber
+                .Where(t => t.AccountId == accountId
+                    && t.ReferenceNumber == referenceNumber
                     && t.Amount > 0)
                 .Select(t => (decimal?)t.Amount)
                 .FirstOrDefaultAsync();

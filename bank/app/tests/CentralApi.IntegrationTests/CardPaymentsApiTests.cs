@@ -67,6 +67,64 @@ namespace CentralApi.IntegrationTests
             }
         }
 
+        [Theory]
+        [InlineData(HttpStatusCode.Accepted, HttpStatusCode.Accepted)]
+        [InlineData(HttpStatusCode.InternalServerError, HttpStatusCode.BadGateway)]
+        public async Task Post_WhenBankHasNoFinalAnswer_ShouldNotCallItARefusal(
+            HttpStatusCode bankStatus, HttpStatusCode expected)
+        {
+            this.factory.BankServer.ResponseStatus = bankStatus;
+
+            try
+            {
+                var response = await this.client.PostAsJsonAsync(
+                    Url, Payment(CentralApiFactory.BankCardPrefix + "1234567890123"));
+
+                response.StatusCode.Should().Be(expected);
+            }
+            finally
+            {
+                this.factory.BankServer.ResponseStatus = HttpStatusCode.OK;
+            }
+        }
+
+        [Theory]
+        [InlineData("Pending")]
+        [InlineData("Completed")]
+        public async Task Status_ShouldPassOnTheBanksAnswer(string state)
+        {
+            this.factory.BankServer.ResponseBody = $"{{\"state\":\"{state}\"}}";
+
+            try
+            {
+                var response = await this.client.PostAsJsonAsync(Url + "/status", new { ReferenceNumber = "abc" });
+
+                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                (await response.Content.ReadAsStringAsync()).Should().Contain(state);
+            }
+            finally
+            {
+                this.factory.BankServer.ResponseBody = null;
+            }
+        }
+
+        [Fact]
+        public async Task Status_WhenBankDoesNotAnswer_ShouldReturnBadGateway()
+        {
+            this.factory.BankServer.ResponseStatus = HttpStatusCode.InternalServerError;
+
+            try
+            {
+                var response = await this.client.PostAsJsonAsync(Url + "/status", new { ReferenceNumber = "abc" });
+
+                response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
+            }
+            finally
+            {
+                this.factory.BankServer.ResponseStatus = HttpStatusCode.OK;
+            }
+        }
+
         [Fact]
         public async Task Post_WithUnknownCardPrefix_ShouldReturnBadRequest()
         {

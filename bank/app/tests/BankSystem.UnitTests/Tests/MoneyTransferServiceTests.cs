@@ -647,6 +647,87 @@
         }
 
         [Fact]
+        public async Task GetTransferStateAsync_Should_FollowTheTransfer()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+
+            // Act and assert
+            (await this.moneyTransferService.GetTransferStateAsync(SampleReferenceNumber))
+                .Should().Be(TransferState.NotFound);
+
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+            (await this.moneyTransferService.GetTransferStateAsync(SampleReferenceNumber))
+                .Should().Be(TransferState.Pending);
+
+            await this.moneyTransferService.CompletePendingTransferAsync(SampleReferenceNumber);
+            (await this.moneyTransferService.GetTransferStateAsync(SampleReferenceNumber))
+                .Should().Be(TransferState.Completed);
+        }
+
+        [Fact]
+        public async Task GetTransferStateAsync_AfterRefund_Should_ReturnRefunded()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Act
+            await this.moneyTransferService.RefundPendingTransferAsync(SampleReferenceNumber);
+
+            // Assert
+            (await this.moneyTransferService.GetTransferStateAsync(SampleReferenceNumber))
+                .Should().Be(TransferState.Refunded);
+        }
+
+        [Fact]
+        public async Task WithdrawAsync_WithUsedReferenceNumber_Should_ChangeNothing()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+            await this.moneyTransferService.CompletePendingTransferAsync(SampleReferenceNumber);
+
+            // Act
+            var result = await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Assert
+            result.Should().Be(MoneyTransferResult.Failed);
+            await this.AssertBalancesAsync(this.dbContext, 70, 5);
+        }
+
+        [Fact]
+        public async Task GetAllPendingTransfersAsync_Should_ShowAccountAndAmount()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+
+            // Act
+            var result = (await this.moneyTransferService.GetAllPendingTransfersAsync()).Single();
+
+            // Assert
+            result.Amount.Should().Be(30);
+            result.AccountUniqueId.Should().Be(SampleBankAccountUniqueId);
+        }
+
+        [Fact]
+        public async Task ResetPendingTransferAttemptsAsync_Should_MakeTransferDueAgain()
+        {
+            // Arrange
+            await this.SeedTransferAccountsAsync(this.dbContext, 100, 5);
+            await this.moneyTransferService.WithdrawAsync(PrepareCreateModel(amount: -30), "payload");
+            await this.moneyTransferService.AddPendingTransferAttemptAsync(SampleReferenceNumber);
+
+            // Act
+            await this.moneyTransferService.ResetPendingTransferAttemptsAsync(SampleReferenceNumber);
+
+            // Assert
+            (await this.moneyTransferService.GetPendingTransfersAsync(DateTime.UtcNow.AddHours(1), 1, 10))
+                .Should().ContainSingle();
+        }
+
+        [Fact]
         public async Task GetPendingTransfersAsync_Should_SkipNewAndExhaustedTransfers()
         {
             // Arrange

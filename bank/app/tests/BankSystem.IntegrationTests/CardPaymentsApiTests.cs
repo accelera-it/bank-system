@@ -10,6 +10,7 @@ namespace BankSystem.IntegrationTests
     using BankSystem.Tests.Shared;
     using FluentAssertions;
     using Microsoft.EntityFrameworkCore;
+    using Newtonsoft.Json.Linq;
     using Xunit;
 
     public class CardPaymentsApiTests : IClassFixture<BankWebFactory>
@@ -78,6 +79,18 @@ namespace BankSystem.IntegrationTests
                 model, this.factory.CentralApiKeys.PrivateKey, this.factory.BankKeys.PublicKey);
 
             return this.client.PostAsync(Url, ApiRequests.JsonBody(SecureRequestBuilder.ToRequestBody(payload)));
+        }
+
+        private async Task<string> StateAsync(string referenceNumber)
+        {
+            var payload = SecureRequestBuilder.CreatePayload(
+                new { ReferenceNumber = referenceNumber },
+                this.factory.CentralApiKeys.PrivateKey,
+                this.factory.BankKeys.PublicKey);
+            var response = await this.client.PostAsync(
+                Url + "/status", ApiRequests.JsonBody(SecureRequestBuilder.ToRequestBody(payload)));
+
+            return (string)JObject.Parse(await response.Content.ReadAsStringAsync())["state"];
         }
 
         [Fact]
@@ -151,9 +164,60 @@ namespace BankSystem.IntegrationTests
 
             var response = await tests.PostAsync(tests.Payment());
 
-            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            response.StatusCode.Should().Be(HttpStatusCode.Accepted);
             (await factory.GetSeededAccountAsync()).Balance.Should().Be(before - 50);
             (await factory.WithDbAsync(db => db.PendingTransfers.CountAsync())).Should().Be(1);
+        }
+
+        [Fact]
+        public async Task Post_WithMerchantReference_ShouldAnswerStatusForThatReference()
+        {
+            await this.EnsureCardAsync();
+            this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
+            var reference = Guid.NewGuid().ToString("N");
+            var payment = JObject.FromObject(this.Payment(amount: 2));
+            payment["ReferenceNumber"] = reference;
+
+            var response = await this.PostAsync(payment);
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            (await this.StateAsync(reference)).Should().Be("Completed");
+            (await this.StateAsync("unknown")).Should().Be("NotFound");
+        }
+
+        [Fact]
+        public async Task Post_WhenOutcomeIsUnknown_ShouldReturnAcceptedAndReportPending()
+        {
+            await this.EnsureCardAsync();
+            this.factory.CentralApi.ResponseStatus = HttpStatusCode.BadGateway;
+            var reference = Guid.NewGuid().ToString("N");
+            var payment = JObject.FromObject(this.Payment(amount: 2));
+            payment["ReferenceNumber"] = reference;
+
+            try
+            {
+                var response = await this.PostAsync(payment);
+
+                response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+                (await this.StateAsync(reference)).Should().Be("Pending");
+            }
+            finally
+            {
+                this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
+                await this.factory.WithDbAsync(async db =>
+                {
+                    db.PendingTransfers.RemoveRange(db.PendingTransfers);
+                    return await db.SaveChangesAsync();
+                });
+            }
+        }
+
+        [Fact]
+        public async Task Status_WithUnsignedBody_ShouldReturnForbidden()
+        {
+            var response = await this.client.PostAsync(Url + "/status", ApiRequests.JsonBody("{}"));
+
+            response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         }
 
         [Fact]

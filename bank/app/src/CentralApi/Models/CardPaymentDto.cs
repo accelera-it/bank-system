@@ -11,6 +11,9 @@
         [MaxLength(ModelConstants.MoneyTransfer.DescriptionMaxLength)]
         public string Description { get; set; }
 
+        [MaxLength(ModelConstants.MoneyTransfer.ReferenceNumberMaxLength)]
+        public string ReferenceNumber { get; set; }
+
         [Required]
         public string Number { get; set; }
 

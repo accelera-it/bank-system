@@ -20,6 +20,7 @@ namespace BankSystem.Tests.Shared
         public const string SchemeName = "Test";
         private const string UserNameHeader = "X-Test-User";
         private const string UserIdHeader = "X-Test-UserId";
+        private const string RoleHeader = "X-Test-Role";
 
         public TestAuthHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -29,10 +30,15 @@ namespace BankSystem.Tests.Shared
         {
         }
 
-        public static void SignIn(HttpClient client, string userName, string userId)
+        public static void SignIn(HttpClient client, string userName, string userId, string role = null)
         {
             client.DefaultRequestHeaders.Add(UserNameHeader, userName);
             client.DefaultRequestHeaders.Add(UserIdHeader, userId);
+
+            if (role != null)
+            {
+                client.DefaultRequestHeaders.Add(RoleHeader, role);
+            }
         }
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -47,6 +53,11 @@ namespace BankSystem.Tests.Shared
                 new Claim(ClaimTypes.Name, userName.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, this.Request.Headers[UserIdHeader].ToString())
             };
+
+            if (this.Request.Headers.TryGetValue(RoleHeader, out var role))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+            }
 
             // Identity's authentication type, so SignInManager.IsSignedIn is true in views
             var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);

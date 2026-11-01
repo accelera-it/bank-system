@@ -82,6 +82,19 @@ namespace BankSystem.IntegrationTests
         }
 
         [Fact]
+        public async Task Post_DeliveredAgainAfterNameChange_ShouldStillSucceed()
+        {
+            var reference = Guid.NewGuid().ToString("N").Substring(0, 20);
+            await this.PostAsync(Transfer(amount: 15, referenceNumber: reference));
+            var before = (await this.factory.GetSeededAccountAsync()).Balance;
+
+            var response = await this.PostAsync(Transfer(amount: 15, recipient: "Former Name", referenceNumber: reference));
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            (await this.factory.GetSeededAccountAsync()).Balance.Should().Be(before);
+        }
+
+        [Fact]
         public async Task Post_SameReferenceWithOtherAmount_ShouldNotCredit()
         {
             var reference = Guid.NewGuid().ToString("N").Substring(0, 20);

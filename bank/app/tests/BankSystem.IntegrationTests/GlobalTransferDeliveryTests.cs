@@ -1,11 +1,18 @@
 namespace BankSystem.IntegrationTests
 {
     using System;
+    using System.Linq;
+    using System.Collections.Generic;
     using System.Net;
+    using System.Net.Http;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
+    using BankSystem.Tests.Shared;
+    using Common;
     using Common.Configuration;
     using FluentAssertions;
     using MapsterMapper;
+    using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
@@ -22,6 +29,8 @@ namespace BankSystem.IntegrationTests
 
     public class GlobalTransferDeliveryTests : IClassFixture<BankWebFactory>
     {
+        private const string Url = "/administration/pendingtransfers";
+
         private readonly BankWebFactory factory;
 
         public GlobalTransferDeliveryTests(BankWebFactory factory) => this.factory = factory;
@@ -102,6 +111,80 @@ namespace BankSystem.IntegrationTests
             (await this.BalanceAsync()).Should().Be(start - 40);
 
             this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
+        }
+
+        [Fact]
+        public async Task AdminPage_ShouldListPendingTransfersForAdministratorsOnly()
+        {
+            (await this.SendAsync(3, HttpStatusCode.BadGateway)).Should().Be(GlobalTransferResult.Pending);
+            var reference = await this.factory.WithDbAsync(db => db.PendingTransfers.Select(p => p.ReferenceNumber).FirstAsync());
+            var account = await this.factory.GetSeededAccountAsync();
+            var options = new WebApplicationFactoryClientOptions { AllowAutoRedirect = false };
+
+            var user = this.factory.CreateClient(options);
+            TestAuthHandler.SignIn(user, BankWebFactory.SeededUserName, account.UserId);
+            var admin = this.factory.CreateClient(options);
+            TestAuthHandler.SignIn(admin, BankWebFactory.SeededUserName, account.UserId, GlobalConstants.AdministratorRoleName);
+
+            (await user.GetAsync(Url)).StatusCode.Should().NotBe(HttpStatusCode.OK);
+            var response = await admin.GetAsync(Url);
+
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            (await response.Content.ReadAsStringAsync()).Should().Contain(reference);
+
+            await this.RetryAsync(HttpStatusCode.OK);
+        }
+
+        private async Task<HttpResponseMessage> PressAsync(string action, string reference)
+        {
+            var account = await this.factory.GetSeededAccountAsync();
+            var admin = this.factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            TestAuthHandler.SignIn(admin, BankWebFactory.SeededUserName, account.UserId, GlobalConstants.AdministratorRoleName);
+
+            var page = await (await admin.GetAsync(Url)).Content.ReadAsStringAsync();
+            var token = Regex.Match(page, "__RequestVerificationToken\\\" type=\\\"hidden\\\" value=\\\"([^\\\"]+)").Groups[1].Value;
+
+            return await admin.PostAsync($"{Url}/{action}", new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["referenceNumber"] = reference,
+                ["__RequestVerificationToken"] = token
+            }));
+        }
+
+        [Fact]
+        public async Task AdminRefund_ShouldReturnTheMoneyOnce()
+        {
+            var start = await this.BalanceAsync();
+            (await this.SendAsync(5, HttpStatusCode.BadGateway)).Should().Be(GlobalTransferResult.Pending);
+            var reference = await this.factory.WithDbAsync(db => db.PendingTransfers.Select(p => p.ReferenceNumber).FirstAsync());
+            this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
+
+            (await this.PressAsync("Refund", reference)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+            (await this.PressAsync("Refund", reference)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+
+            (await this.PendingCountAsync()).Should().Be(0);
+            (await this.BalanceAsync()).Should().Be(start);
+        }
+
+        [Fact]
+        public async Task AdminRetry_ShouldMakeAStoppedTransferDueAgain()
+        {
+            (await this.SendAsync(6, HttpStatusCode.BadGateway)).Should().Be(GlobalTransferResult.Pending);
+            var reference = await this.factory.WithDbAsync(async db =>
+            {
+                var pending = await db.PendingTransfers.FirstAsync();
+                pending.Attempts = GlobalTransferHelper.MaxDeliveryAttempts;
+                await db.SaveChangesAsync();
+                return pending.ReferenceNumber;
+            });
+
+            await this.RetryAsync(HttpStatusCode.OK);
+            (await this.PendingCountAsync()).Should().Be(1);
+
+            (await this.PressAsync("Retry", reference)).StatusCode.Should().Be(HttpStatusCode.Redirect);
+            await this.RetryAsync(HttpStatusCode.OK);
+
+            (await this.PendingCountAsync()).Should().Be(0);
         }
 
         [Fact]

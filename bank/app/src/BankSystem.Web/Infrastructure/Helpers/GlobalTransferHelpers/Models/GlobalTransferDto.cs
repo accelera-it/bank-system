@@ -8,6 +8,10 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers.Models
         [Required]
         public string SourceAccountId { get; set; }
 
+        // Optional: a merchant sets it to be able to ask later how the payment ended
+        [MaxLength(ModelConstants.MoneyTransfer.ReferenceNumberMaxLength)]
+        public string ReferenceNumber { get; set; }
+
         [Required]
         [Range(typeof(decimal), ModelConstants.MoneyTransfer.MinStartingPrice, ModelConstants.MoneyTransfer.MaxStartingPrice)]
         public decimal Amount { get; set; }

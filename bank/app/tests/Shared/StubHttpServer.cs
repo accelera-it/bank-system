@@ -32,6 +32,8 @@ namespace BankSystem.Tests.Shared
 
         public HttpStatusCode ResponseStatus { get; set; } = HttpStatusCode.OK;
 
+        public string ResponseBody { get; set; }
+
         public ConcurrentQueue<string> Requests { get; } = new ConcurrentQueue<string>();
 
         public void Dispose() => this.listener.Close();
@@ -57,6 +59,13 @@ namespace BankSystem.Tests.Shared
                 }
 
                 context.Response.StatusCode = (int)this.ResponseStatus;
+
+                if (this.ResponseBody != null)
+                {
+                    context.Response.ContentType = "application/json";
+                    await context.Response.OutputStream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(this.ResponseBody));
+                }
+
                 context.Response.Close();
             }
         }

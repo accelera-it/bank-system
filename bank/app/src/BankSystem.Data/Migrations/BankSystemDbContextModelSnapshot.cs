@@ -219,6 +219,8 @@ namespace BankSystem.Data.Migrations
 
                     b.HasIndex("AccountId");
 
+                    b.HasIndex("ReferenceNumber");
+
                     b.HasIndex("AccountId", "ReferenceNumber")
                         .IsUnique()
                         .HasFilter("[Amount] > 0");

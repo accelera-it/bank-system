@@ -157,7 +157,8 @@ namespace BankSystem.Web.Controllers
                     DestinationBankSwiftCode = paymentInfo.DestinationBankSwiftCode,
                     DestinationBankAccountUniqueId = paymentInfo.DestinationBankAccountUniqueId,
                     RecipientName = paymentInfo.RecipientName,
-                    SourceAccountId = model.AccountId
+                    SourceAccountId = model.AccountId,
+                    ReferenceNumber = (string)paymentInfo.ReferenceNumber
                 };
 
                 var result = await this.globalTransferHelper.TransferMoneyAsync(serviceModel);

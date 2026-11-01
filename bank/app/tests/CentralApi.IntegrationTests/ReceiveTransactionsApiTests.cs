@@ -101,6 +101,23 @@ namespace CentralApi.IntegrationTests
         }
 
         [Fact]
+        public async Task Post_WhenDestinationBankFails_ShouldReturnBadGateway()
+        {
+            this.factory.BankServer.ResponseStatus = HttpStatusCode.InternalServerError;
+
+            try
+            {
+                var response = await this.PostAsync(Transaction());
+
+                response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
+            }
+            finally
+            {
+                this.factory.BankServer.ResponseStatus = HttpStatusCode.OK;
+            }
+        }
+
+        [Fact]
         public async Task Post_ToUnknownDestinationBank_ShouldReturnNotFound()
         {
             var response = await this.PostAsync(Transaction("Missing bank"));

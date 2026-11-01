@@ -19,7 +19,13 @@ def utc_now() -> datetime:
 
 class PaymentStatus(enum.StrEnum):
     pending = "pending"
+    processing = "processing"
     completed = "completed"
+
+
+class PaymentMethod(enum.StrEnum):
+    card = "card"
+    direct = "direct"
 
 
 class User(Base):
@@ -52,3 +58,16 @@ class Order(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     product: Mapped[Product] = relationship(lazy="joined")
+
+
+class PaymentAttempt(Base):
+    """A payment whose outcome the shop does not know yet."""
+
+    __tablename__ = "payment_attempts"
+
+    reference: Mapped[str] = mapped_column(String(64), primary_key=True, default=lambda: uuid.uuid4().hex)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), index=True)
+    method: Mapped[PaymentMethod] = mapped_column(
+        Enum(PaymentMethod, name="payment_method", native_enum=False, length=10)
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

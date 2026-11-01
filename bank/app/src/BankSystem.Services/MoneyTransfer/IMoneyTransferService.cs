@@ -32,6 +32,23 @@
         /// </summary>
         Task<MoneyTransferResult> WithdrawAsync(MoneyTransferCreateServiceModel model, string payload);
 
+        /// <summary>
+        /// The amount already credited to this account under this reference number, if any.
+        /// </summary>
+        Task<decimal?> GetReceivedAmountAsync(string accountId, string referenceNumber);
+
+        /// <summary>
+        /// Where an outgoing transfer stands, for a merchant that has no answer yet.
+        /// </summary>
+        Task<TransferState> GetTransferStateAsync(string referenceNumber);
+
+        Task<IEnumerable<PendingTransferListingServiceModel>> GetAllPendingTransfersAsync();
+
+        /// <summary>
+        /// Gives a transfer that ran out of attempts a new set of retries.
+        /// </summary>
+        Task ResetPendingTransferAttemptsAsync(string referenceNumber);
+
         Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
             DateTime createdBefore, int maxAttempts, int count);
 

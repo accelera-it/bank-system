@@ -67,9 +67,13 @@ export default function Orders() {
         <PayModal
           order={paying}
           onClose={closePayment}
-          onPaid={() => {
+          onPaid={(paid) => {
             closePayment();
-            message.success("Payment completed");
+            if (paid.payment_status === "completed") {
+              message.success("Payment completed");
+            } else {
+              message.info("Payment is being processed. The order will update when the bank confirms it.");
+            }
             load();
           }}
         />

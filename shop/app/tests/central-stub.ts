@@ -1,4 +1,5 @@
-// Stands in for CentralApi: declines cards starting with 0000 and shows a page for direct payments.
+// Stands in for CentralApi: declines cards starting with 0000, leaves those starting with 2222
+// unconfirmed and shows a page for direct payments.
 import { createServer } from "node:http";
 
 createServer(async (request, response) => {
@@ -11,7 +12,13 @@ createServer(async (request, response) => {
     return;
   }
 
-  const declined = JSON.parse(body).Number.startsWith("0000");
-  response.writeHead(declined ? 400 : 200);
+  if (request.url?.endsWith("/status")) {
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end(JSON.stringify({ state: "Pending" }));
+    return;
+  }
+
+  const { Number: number } = JSON.parse(body);
+  response.writeHead(number.startsWith("0000") ? 400 : number.startsWith("2222") ? 202 : 200);
   response.end();
 }).listen(5000, "0.0.0.0");

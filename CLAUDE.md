@@ -64,6 +64,9 @@ Keycloak's `abs` realm (`kyc/app/realms/abs-realm.json`) has the clients `bank` 
 ### Default user
 `demo@abs.uz` / `123456` is the default user: Keycloak holds the password, BankSystem.Web seeds it with an account and the Administrator role, and DemoShop seeds it with a laptop product (`shop/api/src/seed.py`).
 
+### Money
+Transfers are atomic, a global transfer with no clear answer holds the money and is delivered again, and a bank credits each reference number once; `bank/CLAUDE.md` has the rules. The shop follows such a payment by its reference number, see `shop/CLAUDE.md`.
+
 ### Tests
 Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the shop has pytest in `shop/api/tests` and Playwright in `shop/app/tests`, and `kyc/app/tests` has JUnit tests against a real Keycloak on H2.
 - Unit tests cover services and crypto/payment helpers on an EF Core InMemory DB.

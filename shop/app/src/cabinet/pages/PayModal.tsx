@@ -31,7 +31,7 @@ function BankPayment({ order }: { order: Order }) {
   );
 }
 
-function CardPayment({ order, onPaid }: { order: Order; onPaid: () => void }) {
+function CardPayment({ order, onPaid }: { order: Order; onPaid: (order: Order) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -39,8 +39,7 @@ function CardPayment({ order, onPaid }: { order: Order; onPaid: () => void }) {
     setBusy(true);
     setError("");
     try {
-      await api.cardPayment(order.id, card);
-      onPaid();
+      onPaid(await api.cardPayment(order.id, card));
     } catch (failure) {
       setError(errorMessage(failure));
       setBusy(false);
@@ -80,7 +79,7 @@ function CardPayment({ order, onPaid }: { order: Order; onPaid: () => void }) {
 interface Props {
   order: Order;
   onClose: () => void;
-  onPaid: () => void;
+  onPaid: (order: Order) => void;
 }
 
 export default function PayModal({ order, onClose, onPaid }: Props) {

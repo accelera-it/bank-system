@@ -13,7 +13,7 @@ export interface Product {
 
 export type ProductInput = Omit<Product, "id">;
 
-export type PaymentStatus = "pending" | "completed";
+export type PaymentStatus = "pending" | "processing" | "completed";
 
 export interface Order {
   id: string;

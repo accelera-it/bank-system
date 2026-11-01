@@ -56,6 +56,12 @@
                 TransactionHelper.SignAndEncryptData(sendModel, this.configuration.Key, bank.ApiKey);
             var client = new HttpClient();
             var response = await client.PostAsJsonAsync(bank.ApiAddress, encryptedAndSignedData);
+            if ((int)response.StatusCode >= 500)
+            {
+                // Not a refusal: the bank may have kept the money, so the sender must not refund it yet
+                return this.StatusCode((int)HttpStatusCode.BadGateway);
+            }
+
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 return this.BadRequest(string.Format(BankRefusedTheRequestMessage, model.DestinationBankName));

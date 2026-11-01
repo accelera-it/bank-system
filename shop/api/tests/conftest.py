@@ -112,7 +112,7 @@ async def sign_in(client, kyc, *, email="buyer@abs.uz", name="Buyer", query="", 
 @pytest.fixture
 def central_api() -> dict:
     """What the fake CentralApi received, and the status it answers with."""
-    return {"status": 200, "requests": []}
+    return {"status": 200, "requests": [], "state": "NotFound", "state_status": 200, "asked": []}
 
 
 @pytest.fixture
@@ -166,7 +166,12 @@ async def client(db_factory, redis, settings, central_api, storage, kyc) -> Asyn
                     return httpx.Response(kyc["refresh_error"])
             answer = {"id_token": id_token(kyc["claims"]), "refresh_token": "refresh", "expires_in": 300}
             return httpx.Response(kyc["status"], json=answer)
+        if request.url.path.endswith("/status"):
+            central_api["asked"].append(json.loads(request.content)["ReferenceNumber"])
+            return httpx.Response(central_api["state_status"], json={"state": central_api["state"]})
         central_api["requests"].append(request)
+        if isinstance(central_api["status"], Exception):
+            raise central_api["status"]
         return httpx.Response(central_api["status"])
 
     async def http_client():

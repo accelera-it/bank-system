@@ -13,6 +13,7 @@ The bank and the hub that connects banks.
 
 - **Bank accounts** – owner, balance, transaction history
 - **Money transfers** – internal (same bank) and global (between banks via CentralApi)
+- **Reliable delivery** – internal transfers are atomic; a global transfer with no clear answer holds the money and is delivered again in the background, and a bank credits each reference number once. Administrators see these transfers under Pending transfers, and a merchant can ask how a payment ended
 - **Cards** – issue payment cards and use them for online purchases
 - **Direct payments** – pay on third-party websites straight from a bank account, without card details
 - **Administration** – bank administration area

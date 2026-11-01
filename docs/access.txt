@@ -9,3 +9,7 @@ Default user (bank :8081, shop :8082, sign in at Keycloak):
 
 demo@abs.uz
 123456
+
+---------
+
+These are the values on first start. Change password keeps the new one.

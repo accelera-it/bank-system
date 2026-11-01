@@ -28,7 +28,7 @@ services:
       dockerfile: web/CentralApi/Dockerfile
     env_file: locale.env
     ports:
-      - "5000"
+      - "8080:5000"
     healthcheck: *app-healthcheck
     depends_on:
       db:

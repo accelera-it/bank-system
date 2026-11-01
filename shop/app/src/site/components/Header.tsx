@@ -52,9 +52,8 @@ export default function Header({ user }: { user: User | null }) {
   return (
     <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
       <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 sm:gap-4">
-        <Link to="/" className="flex items-center gap-2 justify-self-start text-xl font-bold tracking-tight">
-          <img src="/img/logo.svg" alt="" className="h-8 w-8 shrink-0" />
-          <span className="max-sm:sr-only">Shop</span>
+        <Link to="/" className="justify-self-start">
+          <img src="/img/brand.svg" alt="Shop" className="h-9 w-auto" />
         </Link>
 
         <nav aria-label="Main" className="flex items-center gap-1 rounded-full bg-slate-100 p-1">
@@ -65,7 +64,7 @@ export default function Header({ user }: { user: User | null }) {
               end={end}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition sm:px-4 ${
-                  isActive ? "bg-white text-brand shadow-sm" : "text-slate-600 hover:text-slate-900"
+                  isActive ? "bg-white text-brand-text shadow-sm" : "text-slate-600 hover:text-slate-900"
                 }`
               }
             >
@@ -79,7 +78,7 @@ export default function Header({ user }: { user: User | null }) {
           {user ? (
             <Link
               to="/cabinet"
-              className="flex items-center gap-1.5 rounded-full bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark sm:px-4"
+              className="flex items-center gap-1.5 rounded-full bg-brand px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-brand-dark sm:px-4"
             >
               <CabinetIcon />
               Cabinet
@@ -87,7 +86,7 @@ export default function Header({ user }: { user: User | null }) {
           ) : (
             <a
               href="/api/auth/login"
-              className="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand hover:text-brand sm:px-4"
+              className="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-dark hover:text-brand-text sm:px-4"
             >
               <LoginIcon />
               Login

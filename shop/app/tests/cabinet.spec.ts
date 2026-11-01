@@ -72,8 +72,13 @@ test("change password asks for the current one and signs in again", async ({ sig
   await page.getByRole("menuitem", { name: "Change password" }).click();
   const popup = await opened;
 
-  await popup.locator("#password").fill(PASSWORD);
-  await popup.locator("#kc-login").click();
+  await popup.locator("#password-current").fill("wrong-password");
+  await popup.locator("#password-new").fill("New-Passw0rd");
+  await popup.locator("#password-confirm").fill("New-Passw0rd");
+  await popup.locator("form [type=submit]").first().click();
+  await expect(popup.getByText("The current password is wrong")).toBeVisible();
+
+  await popup.locator("#password-current").fill(PASSWORD);
   await popup.locator("#password-new").fill("New-Passw0rd");
   await popup.locator("#password-confirm").fill("New-Passw0rd");
   await popup.locator("form [type=submit]").first().click();

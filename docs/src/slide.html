@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BankSystem Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  :root { --ink:#212529; --muted:#6c757d; --line:#e9e4d0; --gold:#ffc700; --deep:#8a5a00; --cream:#f6f5e7; --soft:#fdf3d0; }
+  * { box-sizing:border-box; margin:0; }
+  html, body { width:297mm; height:210mm; }
+  body { font-family:Inter,system-ui,sans-serif; color:var(--ink); background:#fff; font-size:11.5px; line-height:1.5; }
+  header { background:linear-gradient(100deg,#ffc700,#ffe27d); padding:9mm 12mm 7mm; height:62mm; }
+  h1 { font-size:29px; font-weight:800; letter-spacing:-.6px; }
+  .lead { font-size:12.5px; max-width:185mm; margin-top:3mm; }
+  .facts { display:flex; margin-top:4mm; background:rgba(255,255,255,.65); border:1px solid rgba(138,90,0,.25); border-radius:7px; width:max-content; }
+  .facts div { padding:2.4mm 5mm; border-right:1px solid rgba(138,90,0,.2); }
+  .facts div:last-child { border-right:0; }
+  .facts b { display:block; font-size:15px; font-weight:700; }
+  .facts span { font-size:7.5px; letter-spacing:.8px; text-transform:uppercase; color:#495057; }
+  main { display:grid; grid-template-columns:1fr 1fr; gap:9mm; padding:6mm 12mm 0; }
+  h2 { font-size:10px; letter-spacing:1px; color:var(--deep); text-transform:uppercase; border-bottom:1px solid var(--line); padding-bottom:1.2mm; margin-bottom:2.6mm; }
+  h2 + * { margin-top:0; }
+  .flow { border:1px solid var(--line); border-radius:7px; padding:4mm 5mm; margin-bottom:6mm; }
+  .flow h3 { font-size:13px; margin-bottom:3mm; }
+  .step { display:flex; align-items:center; gap:2.5mm; margin-bottom:2.2mm; }
+  .step i { flex:0 0 5mm; height:5mm; border-radius:50%; background:var(--gold); font-style:normal; font-weight:700; font-size:8.5px; display:flex; align-items:center; justify-content:center; }
+  .list { display:grid; grid-template-columns:1fr 1fr; gap:5mm 6mm; }
+  .list h4 { font-size:12px; }
+  .list h4::before { content:""; display:inline-block; width:5px; height:5px; background:var(--gold); border-radius:50%; margin-right:5px; vertical-align:middle; }
+  .list p { color:#495057; font-size:10.5px; }
+  .apps { display:grid; grid-template-columns:repeat(3,1fr); gap:3mm; margin-bottom:6mm; }
+  .app { border:1px solid var(--line); border-radius:7px; padding:4mm; }
+  .app.hi { border:2px solid var(--gold); }
+  .app h3 { font-size:14px; }
+  .app small { color:var(--muted); display:block; margin-bottom:1.5mm; }
+  .app ul { padding-left:4mm; margin:0; } .app li { font-size:10.5px; margin-bottom:.8mm; }
+  .band { background:var(--cream); border-radius:6px; padding:3.5mm 5mm; margin-bottom:6mm; font-size:11px; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:4mm; }
+  .steps b { display:block; color:var(--deep); font-size:8.5px; }
+  .steps h4 { font-size:12px; }
+  .steps p { color:#495057; font-size:10.5px; }
+  footer { position:absolute; left:12mm; right:12mm; top:199mm; border-top:1px solid var(--line); padding-top:1.5mm; font-size:8.5px; color:#495057; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Banking, payments and one sign-in</h1>
+  <p class="lead">Open accounts, issue cards, move money between banks and pay online. Independent banks connect through a secure hub, and customers use one account everywhere.</p>
+  <div class="facts">
+    <div><b>1 account</b><span>Bank and shop</span></div>
+    <div><b>N banks</b><span>One hub</span></div>
+    <div><b>RSA + AES</b><span>Every bank call</span></div>
+    <div><b>3 stacks</b><span>Independent deploys</span></div>
+    <div><b>Refresh tokens</b><span>Sessions end everywhere</span></div>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>What a customer does</h2>
+    <div class="flow">
+      <h3>Pay in the shop from a bank account</h3>
+      <div class="step"><i>1</i>Choose a product and sign in once at the central login</div>
+      <div class="step"><i>2</i>Pick a bank at the hub: it opens the bank's confirmation page</div>
+      <div class="step"><i>3</i>Confirm with no second login: the money moves bank to bank</div>
+      <div class="step"><i>4</i>Back in the shop, the order is marked paid</div>
+    </div>
+    <div class="list">
+      <div><h4>Accounts and balance</h4><p>Every account, balance and recent transfer on one dashboard.</p></div>
+      <div><h4>Transfers</h4><p>Inside the bank or to any bank connected to the hub.</p></div>
+      <div><h4>Payment cards</h4><p>Issue, edit and delete cards, then pay online with them.</p></div>
+      <div><h4>Direct payments</h4><p>Pay merchants from an account, with no card details.</p></div>
+      <div><h4>Shop cabinet</h4><p>Orders, products with uploaded images, payment reminders.</p></div>
+      <div><h4>Administration</h4><p>All accounts and a transfer lookup for bank staff.</p></div>
+    </div>
+  </section>
+  <section>
+    <h2>Three independent stacks</h2>
+    <div class="apps">
+      <div class="app"><h3>Bank</h3><small>ASP.NET Core · SQL Server</small><ul><li>Bank web app</li><li>CentralApi hub</li><li>Ocelot gateway, rate limit</li><li>nginx entry</li></ul></div>
+      <div class="app"><h3>Shop</h3><small>FastAPI · PostgreSQL</small><ul><li>React shop + cabinet</li><li>Python API</li><li>Redis sessions</li><li>MinIO images</li></ul></div>
+      <div class="app hi"><h3>KYC</h3><small>Keycloak · H2</small><ul><li>Login and register</li><li>Edit profile</li><li>Change password</li><li>Single sign-on</li></ul></div>
+    </div>
+    <div class="band"><b>Security built in:</b> passwords live only in Keycloak, internal services publish no ports, and changing a profile or password signs the user in again everywhere.</div>
+    <h2>Up and running in three steps</h2>
+    <div class="steps">
+      <div><b>01</b><h4>Start kyc</h4><p>The central sign-in comes up at port 8080.</p></div>
+      <div><b>02</b><h4>Start bank</h4><p>The bank and the hub at port 8081.</p></div>
+      <div><b>03</b><h4>Start shop</h4><p>The shop and cabinet at port 8082.</p></div>
+    </div>
+  </section>
+</main>
+<footer><b>Try it:</b> sign in with demo@abs.uz · .NET 10, Python, React and TypeScript · Docker Compose · accelera-it/bank-system</footer>
+</body>
+</html>

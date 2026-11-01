@@ -94,6 +94,6 @@ Banks known to CentralApi are stored in its database (name, code, country, publi
 Keys use the .NET `<RSAKeyValue>` XML format. To generate a new key pair (requires `openssl`), run from the repository root:
 
 ```bash
-./rsa-keygen.sh        # 4096-bit
-./rsa-keygen.sh 2048
+docs/rsa-keygen.sh        # 4096-bit
+docs/rsa-keygen.sh 2048
 ```

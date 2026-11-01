@@ -18,7 +18,7 @@ namespace BankSystem.Web.Infrastructure.Extensions
         public const string ActionStatusKey = "kc_action_status";
         public const string ActionSucceeded = "success";
         public const string UpdateProfileAction = "UPDATE_PROFILE";
-        public const string UpdatePasswordAction = "UPDATE_PASSWORD";
+        public const string UpdatePasswordAction = "ABS_UPDATE_PASSWORD";
 
         private const string ClientSecretKey = "BANK_CLIENT_SECRET";
 
@@ -82,12 +82,6 @@ namespace BankSystem.Web.Infrastructure.Extensions
                         if (context.Properties.Items.TryGetValue(ActionKey, out var action))
                         {
                             context.ProtocolMessage.SetParameter(ActionKey, action);
-
-                            // Keycloak's password form has no current password: this asks for it first
-                            if (action == UpdatePasswordAction)
-                            {
-                                context.ProtocolMessage.MaxAge = "0";
-                            }
                         }
 
                         return Task.CompletedTask;

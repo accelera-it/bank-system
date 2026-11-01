@@ -15,7 +15,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:py-24">
           <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">Everything you need, one click away</h1>
           <p className="max-w-xl text-lg text-slate-600">Choose a product, pay safely through your bank and follow your order from the cabinet.</p>
-          <Link to="/products" className="rounded-lg bg-brand px-6 py-3 font-semibold text-white hover:bg-brand-dark">
+          <Link to="/products" className="rounded-lg bg-brand px-6 py-3 font-semibold text-slate-900 hover:bg-brand-dark">
             Shop now
           </Link>
         </div>
@@ -24,7 +24,7 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-6 flex items-end justify-between gap-4">
           <h2 className="text-2xl font-bold tracking-tight">Popular products</h2>
-          <Link to="/products" className="text-sm font-semibold text-brand hover:text-brand-dark">
+          <Link to="/products" className="text-sm font-semibold text-brand-text hover:text-brand-text">
             View all
           </Link>
         </div>

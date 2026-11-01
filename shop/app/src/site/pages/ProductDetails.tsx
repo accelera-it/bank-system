@@ -25,7 +25,7 @@ export default function ProductDetails() {
         <img src={product.image_url} alt={product.name} className="max-h-full max-w-full object-contain" />
       </div>
       <div className="flex flex-col items-start gap-5">
-        <Link to="/products" className="text-sm font-semibold text-brand hover:text-brand-dark">
+        <Link to="/products" className="text-sm font-semibold text-brand-text hover:text-brand-text">
           ← All products
         </Link>
         <h1 className="text-3xl font-bold tracking-tight">{product.name}</h1>
@@ -33,7 +33,7 @@ export default function ProductDetails() {
         <button
           type="button"
           onClick={() => buy(product.id)}
-          className="cursor-pointer rounded-lg bg-brand px-6 py-3 font-semibold text-white hover:bg-brand-dark"
+          className="cursor-pointer rounded-lg bg-brand px-6 py-3 font-semibold text-slate-900 hover:bg-brand-dark"
         >
           Buy now
         </button>

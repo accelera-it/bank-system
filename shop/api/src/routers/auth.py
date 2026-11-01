@@ -43,7 +43,7 @@ async def login(
     next: str | None = None,
     buy: str | None = None,
     register: bool = False,
-    action: Literal["UPDATE_PROFILE", "UPDATE_PASSWORD"] | None = None,
+    action: Literal["UPDATE_PROFILE", "ABS_UPDATE_PASSWORD"] | None = None,
     redis: Redis = Depends(get_redis),
     settings: Settings = Depends(get_settings),
 ) -> RedirectResponse:
@@ -71,9 +71,6 @@ async def login(
         query["prompt"] = "create"
     if action:
         query["kc_action"] = action
-    if action == "UPDATE_PASSWORD":
-        # Keycloak's password form has no current password: this asks for it first
-        query["max_age"] = "0"
 
     url = f"{settings.kyc_public_authority}/protocol/openid-connect/auth?{urlencode(query)}"
     return RedirectResponse(url, status.HTTP_302_FOUND)

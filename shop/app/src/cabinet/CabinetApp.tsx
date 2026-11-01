@@ -44,7 +44,7 @@ function Cabinet() {
 
 export default function CabinetApp() {
   return (
-    <ConfigProvider theme={{ token: { colorPrimary: "#0b7f71", borderRadius: 8 } }}>
+    <ConfigProvider theme={{ token: { colorPrimary: "#e4a216", colorLink: "#8a5a00", colorText: "#212529", colorBgLayout: "#f6f5e7", borderRadius: 8 }, components: { Button: { primaryColor: "#212529" }, Menu: { itemSelectedBg: "#ffc700", itemSelectedColor: "#212529" } } }}>
       <AntApp>
         <Cabinet />
       </AntApp>

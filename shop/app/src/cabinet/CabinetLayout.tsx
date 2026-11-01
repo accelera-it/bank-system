@@ -6,7 +6,7 @@ import type { User } from "../types";
 
 // Keycloak's forms run in a popup, which comes back with new tokens and reloads the cabinet
 const EDIT_PROFILE = "/api/auth/login?action=UPDATE_PROFILE&next=/updated.html";
-const CHANGE_PASSWORD = "/api/auth/login?action=UPDATE_PASSWORD&next=/updated.html";
+const CHANGE_PASSWORD = "/api/auth/login?action=ABS_UPDATE_PASSWORD&next=/updated.html";
 
 const ITEMS = [
   {
@@ -45,13 +45,8 @@ export default function CabinetLayout({ user, onLogout }: Props) {
     <Layout style={{ minHeight: "100vh" }}>
       <Layout.Sider breakpoint="md" collapsedWidth={0} theme="light" style={{ position: "sticky", top: 0, height: "100vh" }}>
         <Flex vertical style={{ height: "100%" }}>
-          <Link to="/" style={{ color: "inherit" }}>
-            <Flex align="center" gap={8} style={{ height: 64, padding: "0 20px" }}>
-              <img src="/img/logo.svg" alt="" width={32} height={32} />
-              <Typography.Text strong style={{ fontSize: 20 }}>
-                Shop
-              </Typography.Text>
-            </Flex>
+          <Link to="/" style={{ display: "block", padding: "14px 20px" }}>
+            <img src="/img/brand.svg" alt="Shop" height={36} />
           </Link>
           <Menu
             mode="inline"

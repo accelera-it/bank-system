@@ -21,7 +21,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Bank System</title>
     <link rel="icon" type="image/svg+xml" href="~/img/logo.svg" asp-append-version="true" />
-    <link rel="alternate icon" href="~/favicon.ico" asp-append-version="true" />
 
     <link rel="stylesheet" href="~/bundle/vendor.min.css" asp-append-version="true" />
 
@@ -85,7 +84,7 @@
             </nav>
 
             <div class="app-sidebar-footer">
-                <p class="text-white font-weight-bold text-truncate mb-2 px-2">@fullName</p>
+                <p class="font-weight-bold text-truncate mb-2 px-2">@fullName</p>
                 <form asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new {area = ""})">
                     <button type="submit" class="btn btn-danger btn-block">
                         <i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i> Log out

@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Home";
 }
 
@@ -10,7 +10,7 @@
                 <h1>Banking that keeps up with you</h1>
                 <p class="hero-lead">Manage accounts, issue cards and send money to any connected bank from one secure place.</p>
                 <div class="hero-actions">
-                    <a class="btn btn-outline-light btn-lg" asp-page="/Account/Login"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Log in</a>
+                    <a class="btn btn-primary btn-lg" asp-page="/Account/Login"><i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Log in</a>
                 </div>
             </div>
             <img class="hero-art" src="~/img/hero-bank.svg" alt="" asp-append-version="true" />
@@ -20,7 +20,7 @@
     <div class="trust">
         <ul class="container">
             <li><i class="fas fa-lock" aria-hidden="true"></i> Encrypted bank traffic</li>
-            <li><i class="fas fa-mobile-alt" aria-hidden="true"></i> Two-factor sign-in</li>
+            <li><i class="fas fa-user-shield" aria-hidden="true"></i> One secure sign-in</li>
             <li><i class="fas fa-university" aria-hidden="true"></i> Connected banks</li>
             <li><i class="fas fa-coins" aria-hidden="true"></i> Accounts in UZS</li>
         </ul>
@@ -63,8 +63,8 @@
             <div class="col-12 col-md-6 col-lg-4 mb-4">
                 <article class="feature">
                     <span class="feature-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
-                    <h3>Two-factor security</h3>
-                    <p>Protect your sign-in with a code from an authenticator app.</p>
+                    <h3>One secure sign-in</h3>
+                    <p>Sign in once for the bank and the shop, with one central account.</p>
                 </article>
             </div>
             <div class="col-12 col-md-6 col-lg-4 mb-4">
@@ -105,7 +105,7 @@
         <h2>Ready to get started?</h2>
         <p>Open your account and start using it right away.</p>
     </div>
-    <a class="btn btn-light btn-lg" asp-page="/Account/Register"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i> Open an account</a>
+    <a class="btn btn-outline-dark btn-lg" asp-page="/Account/Register"><i class="fas fa-user-plus mr-1" aria-hidden="true"></i> Open an account</a>
 </section>
 
 <footer class="landing-footer">&copy; @DateTime.Now.Year Bank System</footer>

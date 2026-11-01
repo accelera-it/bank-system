@@ -13,7 +13,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <img src={product.image_url} alt={product.name} className="max-h-full max-w-full object-contain" />
       </Link>
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <Link to={`/products/${product.id}`} className="font-medium hover:text-brand">
+        <Link to={`/products/${product.id}`} className="font-medium hover:text-brand-text">
           {product.name}
         </Link>
         <div className="mt-auto flex items-center justify-between gap-3">
@@ -21,7 +21,7 @@ export default function ProductCard({ product }: { product: Product }) {
           <button
             type="button"
             onClick={() => buy(product.id)}
-            className="cursor-pointer rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+            className="cursor-pointer rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-brand-dark"
           >
             Buy
           </button>

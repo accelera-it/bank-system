@@ -67,13 +67,8 @@ async def test_second_login_takes_the_full_name_from_keycloak(signed_in, kyc):
 
 
 async def test_profile_and_password_forms_run_at_keycloak(client):
-    for action in ("UPDATE_PROFILE", "UPDATE_PASSWORD"):
+    for action in ("UPDATE_PROFILE", "ABS_UPDATE_PASSWORD"):
         assert query_of(await client.get(f"/api/auth/login?action={action}"))["kc_action"] == action
-
-
-async def test_change_password_asks_for_the_current_password(client):
-    assert query_of(await client.get("/api/auth/login?action=UPDATE_PASSWORD"))["max_age"] == "0"
-    assert "max_age" not in query_of(await client.get("/api/auth/login?action=UPDATE_PROFILE"))
 
 
 async def test_saved_form_ends_the_session_for_a_new_login(signed_in, kyc, redis):

@@ -2,8 +2,8 @@
 
 .hero {
     padding: 4.5rem 0;
-    color: #fff;
-    background: linear-gradient(100deg, #08255c 0%, #0b3d91 55%, #1257c9 100%);
+    color: #212529;
+    background: linear-gradient(100deg, #f6f5e7 0%, #fdf3d0 55%, #ffe27d 100%);
 }
 
 .hero .container {
@@ -47,7 +47,7 @@
 
 .trust {
     background: #fff;
-    border-bottom: 1px solid #e3e8f0;
+    border-bottom: 1px solid #e9e4d0;
 }
 
 .trust ul {
@@ -63,12 +63,12 @@
 .trust li {
     margin: 0 1.5rem 0.75rem 0;
     font-weight: 600;
-    color: #16233a;
+    color: #212529;
 }
 
 .trust i {
     width: 1.5rem;
-    color: #1257c9;
+    color: #8a5a00;
 }
 
 /* Sections */
@@ -87,7 +87,7 @@
     margin: 0;
     font-size: 2rem;
     font-weight: 700;
-    color: #16233a;
+    color: #212529;
 }
 
 /* Features */
@@ -96,14 +96,14 @@
     height: 100%;
     padding: 1.75rem;
     background: #fff;
-    border: 1px solid #e3e8f0;
+    border: 1px solid #e9e4d0;
     border-radius: 0.75rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .feature:hover {
-    border-color: #b9cdf0;
-    box-shadow: 0 0.5rem 1.25rem rgba(11, 61, 145, 0.1);
+    border-color: #ffc700;
+    box-shadow: 0 0.5rem 1.25rem rgba(228, 162, 22, 0.15);
 }
 
 .feature-icon {
@@ -114,8 +114,8 @@
     height: 3rem;
     margin-bottom: 1rem;
     font-size: 1.25rem;
-    color: #0b3d91;
-    background: #e8f0fd;
+    color: #8a5a00;
+    background: #fdf3d0;
     border-radius: 0.75rem;
 }
 
@@ -123,13 +123,13 @@
 .step h3 {
     font-size: 1.15rem;
     font-weight: 600;
-    color: #16233a;
+    color: #212529;
 }
 
 .feature p,
 .step p {
     margin-bottom: 0;
-    color: #66728a;
+    color: #6c757d;
 }
 
 /* Steps */
@@ -151,8 +151,8 @@
     height: 2.5rem;
     margin-bottom: 1rem;
     font-weight: 700;
-    color: #fff;
-    background: #1257c9;
+    color: #212529;
+    background: #ffc700;
     border-radius: 50%;
 }
 
@@ -165,8 +165,8 @@
     justify-content: space-between;
     margin: 2rem 0;
     padding: 2.5rem;
-    color: #fff;
-    background: linear-gradient(100deg, #08255c, #1257c9);
+    color: #212529;
+    background: linear-gradient(100deg, #ffc700, #ffe27d);
     border-radius: 0.75rem;
 }
 
@@ -185,9 +185,9 @@
 
 .landing-footer {
     padding: 1.25rem 0 0.5rem;
-    color: #66728a;
+    color: #6c757d;
     text-align: center;
-    border-top: 1px solid #e3e8f0;
+    border-top: 1px solid #e9e4d0;
 }
 
 /* Small screens */

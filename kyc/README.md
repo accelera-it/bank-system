@@ -8,6 +8,7 @@ Keycloak, the identity system for the bank and the shop. Both are clients of the
 | - | -
 | `app/` | Keycloak image, the `abs` realm in `realms/abs-realm.json` and the `abs` login theme in `themes/`
 | `proxy/` | nginx, the public entry
+| `app/provider/` | Keycloak provider that checks the current password in Change password
 | `app/setup.sh` | Makes the root user permanent, run once by the `kyc_setup` service
 | `app/tests/` | Login, register, token and session tests (Java, JUnit)
 | `docker-compose.yml` | Keycloak and nginx
@@ -15,7 +16,7 @@ Keycloak, the identity system for the bank and the shop. Both are clients of the
 | `kyc.env` | Keycloak settings of `docker-compose.yml`
 | `client.env` | Client secrets, read by kyc, bank and shop
 
-Login asks for email and password. Register asks for Full Name, email, password and its confirmation, and the button waits for the agreement checkbox. Edit profile shows Full Name, Phone and Address, with the email read-only, and Change password asks for the current password first. After either one the user signs in again, in the bank and the shop.
+Login asks for email and password. Register asks for Full Name, email, password and its confirmation, and the button waits for the agreement checkbox. Edit profile shows Full Name, Phone and Address, with the email read-only, and Change password asks for the current password, the new one and its confirmation. After either one the user signs in again, in the bank and the shop.
 
 ## Running
 

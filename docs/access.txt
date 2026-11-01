@@ -1,0 +1,11 @@
+Keycloak root user (http://localhost:8080/admin):
+
+admin
+123456
+
+---------
+
+Default user (bank :8081, shop :8082, sign in at Keycloak):
+
+demo@abs.uz
+123456

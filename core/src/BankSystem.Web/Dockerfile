@@ -1,23 +1,23 @@
-# Build context: repository root (see core/docker-compose.yml)
+# Build context: core (see docker-compose.yml)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
-COPY core/src/BankSystem.Common/BankSystem.Common.csproj core/src/BankSystem.Common/
-COPY core/src/BankSystem.Models/BankSystem.Models.csproj core/src/BankSystem.Models/
-COPY core/src/BankSystem.Data/BankSystem.Data.csproj core/src/BankSystem.Data/
-COPY core/src/BankSystem.Services.Models/BankSystem.Services.Models.csproj core/src/BankSystem.Services.Models/
-COPY core/src/BankSystem.Services/BankSystem.Services.csproj core/src/BankSystem.Services/
-COPY core/src/BankSystem.Web/BankSystem.Web.csproj core/src/BankSystem.Web/
-RUN dotnet restore core/src/BankSystem.Web/BankSystem.Web.csproj
+COPY src/BankSystem.Common/BankSystem.Common.csproj src/BankSystem.Common/
+COPY src/BankSystem.Models/BankSystem.Models.csproj src/BankSystem.Models/
+COPY src/BankSystem.Data/BankSystem.Data.csproj src/BankSystem.Data/
+COPY src/BankSystem.Services.Models/BankSystem.Services.Models.csproj src/BankSystem.Services.Models/
+COPY src/BankSystem.Services/BankSystem.Services.csproj src/BankSystem.Services/
+COPY src/BankSystem.Web/BankSystem.Web.csproj src/BankSystem.Web/
+RUN dotnet restore src/BankSystem.Web/BankSystem.Web.csproj
 
-COPY core/src/BankSystem.Common/ core/src/BankSystem.Common/
-COPY core/src/BankSystem.Models/ core/src/BankSystem.Models/
-COPY core/src/BankSystem.Data/ core/src/BankSystem.Data/
-COPY core/src/BankSystem.Services.Models/ core/src/BankSystem.Services.Models/
-COPY core/src/BankSystem.Services/ core/src/BankSystem.Services/
-COPY core/src/BankSystem.Web/ core/src/BankSystem.Web/
-RUN dotnet publish core/src/BankSystem.Web/BankSystem.Web.csproj -c Debug -o /app/publish --no-restore
+COPY src/BankSystem.Common/ src/BankSystem.Common/
+COPY src/BankSystem.Models/ src/BankSystem.Models/
+COPY src/BankSystem.Data/ src/BankSystem.Data/
+COPY src/BankSystem.Services.Models/ src/BankSystem.Services.Models/
+COPY src/BankSystem.Services/ src/BankSystem.Services/
+COPY src/BankSystem.Web/ src/BankSystem.Web/
+RUN dotnet publish src/BankSystem.Web/BankSystem.Web.csproj -c Debug -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app

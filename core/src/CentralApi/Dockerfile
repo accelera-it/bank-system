@@ -1,23 +1,23 @@
-# Build context: repository root (see core/docker-compose.yml)
+# Build context: core (see docker-compose.yml)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
-COPY core/src/BankSystem.Common/BankSystem.Common.csproj core/src/BankSystem.Common/
-COPY core/src/CentralApi.Models/CentralApi.Models.csproj core/src/CentralApi.Models/
-COPY core/src/CentralApi.Data/CentralApi.Data.csproj core/src/CentralApi.Data/
-COPY core/src/CentralApi.Services.Models/CentralApi.Services.Models.csproj core/src/CentralApi.Services.Models/
-COPY core/src/CentralApi.Services/CentralApi.Services.csproj core/src/CentralApi.Services/
-COPY core/src/CentralApi/CentralApi.csproj core/src/CentralApi/
-RUN dotnet restore core/src/CentralApi/CentralApi.csproj
+COPY src/BankSystem.Common/BankSystem.Common.csproj src/BankSystem.Common/
+COPY src/CentralApi.Models/CentralApi.Models.csproj src/CentralApi.Models/
+COPY src/CentralApi.Data/CentralApi.Data.csproj src/CentralApi.Data/
+COPY src/CentralApi.Services.Models/CentralApi.Services.Models.csproj src/CentralApi.Services.Models/
+COPY src/CentralApi.Services/CentralApi.Services.csproj src/CentralApi.Services/
+COPY src/CentralApi/CentralApi.csproj src/CentralApi/
+RUN dotnet restore src/CentralApi/CentralApi.csproj
 
-COPY core/src/BankSystem.Common/ core/src/BankSystem.Common/
-COPY core/src/CentralApi.Models/ core/src/CentralApi.Models/
-COPY core/src/CentralApi.Data/ core/src/CentralApi.Data/
-COPY core/src/CentralApi.Services.Models/ core/src/CentralApi.Services.Models/
-COPY core/src/CentralApi.Services/ core/src/CentralApi.Services/
-COPY core/src/CentralApi/ core/src/CentralApi/
-RUN dotnet publish core/src/CentralApi/CentralApi.csproj -c Debug -o /app/publish --no-restore
+COPY src/BankSystem.Common/ src/BankSystem.Common/
+COPY src/CentralApi.Models/ src/CentralApi.Models/
+COPY src/CentralApi.Data/ src/CentralApi.Data/
+COPY src/CentralApi.Services.Models/ src/CentralApi.Services.Models/
+COPY src/CentralApi.Services/ src/CentralApi.Services/
+COPY src/CentralApi/ src/CentralApi/
+RUN dotnet publish src/CentralApi/CentralApi.csproj -c Debug -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app

@@ -1,4 +1,4 @@
-# Build context: repository root (see core/docker-compose.test.yml)
+# Build context: core (see docker-compose.test.yml)
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 WORKDIR /src
 

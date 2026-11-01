@@ -9,6 +9,7 @@ namespace CentralApi.IntegrationTests
     using System.Threading.Tasks;
     using BankSystem.Tests.Shared;
     using FluentAssertions;
+    using Microsoft.AspNetCore.Mvc.Testing;
     using Newtonsoft.Json;
     using Xunit;
 
@@ -65,6 +66,22 @@ namespace CentralApi.IntegrationTests
 
             redirect.StatusCode.Should().Be(HttpStatusCode.OK);
             (await redirect.Content.ReadAsStringAsync()).Should().Contain(this.factory.BankServer.Url + "pay");
+        }
+
+        [Fact]
+        public async Task Pay_BehindGateway_ShouldKeepForwardedPrefixInRedirect()
+        {
+            var client = this.factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/pay")
+            {
+                Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["data"] = PaymentRequest() })
+            };
+            request.Headers.Add("X-Forwarded-Prefix", "/api");
+
+            var response = await client.SendAsync(request);
+
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should().Be("/api/pay");
         }
 
         [Fact]

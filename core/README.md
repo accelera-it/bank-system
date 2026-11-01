@@ -6,6 +6,8 @@ The bank and the hub that connects banks.
 | - | -
 | **BankSystem.Web** | The bank: web UI plus API endpoints that receive transfers and card payments
 | **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
+| **nginx** | The only public entry, on port 8081: `/api/` goes to Ocelot, everything else to BankSystem.Web
+| **Ocelot** | Gateway for every call to CentralApi
 
 ## Features
 
@@ -21,10 +23,12 @@ The bank and the hub that connects banks.
 | Path | Contents
 | - | -
 | `src/` | `BankSystem.Common` and the Models / Data / Services layers and web projects of BankSystem and CentralApi
+| `src/CentralApi.Gateway/` | Ocelot gateway for CentralApi; routes are in `ocelot.json`
+| `proxy/` | nginx, the public entry for both apps
 | `tests/` | Unit and integration tests (xUnit)
 | `data/oracle/` | Oracle image, with one schema per app
 | `data/redis/` | Redis image, for the bank's login sessions and cache
-| `docker-compose.yml` | Oracle, Redis, CentralApi and BankSystem.Web
+| `docker-compose.yml` | Oracle, Redis, CentralApi, BankSystem.Web, Ocelot and nginx
 | `docker-compose.test.yml` | The four test projects, one service each
 | `bank.env` | Environment of `docker-compose.yml`
 
@@ -41,19 +45,19 @@ docker compose -f core/docker-compose.yml up -d --build
 | Service | Address
 |-|-
 | **BankSystem.Web** | <http://localhost:8081>
-| **CentralApi** | <http://localhost:8080>
+| **CentralApi** | <http://localhost:8081/api>
 
-CentralApi serves Swagger at <http://localhost:8080/swagger> in the Development environment. It lists the endpoints only: the API bodies are encrypted and signed, so "Try it out" returns 403.
+CentralApi serves Swagger at <http://localhost:8081/api/swagger/index.html> in the Development environment. It lists the endpoints only: the API bodies are encrypted and signed, so "Try it out" returns 403.
 
-Oracle and Redis are only reachable inside the Docker network. Passwords are in `bank.env`. A new database password needs a fresh volume, because Oracle keeps the one it was created with.
+Only nginx publishes a port. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only. The bank and the shop call CentralApi through Ocelot; CentralApi calls the bank's API on `web` directly. Passwords are in `bank.env`. A new database password needs a fresh volume, because Oracle keeps the one it was created with.
 
 ### Without Docker
 
-Requires the .NET 10 SDK and Oracle. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
+Requires the .NET 10 SDK and Oracle. Run these from `core/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
-dotnet run --project core/src/CentralApi
-dotnet run --project core/src/BankSystem.Web
+dotnet run --project src/CentralApi
+dotnet run --project src/BankSystem.Web
 ```
 
 ### Tests
@@ -61,7 +65,7 @@ dotnet run --project core/src/BankSystem.Web
 The tests run on EF Core InMemory and need no database.
 
 ```bash
-dotnet test core/tests/BankSystem.UnitTests
+dotnet test tests/BankSystem.UnitTests
 docker compose -f core/docker-compose.test.yml up --build --abort-on-container-failure
 docker compose -f core/docker-compose.test.yml run --rm --build api-unit   # one project: {web,api}-{unit,integration}
 ```

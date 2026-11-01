@@ -7,9 +7,11 @@ Several independent BankSystem instances can be connected through **CentralApi**
 ## How it works
 
 ```
-demo (DemoShop) ──► api (CentralApi) ──► web (BankSystem.Web)
-                          │
-                          └──► other BankSystem instances
+browser ──► nginx :8081 ──► web (BankSystem.Web)
+                 │
+                 └─ /api ──► ocelot ──► api (CentralApi) ──► web, other BankSystem instances
+                                ▲
+                  demo (shop-api)
 ```
 
 All traffic between components is encrypted and signed (RSA + AES hybrid encryption).
@@ -18,10 +20,10 @@ All traffic between components is encrypted and signed (RSA + AES hybrid encrypt
 
 | Folder | Contents | Docs
 | - | - | -
-| `core/` | BankSystem.Web and CentralApi on Oracle and Redis | [core/README.md](core/README.md)
-| `demo/` | DemoShop on PostgreSQL and Redis | [demo/README.md](demo/README.md)
+| `core/` | BankSystem.Web and CentralApi on Oracle and Redis, behind nginx and Ocelot | [core/README.md](core/README.md)
+| `demo/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [demo/README.md](demo/README.md)
 
-Each has its own `src/`, `tests/`, `data/`, compose files and env file. All projects are in `BankSystem.sln` at the repository root.
+Each has its own `data/`, compose files and env file. The .NET projects are in `core/BankSystem.sln`.
 
 ## Quick start
 
@@ -35,14 +37,16 @@ docker compose -f demo/docker-compose.yml up -d --build
 | Service | Address
 |-|-
 | **BankSystem.Web** | <http://localhost:8081>
-| **CentralApi** | <http://localhost:8080>
-| **DemoShop** | <http://localhost:8082>
+| **CentralApi** | <http://localhost:8081/api>
+| **Shop** | <http://localhost:8082>
+| **Shop cabinet** | <http://localhost:8082/cabinet>
 
 All containers use the `Asia/Tashkent` timezone.
 
-To build and test everything (no database needed), with the .NET 10 SDK:
+To build and test the .NET projects (no database needed), with the .NET 10 SDK:
 
 ```bash
+cd core
 dotnet build
 dotnet test
 ```
@@ -50,12 +54,15 @@ dotnet test
 ## Tech stack
 
 - C#, ASP.NET Core 10 (MVC, Razor Pages, Web API)
-- Entity Framework Core, Oracle, PostgreSQL
+- Entity Framework Core, Oracle
+- Python, FastAPI, SQLAlchemy, PostgreSQL, MinIO
+- React, TypeScript, Vite, Tailwind CSS, Ant Design
+- Ocelot, nginx
 - Redis (login sessions, cache)
 - ASP.NET Core Identity
 - Mapster
 - jQuery, Bootstrap
-- xUnit, Moq, FluentAssertions
+- xUnit, Moq, FluentAssertions, pytest, Playwright
 - Docker, Docker Compose
 
 ## Acknowledgements

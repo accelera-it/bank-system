@@ -37,11 +37,9 @@ services:
 
   api:
     build:
-      context: ..
-      dockerfile: core/src/CentralApi/Dockerfile
+      context: .
+      dockerfile: src/CentralApi/Dockerfile
     env_file: bank.env
-    ports:
-      - "8080:5000"
     healthcheck: *app-healthcheck
     depends_on:
       oracle:
@@ -51,18 +49,46 @@ services:
 
   web:
     build:
-      context: ..
-      dockerfile: core/src/BankSystem.Web/Dockerfile
+      context: .
+      dockerfile: src/BankSystem.Web/Dockerfile
     env_file: bank.env
-    ports:
-      - "8081:5000"
     healthcheck: *app-healthcheck
     depends_on:
       oracle:
         condition: service_healthy
       bank-redis:
         condition: service_healthy
+      ocelot:
+        condition: service_healthy
+    networks:
+      - bank_lan
+
+  ocelot:
+    build:
+      context: .
+      dockerfile: src/CentralApi.Gateway/Dockerfile
+    healthcheck: *app-healthcheck
+    depends_on:
       api:
+        condition: service_healthy
+    networks:
+      - bank_lan
+
+  nginx:
+    build:
+      context: proxy
+    ports:
+      - "8081:5000"
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
+    depends_on:
+      web:
+        condition: service_healthy
+      ocelot:
         condition: service_healthy
     networks:
       - bank_lan

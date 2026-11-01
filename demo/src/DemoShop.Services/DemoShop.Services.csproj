@@ -1,8 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <ItemGroup>
-      <ProjectReference Include="..\DemoShop.Data\DemoShop.Data.csproj" />
-      <ProjectReference Include="..\DemoShop.Services.Models\DemoShop.Services.Models.csproj" />
-    </ItemGroup>
-
-</Project>

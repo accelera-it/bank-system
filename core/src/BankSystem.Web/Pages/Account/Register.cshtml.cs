@@ -106,6 +106,9 @@ namespace BankSystem.Web.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms of the agreement.")]
+            public bool AcceptAgreement { get; set; }
         }
     }
 }

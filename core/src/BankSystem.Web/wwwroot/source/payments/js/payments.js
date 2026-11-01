@@ -42,7 +42,7 @@ $('#payBtn').click(function () {
     btn.html('<i class="fas fa-circle-notch fa-spin"></i> Processing');
 
     $.ajax({
-        url: '/payments/payasync',
+        url: '/payments/pay',
         type: 'post',
         data: $('#paymentForm').serialize()
 

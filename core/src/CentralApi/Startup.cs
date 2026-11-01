@@ -7,6 +7,7 @@
     using Infrastructure;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.HttpOverrides;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +49,12 @@
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Only Ocelot can reach this app in Docker. It sends the /api prefix of the pay pages, so links keep it.
+            var forwardedHeaders = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedPrefix };
+            forwardedHeaders.KnownIPNetworks.Clear();
+            forwardedHeaders.KnownProxies.Clear();
+            app.UseForwardedHeaders(forwardedHeaders);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

@@ -1,9 +1,22 @@
 x-app-healthcheck: &app-healthcheck
-  test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q ' 200 ' <&3" ]
+  test: [ "CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5000/health', timeout=2)" ]
   interval: 10s
   timeout: 5s
   start_period: 30s
   retries: 5
+
+x-ui-healthcheck: &ui-healthcheck
+  test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
+  interval: 10s
+  timeout: 5s
+  start_period: 10s
+  retries: 5
+
+x-minio-healthcheck: &minio-healthcheck
+  test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /minio/health/live HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]" ]
+  interval: 5s
+  timeout: 3s
+  retries: 10
 
 services:
   pg:
@@ -34,26 +47,48 @@ services:
     networks:
       - shop_lan
 
-  demo:
+  minio:
     build:
-      context: ..
-      dockerfile: demo/src/DemoShop.Web/Dockerfile
+      context: data/minio
     env_file: shop.env
-    ports:
-      - "8082:5000"
+    volumes:
+      - minio-data:/data
+    healthcheck: *minio-healthcheck
+    networks:
+      - shop_lan
+
+  shop-api:
+    build:
+      context: api
+    env_file: shop.env
     healthcheck: *app-healthcheck
     depends_on:
       pg:
         condition: service_healthy
       shop-redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - shop_lan
       - bank_lan
 
+  ui:
+    build:
+      context: app
+    ports:
+      - "8082:5000"
+    healthcheck: *ui-healthcheck
+    depends_on:
+      shop-api:
+        condition: service_healthy
+    networks:
+      - shop_lan
+
 volumes:
   pg-data:
   redis-data:
+  minio-data:
 
 networks:
   shop_lan:

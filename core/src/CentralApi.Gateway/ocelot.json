@@ -1,0 +1,33 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/pay",
+      "DownstreamPathTemplate": "/pay",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "api", "Port": 5000 } ],
+      "UpstreamHeaderTransform": { "X-Forwarded-Prefix": "/api" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/pay/continue",
+      "DownstreamPathTemplate": "/pay/continue",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "api", "Port": 5000 } ],
+      "UpstreamHeaderTransform": { "X-Forwarded-Prefix": "/api" }
+    },
+    {
+      "UpstreamPathTemplate": "/api/swagger/{everything}",
+      "DownstreamPathTemplate": "/swagger/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "api", "Port": 5000 } ]
+    },
+    {
+      "UpstreamPathTemplate": "/api/{everything}",
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [ { "Host": "api", "Port": 5000 } ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:8081"
+  }
+}

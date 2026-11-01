@@ -491,3 +491,10 @@ bundle/
 
 # Local configuration overrides
 appsettings.*.local.json
+
+# Demo
+demo/app/dist/
+.pytest_cache/
+.venv/
+demo/app/test-results/
+demo/app/playwright-report/

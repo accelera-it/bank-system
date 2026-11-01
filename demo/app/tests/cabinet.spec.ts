@@ -1,0 +1,150 @@
+import { randomUUID } from "node:crypto";
+
+import type { Page } from "@playwright/test";
+
+import { expect, fillRegistration, LAPTOP, PASSWORD, test } from "./fixtures";
+
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+async function fillCard(page: Page, number: string) {
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("tab", { name: "Card" }).click();
+  await dialog.getByLabel("Card number").fill(number);
+  await dialog.getByLabel("Name on card").fill("ABS Admin");
+  await dialog.getByLabel("Expires").fill("12/30");
+  await dialog.getByLabel("CVV").fill("123");
+  await dialog.getByRole("button", { name: /^Pay / }).click();
+}
+
+test("guest is sent to login and back", async ({ page, email }) => {
+  await page.goto("/cabinet/products");
+
+  await expect(page).toHaveURL(/\/login\?next=/);
+  await page.getByRole("link", { name: "Create an account" }).click();
+  await fillRegistration(page, email);
+
+  await expect(page).toHaveURL("/cabinet/products");
+});
+
+test("menu opens every section", async ({ signedIn: page }) => {
+  await page.getByRole("menuitem", { name: "Products" }).click();
+  await expect(page.getByRole("button", { name: "Create product" })).toBeVisible();
+
+  await page.getByRole("menuitem", { name: "Orders" }).click();
+  await expect(page.getByText("You have no orders yet")).toBeVisible();
+
+  await page.getByRole("menuitem", { name: "Dashboard" }).click();
+  await expect(page.getByText("Recent orders")).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Profile" })).toHaveCount(0);
+});
+
+test("sidebar shows the full name as plain text", async ({ signedIn: page }) => {
+  const sidebar = page.getByRole("complementary");
+
+  await expect(sidebar.getByText("Test User")).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: "Test User" })).toHaveCount(0);
+});
+
+test("settings edit the profile", async ({ signedIn: page, email }) => {
+  await page.getByRole("menuitem", { name: "Settings" }).click();
+  await expect(page.getByLabel("Email")).toHaveValue(email);
+  await page.getByLabel("Full Name").fill("New Name");
+  await page.getByLabel("Phone").fill("+998 90 123 45 67");
+  await page.getByLabel("Address").fill("Tashkent");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Profile saved")).toBeVisible();
+  await expect(page.getByRole("complementary").getByText("New Name")).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByLabel("Full Name")).toHaveValue("New Name");
+  await expect(page.getByLabel("Phone")).toHaveValue("+998 90 123 45 67");
+  await expect(page.getByLabel("Address")).toHaveValue("Tashkent");
+});
+
+test("brand opens the site", async ({ signedIn: page }) => {
+  await page.getByRole("link", { name: "Shop" }).first().click();
+
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("link", { name: "Cabinet" })).toBeVisible();
+});
+
+test("dashboard counts orders", async ({ pendingOrder: page }) => {
+  await fillCard(page, "1234567890123456");
+  await expect(page.getByText("Payment completed")).toBeVisible();
+
+  await page.getByRole("menuitem", { name: "Dashboard" }).click();
+
+  const stat = (title: string) => page.locator(".ant-statistic").filter({ hasText: title });
+  await expect(stat("Orders")).toContainText("1");
+  await expect(stat("Paid")).toContainText("1");
+  await expect(stat("Pending")).toContainText("0");
+  await expect(stat("Total spent")).toContainText("8 900 000 UZS");
+  await expect(page.getByRole("cell", { name: LAPTOP })).toBeVisible();
+});
+
+test("card payment marks order paid", async ({ pendingOrder: page }) => {
+  await fillCard(page, "1234567890123456");
+
+  await expect(page.getByText("Payment completed")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Paid" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pay" })).toHaveCount(0);
+});
+
+test("declined card keeps order pending", async ({ pendingOrder: page }) => {
+  await fillCard(page, "0000000000000000");
+
+  await expect(page.getByRole("dialog").getByText("Payment failed")).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("cell", { name: "Pending" })).toBeVisible();
+});
+
+test("card form validates before sending", async ({ pendingOrder: page }) => {
+  await fillCard(page, "123");
+
+  await expect(page.getByText("Enter the 16 digits of the card")).toBeVisible();
+});
+
+test("bank payment posts to central api", async ({ pendingOrder: page }) => {
+  await page.getByRole("dialog").getByRole("button", { name: "Continue to the bank" }).click();
+
+  await expect(page.getByRole("heading", { name: "Stub bank" })).toBeVisible();
+});
+
+test("created product appears on the site", async ({ signedIn: page }) => {
+  const name = `Headphones ${randomUUID().slice(0, 8)}`;
+  await page.getByRole("menuitem", { name: "Products" }).click();
+  await page.getByRole("button", { name: "Create product" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill(name);
+  await dialog.getByLabel("Price").fill("1500");
+  await dialog.locator("input[type=file]").setInputFiles({ name: "headphones.png", mimeType: "image/png", buffer: PNG });
+  await expect(dialog.locator("img")).toBeVisible();
+  await dialog.getByRole("button", { name: "Create" }).click();
+
+  await expect(page.getByRole("cell", { name })).toBeVisible();
+  await page.goto("/products");
+  await expect(page.getByText(name)).toBeVisible();
+
+  // The site really loads the picture from MinIO.
+  const image = page.getByRole("img", { name });
+  await expect(image).toHaveJSProperty("complete", true);
+  expect(await image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(1);
+});
+
+test("logout ends the session", async ({ signedIn: page }) => {
+  await page.getByRole("button", { name: "Log out" }).click();
+  await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
+
+  await page.goto("/cabinet");
+  await expect(page).toHaveURL(/\/login/);
+});
+
+test("laptop name is shown in orders", async ({ pendingOrder: page }) => {
+  await page.getByRole("button", { name: "Close" }).click();
+
+  await expect(page.getByRole("cell", { name: LAPTOP })).toBeVisible();
+});

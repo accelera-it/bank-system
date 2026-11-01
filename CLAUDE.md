@@ -55,42 +55,14 @@ Each stack loads its own env file through `env_file` (`kyc/kyc.env`, `bank/bank.
 
 ## Architecture
 
-### Layering
-BankSystem and CentralApi follow the same layered layout, split into separate projects per layer:
-`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Projects sit under `bank/app/src/`; what both apps share is in `bank/app/core/`. `BankSystem.Common` holds the config classes, crypto utils and Mapster setup.
-
 ### Look
 The bank, the shop and the Keycloak theme share the light palette of cbu.uz: gold `#ffc700` / `#e4a216` with dark text, deep gold `#8a5a00` for links and cream `#f6f5e7` behind the pages. There is no dark mode. Everything is served locally, with nothing from a CDN: Inter and Font Awesome in `wwwroot/fonts` and `shop/app/public/fonts`, Tailwind in `shop/app/public/js/tailwind.js`, and CentralApi's Bootstrap and fonts in its `wwwroot/static`, which Kong publishes at `/api/static/`.
 
 ### Sign-in (kyc)
 Keycloak's `abs` realm (`kyc/app/realms/abs-realm.json`) has the clients `bank` and `shop`; their secrets are in `kyc/client.env`. The realm is imported on first start only. Neither app has login or register pages or keeps passwords: `/account/login` and `/account/register` in the bank and `/api/auth/login` in the shop send the browser to Keycloak (`prompt=create` for register), and it comes back to `/signin-oidc` + `/account/callback` and `/api/auth/callback`, which create the local user on first sign-in, by email. Each app keeps the refresh token with its session (`KycTokenRefresher` in the bank, `current_user` in the shop): expired tokens are renewed on the next request, a refused refresh ends the session, and an unreachable Keycloak leaves it alone. Logout ends the Keycloak session too, and the Edit profile and Change password menu items run Keycloak's forms in a popup through the login flow (`kc_action`); the password form asks for the current password, added by the `abs` theme and checked by the `ABS_UPDATE_PASSWORD` required action in `kyc/app/provider`, and neither app has a settings page. A saved form (`kc_action_status=success`) ends the app session and the Keycloak session and lands on `/relogin.html`, which sends the app behind to login; a cancelled form lands on `/updated.html`, which only reloads it. Both apps take the Full Name from Keycloak on each sign-in. A shop payment is accepted only if the bank user's Full Name equals `RECIPIENT_NAME` in `shop.env`, so the default user's name is `ABS Admin`. Browsers use `localhost:8080`; the apps use `kyc-proxy:5000` for tokens, which Keycloak's dynamic backchannel allows.
 
-### MinIO (shop)
-Product images uploaded in the cabinet go to the `products` bucket through `shop/api/src/storage.py`. The bucket is private: `shop_api` serves images at `/api/products/images/{key}`. The image is `cgr.dev/chainguard/minio`, because the official one is not on the registries. A product with orders cannot be deleted.
-
-### Redis
-`RedisServiceCollectionExtensions.AddRedisSessions` in BankSystem.Web puts `IDistributedCache`, login tickets (`RedisTicketStore`) and Data Protection keys in Redis, so the auth cookie only carries a key. Without `ConnectionStrings:Redis` (tests, plain `dotnet run`) the cache lives in memory. CentralApi has no logins or cache, so it does not use Redis.
-
-### Convention-based DI
-`bank/app/src/BankSystem.Web/Infrastructure/Extensions/ServiceCollectionExtensions.cs` registers every class `Foo` that implements an interface named `IFoo` — scoped for the Services and Common assemblies, transient for the web assembly. New services need no manual registration as long as they follow the `Foo`/`IFoo` naming.
-
-### Convention-based Mapster mapping
-`bank/app/core/BankSystem.Common/Mapping/MappingConfig.cs` scans the assemblies passed to `AddMapping`/`MappingConfig.Create`:
-- types implementing `IMapWith<T>` get a bidirectional map with `T`;
-- types implementing `IHaveCustomMapping` configure their own maps.
-Add mappings by implementing these interfaces on the DTO/view model.
-
-### Inter-bank security protocol
-All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`bank/app/core/BankSystem.Common/Utils/SignatureVerificationUtil.cs`, `CryptographyExtensions.cs`, `RsaExtensions.cs`):
-- Sender signs with its private key and encrypts an AES key/IV with the recipient's public key; the payload is a Base64 JSON `{ EncryptedKey, EncryptedIv, Data, Signature }`.
-- Receivers use a `[DecryptAndVerifyRequest]` action filter (one in BankSystem.Web, one in CentralApi) that decrypts, verifies, and **replaces the action's first argument** with the decrypted JSON string, returning 403 on failure. API actions therefore take `[FromBody] string data` and deserialize it themselves.
-- CentralApi serves Swagger at `/swagger` (`/api/swagger/index.html` through nginx) in Development only; it lists endpoints, and unsigned calls still get 403.
-- Bank API endpoints: `bank/app/src/BankSystem.Web/Api/` (`ReceiveMoneyTransfers`, `CardPayments`). CentralApi endpoints: `ReceiveTransactions`, `CardPayments`, `Payments`.
-
-### Configuration and multi-bank setup
-- Bank identity comes from the `BankConfiguration` section (name, `UniqueIdentifier` = swift code, country, `First3CardDigits`, own RSA `Key`, `CentralApiPublicKey`, `CentralApiAddress`). It is validated in `PostConfigure`, so startup throws if a value is missing.
-- CentralApi knows banks through its `Banks` table (`bank/app/src/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `bank/app/src/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`, at the address in the `DefaultBankBaseUrl` setting, with its browser-facing payment page at `DefaultBankPublicUrl`.
-- `demo@abs.uz` / `123456` is the default user: Keycloak holds the password, BankSystem.Web seeds it with an account and the Administrator role, and DemoShop seeds it with a laptop product (`shop/api/src/seed.py`).
+### Default user
+`demo@abs.uz` / `123456` is the default user: Keycloak holds the password, BankSystem.Web seeds it with an account and the Administrator role, and DemoShop seeds it with a laptop product (`shop/api/src/seed.py`).
 
 ### Tests
 Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the shop has pytest in `shop/api/tests` and Playwright in `shop/app/tests`, and `kyc/app/tests` has JUnit tests against a real Keycloak on H2.

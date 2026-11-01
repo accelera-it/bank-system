@@ -8,9 +8,9 @@ BankSystem is an ASP.NET Core (.NET 10) solution (`BankSystem.sln` at the repo r
 
 - **BankSystem.Web** (`core/src/BankSystem.Web`) — the bank: MVC + Razor Pages (Identity under `Pages/Account`), feature areas `Cards`, `MoneyTransfers`, `Administration`.
 - **CentralApi** (`core/src/CentralApi`) — a hub that connects multiple BankSystem instances and routes global transfers, card payments and direct payments between them.
-- **DemoShop** (`demo/`) — sample merchant site that pays via CentralApi (direct and card payments).
+- **DemoShop** (`demo/src/DemoShop.Web`) — sample merchant site that pays via CentralApi (direct and card payments).
 
-Repo layout (mirrored by the `core` and `demo` solution folders in `BankSystem.sln`): `core/` holds the bank and CentralApi, `demo/` holds DemoShop. Each has `src/`, `tests/`, `data/` (one Dockerfile per backing service), its own compose files and env file; there is no compose file at the root. `./rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config. Setup and feature docs live in the GitHub wiki (https://github.com/banksystembg/BankSystem/wiki), linked from README.md.
+Repo layout (mirrored by the `core` and `demo` solution folders in `BankSystem.sln`): `core/` holds the bank and CentralApi, `demo/` holds DemoShop. Each has `src/`, `tests/`, `data/` (one Dockerfile per backing service), its own compose files and env file; there is no compose file at the root. `README.md` is the overview; `core/README.md` and `demo/README.md` cover setup, tests and configuration for each side. `./rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config. Setup and feature docs live in the GitHub wiki (https://github.com/banksystembg/BankSystem/wiki), linked from README.md.
 
 ## Commands
 

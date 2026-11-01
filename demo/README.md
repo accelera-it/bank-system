@@ -28,7 +28,7 @@ The shop is at <http://localhost:8082>. PostgreSQL and Redis are only reachable 
 
 ### Without Docker
 
-Requires the .NET 10 SDK and PostgreSQL (the connection string is in `src/DemoShop.Web/appsettings.json`). The database is migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
+Requires the .NET 10 SDK and PostgreSQL. Settings and RSA keys are environment variables, listed in `shop.env`; `src/DemoShop.Web/appsettings.json` only holds logging defaults. The database is migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
 dotnet run --project demo/src/DemoShop.Web

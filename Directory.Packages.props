@@ -31,7 +31,6 @@
     <PackageVersion Include="BuildBundlerMinifier" Version="3.2.449" />
     <PackageVersion Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="SendGrid" Version="9.29.3" />
   </ItemGroup>
 
   <ItemGroup Label="Transitive security pins">

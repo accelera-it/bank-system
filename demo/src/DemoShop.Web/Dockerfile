@@ -11,11 +11,12 @@ COPY demo/src/DemoShop.Web/DemoShop.Web.csproj demo/src/DemoShop.Web/
 RUN dotnet restore demo/src/DemoShop.Web/DemoShop.Web.csproj
 
 COPY demo/src/ demo/src/
-RUN dotnet publish demo/src/DemoShop.Web/DemoShop.Web.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish demo/src/DemoShop.Web/DemoShop.Web.csproj -c Debug -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:5000 \
+    ASPNETCORE_ENVIRONMENT=Development \
     TZ=Asia/Tashkent
 EXPOSE 5000
 COPY --from=build /app/publish .

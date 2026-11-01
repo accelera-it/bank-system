@@ -8,20 +8,17 @@
     using MapsterMapper;
     using BankSystem.Models;
     using Common;
-    using Common.EmailSender.Interface;
     using Data;
     using Microsoft.EntityFrameworkCore;
     using Models.MoneyTransfer;
 
     public class MoneyTransferService : BaseService, IMoneyTransferService
     {
-        private readonly IEmailSender emailSender;
         private readonly IMapper mapper;
         
-        public MoneyTransferService(BankSystemDbContext context, IEmailSender emailSender, IMapper mapper)
+        public MoneyTransferService(BankSystemDbContext context, IMapper mapper)
             : base(context)
         {
-            this.emailSender = emailSender;
             this.mapper = mapper;
         }
 
@@ -103,17 +100,6 @@
 
             await this.Context.Transfers.AddAsync(dbModel);
             await this.Context.SaveChangesAsync();
-
-            if (dbModel.Amount > 0)
-            {
-                await this.emailSender.SendEmailAsync(dbModel.Account.User.Email, EmailMessages.ReceiveMoneySubject,
-                    string.Format(EmailMessages.ReceiveMoneyMessage, dbModel.Amount));
-            }
-            else
-            {
-                await this.emailSender.SendEmailAsync(dbModel.Account.User.Email, EmailMessages.SendMoneySubject,
-                    string.Format(EmailMessages.SendMoneyMessage, Math.Abs(dbModel.Amount)));
-            }
 
             return true;
         }

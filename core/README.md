@@ -47,7 +47,7 @@ Oracle and Redis are only reachable inside the Docker network. Passwords are in 
 
 ### Without Docker
 
-Requires the .NET 10 SDK and Oracle (connection strings are in each app's `appsettings.json`). Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
+Requires the .NET 10 SDK and Oracle. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
 dotnet run --project core/src/CentralApi
@@ -74,7 +74,7 @@ On first start the bank creates a demo user with a 10,000,000 UZS account:
 
 ## Configuration
 
-Each bank is configured through the `BankConfiguration` section of `src/BankSystem.Web/appsettings.json`: bank name, unique identifier (bank code), country, first 3 card digits, its own RSA private key and the CentralApi public key and address. The app refuses to start if any value is missing.
+Each bank is configured through the `BankConfiguration__*` variables in `bank.env`: bank name, unique identifier (bank code), country, first 3 card digits, its own RSA private key and the CentralApi public key and address. The app refuses to start if any value is missing.
 
 Banks known to CentralApi are stored in its database (name, code, country, public key and API addresses).
 

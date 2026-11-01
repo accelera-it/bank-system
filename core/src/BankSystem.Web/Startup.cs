@@ -4,7 +4,6 @@
     using MapsterMapper;
     using BankSystem.Models;
     using Common.Configuration;
-    using Common.EmailSender;
     using Common.Utils;
     using Data;
     using Infrastructure.Extensions;
@@ -47,7 +46,6 @@
             services.AddIdentity<BankUser, IdentityRole>(options =>
                 {
                     options.Password.RequireNonAlphanumeric = false;
-                    options.SignIn.RequireConfirmedEmail = true;
 
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
                     options.Lockout.MaxFailedAccessAttempts = 5;
@@ -79,9 +77,7 @@
 
             services
                 .Configure<BankConfiguration>(
-                    this.Configuration.GetSection(nameof(BankConfiguration)))
-                .Configure<SendGridConfiguration>(
-                    this.Configuration.GetSection(nameof(SendGridConfiguration)));
+                    this.Configuration.GetSection(nameof(BankConfiguration)));
 
             services
                 .PostConfigure<BankConfiguration>(settings =>
@@ -89,13 +85,6 @@
                     if (!ValidationUtil.IsObjectValid(settings))
                     {
                         throw new ApplicationException("BankConfiguration is invalid");
-                    }
-                })
-                .PostConfigure<SendGridConfiguration>(settings =>
-                {
-                    if (!ValidationUtil.IsObjectValid(settings))
-                    {
-                        throw new ApplicationException("SendGridConfiguration is invalid");
                     }
                 });
 

@@ -6,7 +6,6 @@
     using System.Threading.Tasks;
     using BankSystem.Models;
     using Common;
-    using Common.EmailSender.Interface;
     using Data;
     using FluentAssertions;
     using Microsoft.EntityFrameworkCore;
@@ -22,7 +21,6 @@
             this.dbContext = this.DatabaseInstance;
             this.moneyTransferService = new MoneyTransferService(
                 this.dbContext,
-                Mock.Of<IEmailSender>(),
                 this.Mapper);
         }
 

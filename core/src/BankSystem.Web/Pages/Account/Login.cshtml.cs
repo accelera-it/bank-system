@@ -14,7 +14,6 @@
     [AllowAnonymous]
     public class LoginModel : BasePageModel
     {
-        private const string SendEmailPage = "/Account/SendEmailVerification";
 
         private readonly ILogger<LoginModel> logger;
         private readonly SignInManager<BankUser> signInManager;
@@ -80,12 +79,6 @@
                 {
                     this.ShowErrorMessage(NotificationMessages.LoginLockedOut);
                     return this.RedirectToAuthModal(returnUrl);
-                }
-
-                if (result.IsNotAllowed)
-                {
-                    this.ShowErrorMessage(NotificationMessages.EmailVerificationRequired);
-                    return this.RedirectToPage(SendEmailPage);
                 }
 
                 this.ShowErrorMessage(NotificationMessages.InvalidCredentials);

@@ -17,11 +17,12 @@ COPY core/src/BankSystem.Data/ core/src/BankSystem.Data/
 COPY core/src/BankSystem.Services.Models/ core/src/BankSystem.Services.Models/
 COPY core/src/BankSystem.Services/ core/src/BankSystem.Services/
 COPY core/src/BankSystem.Web/ core/src/BankSystem.Web/
-RUN dotnet publish core/src/BankSystem.Web/BankSystem.Web.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish core/src/BankSystem.Web/BankSystem.Web.csproj -c Debug -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:5000 \
+    ASPNETCORE_ENVIRONMENT=Development \
     TZ=Asia/Tashkent
 EXPOSE 5000
 COPY --from=build /app/publish .

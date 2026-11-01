@@ -2,7 +2,6 @@ namespace BankSystem.Web.Pages.Account
 {
     using BankSystem.Models;
     using Common;
-    using Common.EmailSender.Interface;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
@@ -10,23 +9,23 @@ namespace BankSystem.Web.Pages.Account
     using Models;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
-    using System.Text.Encodings.Web;
     using System.Threading.Tasks;
 
     [AllowAnonymous]
     public class RegisterModel : BasePageModel
     {
-        private readonly IEmailSender emailSender;
         private readonly ILogger<RegisterModel> logger;
+        private readonly SignInManager<BankUser> signInManager;
         private readonly UserManager<BankUser> userManager;
 
         public RegisterModel(
             UserManager<BankUser> userManager,
-            ILogger<RegisterModel> logger, IEmailSender emailSender)
+            SignInManager<BankUser> signInManager,
+            ILogger<RegisterModel> logger)
         {
             this.userManager = userManager;
             this.logger = logger;
-            this.emailSender = emailSender;
+            this.signInManager = signInManager;
         }
 
         [BindProperty]
@@ -65,7 +64,8 @@ namespace BankSystem.Web.Pages.Account
             {
                 UserName = this.Input.Email,
                 Email = this.Input.Email,
-                FullName = this.Input.FullName
+                FullName = this.Input.FullName,
+                EmailConfirmed = true
             };
 
             var result = await this.userManager.CreateAsync(user, this.Input.Password);
@@ -77,18 +77,9 @@ namespace BankSystem.Web.Pages.Account
 
             this.logger.LogInformation("User created a new account with password.");
 
-            var code = await this.userManager.GenerateEmailConfirmationTokenAsync(user);
-            var callbackUrl = this.Url.Page(
-                EmailMessages.EmailConfirmationPage,
-                null,
-                new { userId = user.Id, code },
-                this.Request.Scheme);
-            await this.emailSender.SendEmailAsync(GlobalConstants.BankSystemEmail, this.Input.Email,
-                EmailMessages.ConfirmEmailSubject,
-                string.Format(EmailMessages.EmailConfirmationMessage, HtmlEncoder.Default.Encode(callbackUrl)));
+            await this.signInManager.SignInAsync(user, false);
 
-            this.ShowSuccessMessage(NotificationMessages.SuccessfulRegistration);
-            return this.RedirectToLoginPage();
+            return this.LocalRedirect(returnUrl);
         }
 
         private IActionResult RedirectToAuthModal(string returnUrl)

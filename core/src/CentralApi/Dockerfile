@@ -17,11 +17,12 @@ COPY core/src/CentralApi.Data/ core/src/CentralApi.Data/
 COPY core/src/CentralApi.Services.Models/ core/src/CentralApi.Services.Models/
 COPY core/src/CentralApi.Services/ core/src/CentralApi.Services/
 COPY core/src/CentralApi/ core/src/CentralApi/
-RUN dotnet publish core/src/CentralApi/CentralApi.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish core/src/CentralApi/CentralApi.csproj -c Debug -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:5000 \
+    ASPNETCORE_ENVIRONMENT=Development \
     TZ=Asia/Tashkent
 EXPOSE 5000
 COPY --from=build /app/publish .

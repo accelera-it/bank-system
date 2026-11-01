@@ -47,13 +47,13 @@ docker compose -f core/docker-compose.test.yml run --rm --build api-unit   # one
 
 Every service has a `healthcheck` in its compose file (not in the Dockerfiles): the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
 
-Each stack loads its own env file through `env_file` (`core/bank.env`, `demo/shop.env`), which overrides connection strings and inter-service URLs (`Section__Key`: `ConnectionStrings__BankSystem`, `__CentralApi`, `__DemoShop`, `__Redis`). Apps listen on port 5000 inside the containers.
+Each stack loads its own env file through `env_file` (`core/bank.env`, `demo/shop.env`), which holds connection strings, inter-service URLs, RSA keys and every other setting; `appsettings.json` only has logging defaults, and `ASPNETCORE_ENVIRONMENT=Development` is set in the Dockerfiles (`Section__Key`: `ConnectionStrings__BankSystem`, `__CentralApi`, `__DemoShop`, `__Redis`). Apps listen on port 5000 inside the containers.
 
 ## Architecture
 
 ### Layering
 Each app follows the same layered layout, split into separate projects per layer:
-`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Every project sits directly under `core/src/` or `demo/src/`. `core/src/BankSystem.Common` is shared by BankSystem and CentralApi (config classes, crypto utils, email sender, Mapster setup).
+`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Every project sits directly under `core/src/` or `demo/src/`. `core/src/BankSystem.Common` is shared by BankSystem and CentralApi (config classes, crypto utils, Mapster setup).
 
 ### Redis
 `RedisServiceCollectionExtensions.AddRedisSessions` (one copy in BankSystem.Web, one in DemoShop.Web) puts `IDistributedCache`, login tickets (`RedisTicketStore`) and Data Protection keys in Redis, so the auth cookie only carries a key. Without `ConnectionStrings:Redis` (tests, plain `dotnet run`) the cache lives in memory. CentralApi has no logins or cache, so it does not use Redis.
@@ -74,9 +74,9 @@ All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`core/s
 - Bank API endpoints: `core/src/BankSystem.Web/Api/` (`ReceiveMoneyTransfers`, `CardPayments`). CentralApi endpoints: `ReceiveTransactions`, `CardPayments`, `Payments`.
 
 ### Configuration and multi-bank setup
-- Bank identity comes from the `BankConfiguration` section (name, `UniqueIdentifier` = swift code, country, `First3CardDigits`, own RSA `Key`, `CentralApiPublicKey`, `CentralApiAddress`). It and `SendGridConfiguration` are validated in `PostConfigure`, so startup throws if a value is missing.
+- Bank identity comes from the `BankConfiguration` section (name, `UniqueIdentifier` = swift code, country, `First3CardDigits`, own RSA `Key`, `CentralApiPublicKey`, `CentralApiAddress`). It is validated in `PostConfigure`, so startup throws if a value is missing.
 - CentralApi knows banks through its `Banks` table (`core/src/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `core/src/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`, at the address in the `DefaultBankBaseUrl` setting, with its browser-facing payment page at `DefaultBankPublicUrl`.
-- BankSystem.Web seeds the `admin@abs.uz` / `123456` user with an account and the Administrator role on startup (its password bypasses the policy by being hashed directly), and DemoShop seeds `demo@abs.uz` / `123456` and a laptop product (`Infrastructure/Extensions/ApplicationBuilderExtensions.cs`).
+- BankSystem.Web seeds the `admin@abs.uz` / `123456` user with an account and the Administrator role on startup (its password bypasses the policy by being hashed directly). Nothing sends email: registration signs the user in straight away, and DemoShop seeds `demo@abs.uz` / `123456` and a laptop product (`Infrastructure/Extensions/ApplicationBuilderExtensions.cs`).
 
 ### Tests
 Six xUnit projects (FluentAssertions, Moq): `core/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}` and `demo/tests/DemoShop.{UnitTests,IntegrationTests}`.

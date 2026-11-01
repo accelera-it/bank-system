@@ -3,7 +3,7 @@
     using System.Linq;
     using System.Reflection;
     using Common.Mapping;
-    using Common.EmailSender.Interface;
+    using Common;
     using Microsoft.Extensions.DependencyInjection;
     using Services;
 
@@ -20,7 +20,7 @@
 
         public static IServiceCollection AddCommonProjectServices(this IServiceCollection services)
         {
-            var assembly = Assembly.GetAssembly(typeof(IEmailSender));
+            var assembly = Assembly.GetAssembly(typeof(GlobalConstants));
             AddAssemblyServices(services, assembly);
             services.AddMapping(Assembly.GetExecutingAssembly());
 

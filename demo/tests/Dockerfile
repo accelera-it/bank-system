@@ -4,7 +4,7 @@ WORKDIR /src
 
 COPY . .
 RUN dotnet restore BankSystem.sln
-RUN dotnet build BankSystem.sln -c Release --no-restore
+RUN dotnet build BankSystem.sln --no-restore
 
-ENTRYPOINT ["dotnet", "test", "-c", "Release", "--no-build", "--logger", "console;verbosity=minimal"]
+ENTRYPOINT ["dotnet", "test", "--no-build", "--logger", "console;verbosity=minimal"]
 CMD ["BankSystem.sln"]

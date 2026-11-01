@@ -47,22 +47,5 @@ namespace BankSystem.Common
 
         public const string PaymentStateInvalid =
             "Payment details are invalid or have expired. Please try again later.";
-
-        public const string SuccessfulRegistration =
-                   "Thank you for your registration. To activate your account, please follow the link in the email we have sent you";
-
-        public const string EmailVerificationLinkResentSuccessfully =
-            "Account activation link sent successfully";
-
-        public const string SuccessfulEmailVerification =
-            "Account activated. You can now log in.";
-
-        public const string EmailVerificationFailed =
-            "An error occured while verifying your email. Please try again later and if this error continues to occur, contact our support center";
-
-        public const string EmailAlreadyVerified = "Your email is already verified. You can log in.";
-
-        public const string EmailVerificationRequired =
-            "Your account is not activated. If you have not received the activation email, you can request a new one on this page.";
     }
 }

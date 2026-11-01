@@ -6,7 +6,6 @@ namespace BankSystem.IntegrationTests
     using System.Threading.Tasks;
     using BankSystem.Models;
     using BankSystem.Tests.Shared;
-    using Common.EmailSender.Interface;
     using Data;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Mvc.Testing;
@@ -48,6 +47,10 @@ namespace BankSystem.IntegrationTests
             builder.UseEnvironment("Testing");
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string>
             {
+                ["BankConfiguration:BankName"] = "Bank system",
+                ["BankConfiguration:UniqueIdentifier"] = "ABC",
+                ["BankConfiguration:First3CardDigits"] = "101",
+                ["BankConfiguration:Country"] = "Uzbekistan",
                 ["BankConfiguration:Key"] = this.BankKeys.PrivateKey,
                 ["BankConfiguration:CentralApiPublicKey"] = this.CentralApiKeys.PublicKey,
                 ["BankConfiguration:CentralApiAddress"] = this.CentralApi.Url
@@ -56,8 +59,6 @@ namespace BankSystem.IntegrationTests
             {
                 services.UseTestDatabase<BankSystemDbContext>(this.databaseName);
                 services.AddTestAuthentication();
-                services.RemoveAll<IEmailSender>();
-                services.AddSingleton(Mock.Of<IEmailSender>());
             });
         }
 

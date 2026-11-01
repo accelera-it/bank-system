@@ -1,0 +1,63 @@
+x-app-healthcheck: &app-healthcheck
+  test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q ' 200 ' <&3" ]
+  interval: 10s
+  timeout: 5s
+  start_period: 30s
+  retries: 5
+
+services:
+  pg:
+    build:
+      context: data/pg
+    env_file: shop.env
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\"" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - shop_lan
+
+  shop-redis:
+    build:
+      context: data/redis
+    env_file: shop.env
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - shop_lan
+
+  demo:
+    build:
+      context: ..
+      dockerfile: demo/src/DemoShop.Web/Dockerfile
+    env_file: shop.env
+    ports:
+      - "8082:5000"
+    healthcheck: *app-healthcheck
+    depends_on:
+      pg:
+        condition: service_healthy
+      shop-redis:
+        condition: service_healthy
+    networks:
+      - shop_lan
+      - bank_lan
+
+volumes:
+  pg-data:
+  redis-data:
+
+networks:
+  shop_lan:
+    name: shop_lan
+  # Created by core/docker-compose.yml: start core first, CentralApi is reached through it
+  bank_lan:
+    external: true

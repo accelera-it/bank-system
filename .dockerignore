@@ -9,7 +9,7 @@
 .git/
 .gitignore
 .dockerignore
-docker-compose*.yml
+**/docker-compose*.yml
 .env
-locale.env
+**/*.env
 *.md

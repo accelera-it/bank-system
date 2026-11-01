@@ -1,0 +1,14 @@
+x-tests: &tests
+  image: shop-tests
+  build:
+    context: ..
+    dockerfile: demo/tests/Dockerfile
+
+services:
+  demo-unit:
+    <<: *tests
+    command: demo/tests/DemoShop.UnitTests
+
+  demo-integration:
+    <<: *tests
+    command: demo/tests/DemoShop.IntegrationTests

@@ -54,7 +54,7 @@ docker compose --env-file locale.env up --build
 | **CentralApi** | <http://localhost:8080>
 | **DemoShop** | <http://localhost:8082>
 
-SQL Server (`db`, built from `data/Dockerfile`) is only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in `locale.env`.
+SQL Server (`db`, built from `core/data/oracle/Dockerfile`) is only reachable inside the Docker network. All containers use the `Asia/Tashkent` timezone. The default SA password is `BankSystem_Dev123!`; to change it, set `MSSQL_SA_PASSWORD` in `locale.env`.
 
 ### Without Docker
 
@@ -63,9 +63,9 @@ Requires the .NET 10 SDK and SQL Server (connection strings are in each app's `a
 ```bash
 dotnet build
 dotnet test
-dotnet run --project web/CentralApi
-dotnet run --project web/BankSystem.Web
-dotnet run --project demo/DemoShop.Web
+dotnet run --project core/src/CentralApi
+dotnet run --project core/src/BankSystem.Web
+dotnet run --project demo/src/DemoShop.Web
 ```
 
 ### Tests
@@ -87,7 +87,7 @@ On first start the bank creates a demo user with a 10,000,000 UZS account:
 
 ## Configuration
 
-Each bank is configured through the `BankConfiguration` section of `web/BankSystem.Web/appsettings.json`: bank name, unique identifier (bank code), country, first 3 card digits, its own RSA private key and the CentralApi public key and address. The app refuses to start if any value is missing.
+Each bank is configured through the `BankConfiguration` section of `core/src/BankSystem.Web/appsettings.json`: bank name, unique identifier (bank code), country, first 3 card digits, its own RSA private key and the CentralApi public key and address. The app refuses to start if any value is missing.
 
 Banks known to CentralApi are stored in its database (name, code, country, public key and API addresses).
 

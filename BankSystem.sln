@@ -5,55 +5,51 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "core", "core", "{FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Common", "core\BankSystem.Common\BankSystem.Common.csproj", "{EB83BE01-D139-4797-9C81-477221EF511A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Common", "core\src\BankSystem.Common\BankSystem.Common.csproj", "{EB83BE01-D139-4797-9C81-477221EF511A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Data", "core\BankSystem.Data\BankSystem.Data.csproj", "{86A4EC3D-9016-488E-858D-7DEEB88BFD55}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Data", "core\src\BankSystem.Data\BankSystem.Data.csproj", "{86A4EC3D-9016-488E-858D-7DEEB88BFD55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Models", "core\BankSystem.Models\BankSystem.Models.csproj", "{D5F6CECE-495C-4094-BB2F-C1DCB727BEE7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Models", "core\src\BankSystem.Models\BankSystem.Models.csproj", "{D5F6CECE-495C-4094-BB2F-C1DCB727BEE7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Services.Models", "core\BankSystem.Services.Models\BankSystem.Services.Models.csproj", "{B17492C2-EF85-4C00-BEB8-30D44D28E99F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Services.Models", "core\src\BankSystem.Services.Models\BankSystem.Services.Models.csproj", "{B17492C2-EF85-4C00-BEB8-30D44D28E99F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Services", "core\BankSystem.Services\BankSystem.Services.csproj", "{A7D0320B-C89A-4679-986D-0488D2545D94}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Services", "core\src\BankSystem.Services\BankSystem.Services.csproj", "{A7D0320B-C89A-4679-986D-0488D2545D94}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Data", "core\CentralApi.Data\CentralApi.Data.csproj", "{21C874EF-B1A2-483A-BBD3-FF0D2D7FBC13}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Data", "core\src\CentralApi.Data\CentralApi.Data.csproj", "{21C874EF-B1A2-483A-BBD3-FF0D2D7FBC13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Models", "core\CentralApi.Models\CentralApi.Models.csproj", "{B5C5BCFA-77D7-4A29-AAB2-4495A6BCD05C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Models", "core\src\CentralApi.Models\CentralApi.Models.csproj", "{B5C5BCFA-77D7-4A29-AAB2-4495A6BCD05C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Services.Models", "core\CentralApi.Services.Models\CentralApi.Services.Models.csproj", "{BC7078C5-D2EF-4BA4-879A-490CBC3AB44A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Services.Models", "core\src\CentralApi.Services.Models\CentralApi.Services.Models.csproj", "{BC7078C5-D2EF-4BA4-879A-490CBC3AB44A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Services", "core\CentralApi.Services\CentralApi.Services.csproj", "{5D8CD55E-280F-4502-92AD-802F4C5591A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.Services", "core\src\CentralApi.Services\CentralApi.Services.csproj", "{5D8CD55E-280F-4502-92AD-802F4C5591A0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "demo", "demo", "{A39C23D2-F2C0-258D-165A-CF1E7FEE6E7B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Data", "demo\DemoShop.Data\DemoShop.Data.csproj", "{FE78C410-2FB4-43C9-98AB-C774C98E20D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Data", "demo\src\DemoShop.Data\DemoShop.Data.csproj", "{FE78C410-2FB4-43C9-98AB-C774C98E20D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Models", "demo\DemoShop.Models\DemoShop.Models.csproj", "{37B60988-667B-4CFB-89CB-9169D9781286}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Models", "demo\src\DemoShop.Models\DemoShop.Models.csproj", "{37B60988-667B-4CFB-89CB-9169D9781286}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Services.Models", "demo\DemoShop.Services.Models\DemoShop.Services.Models.csproj", "{47023269-244B-40F7-B318-A52CE1F8FF08}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Services.Models", "demo\src\DemoShop.Services.Models\DemoShop.Services.Models.csproj", "{47023269-244B-40F7-B318-A52CE1F8FF08}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Services", "demo\DemoShop.Services\DemoShop.Services.csproj", "{08D1016F-8651-401C-8DBA-ECE1B5E17021}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Services", "demo\src\DemoShop.Services\DemoShop.Services.csproj", "{08D1016F-8651-401C-8DBA-ECE1B5E17021}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Web", "demo\DemoShop.Web\DemoShop.Web.csproj", "{2D5F642B-9DB9-4424-B8F6-51B6C128F983}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.Web", "demo\src\DemoShop.Web\DemoShop.Web.csproj", "{2D5F642B-9DB9-4424-B8F6-51B6C128F983}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.UnitTests", "core\tests\BankSystem.UnitTests\BankSystem.UnitTests.csproj", "{AD73CA18-D383-4D5B-BE6A-77CA068EC24B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.UnitTests", "tests\BankSystem.UnitTests\BankSystem.UnitTests.csproj", "{AD73CA18-D383-4D5B-BE6A-77CA068EC24B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.UnitTests", "core\tests\CentralApi.UnitTests\CentralApi.UnitTests.csproj", "{5D2782D9-8C75-4078-907A-283C807CA3CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.UnitTests", "tests\CentralApi.UnitTests\CentralApi.UnitTests.csproj", "{5D2782D9-8C75-4078-907A-283C807CA3CC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Web", "core\src\BankSystem.Web\BankSystem.Web.csproj", "{A54502A0-A141-407F-A995-1D1036027C9A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "web", "web", "{256F4E96-6A73-9ABE-786F-840C672A50F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi", "core\src\CentralApi\CentralApi.csproj", "{C601BC24-EBBA-4820-9989-E24987B00DF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.Web", "web\BankSystem.Web\BankSystem.Web.csproj", "{A54502A0-A141-407F-A995-1D1036027C9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.UnitTests", "demo\tests\DemoShop.UnitTests\DemoShop.UnitTests.csproj", "{C8E6AE3C-FB6C-4ADF-A771-146CD90310BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi", "web\CentralApi\CentralApi.csproj", "{C601BC24-EBBA-4820-9989-E24987B00DF8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.IntegrationTests", "core\tests\BankSystem.IntegrationTests\BankSystem.IntegrationTests.csproj", "{9826D28E-C370-418C-B6D4-A8EB50EB1808}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.UnitTests", "tests\DemoShop.UnitTests\DemoShop.UnitTests.csproj", "{C8E6AE3C-FB6C-4ADF-A771-146CD90310BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.IntegrationTests", "core\tests\CentralApi.IntegrationTests\CentralApi.IntegrationTests.csproj", "{D681774E-9762-4F61-A312-450DF57A3B4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSystem.IntegrationTests", "tests\BankSystem.IntegrationTests\BankSystem.IntegrationTests.csproj", "{9826D28E-C370-418C-B6D4-A8EB50EB1808}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralApi.IntegrationTests", "tests\CentralApi.IntegrationTests\CentralApi.IntegrationTests.csproj", "{D681774E-9762-4F61-A312-450DF57A3B4F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.IntegrationTests", "tests\DemoShop.IntegrationTests\DemoShop.IntegrationTests.csproj", "{10F39F23-1297-4E23-8EFF-60C9C01CF384}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoShop.IntegrationTests", "demo\tests\DemoShop.IntegrationTests\DemoShop.IntegrationTests.csproj", "{10F39F23-1297-4E23-8EFF-60C9C01CF384}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -348,13 +344,13 @@ Global
 		{47023269-244B-40F7-B318-A52CE1F8FF08} = {A39C23D2-F2C0-258D-165A-CF1E7FEE6E7B}
 		{08D1016F-8651-401C-8DBA-ECE1B5E17021} = {A39C23D2-F2C0-258D-165A-CF1E7FEE6E7B}
 		{2D5F642B-9DB9-4424-B8F6-51B6C128F983} = {A39C23D2-F2C0-258D-165A-CF1E7FEE6E7B}
-		{AD73CA18-D383-4D5B-BE6A-77CA068EC24B} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{5D2782D9-8C75-4078-907A-283C807CA3CC} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{A54502A0-A141-407F-A995-1D1036027C9A} = {256F4E96-6A73-9ABE-786F-840C672A50F4}
-		{C601BC24-EBBA-4820-9989-E24987B00DF8} = {256F4E96-6A73-9ABE-786F-840C672A50F4}
-		{C8E6AE3C-FB6C-4ADF-A771-146CD90310BE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{9826D28E-C370-418C-B6D4-A8EB50EB1808} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{D681774E-9762-4F61-A312-450DF57A3B4F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{10F39F23-1297-4E23-8EFF-60C9C01CF384} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{AD73CA18-D383-4D5B-BE6A-77CA068EC24B} = {FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}
+		{5D2782D9-8C75-4078-907A-283C807CA3CC} = {FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}
+		{A54502A0-A141-407F-A995-1D1036027C9A} = {FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}
+		{C601BC24-EBBA-4820-9989-E24987B00DF8} = {FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}
+		{C8E6AE3C-FB6C-4ADF-A771-146CD90310BE} = {A39C23D2-F2C0-258D-165A-CF1E7FEE6E7B}
+		{9826D28E-C370-418C-B6D4-A8EB50EB1808} = {FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}
+		{D681774E-9762-4F61-A312-450DF57A3B4F} = {FBF56CC3-7AE6-AD2D-3F14-7F97FD322CD6}
+		{10F39F23-1297-4E23-8EFF-60C9C01CF384} = {A39C23D2-F2C0-258D-165A-CF1E7FEE6E7B}
 	EndGlobalSection
 EndGlobal

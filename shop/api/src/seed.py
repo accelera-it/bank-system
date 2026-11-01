@@ -8,7 +8,7 @@ from src.models import Product, User
 from src.storage import get_storage
 
 DEMO_EMAIL = "demo@abs.uz"
-DEMO_NAME = "Demo User"
+DEMO_NAME = "ABS Admin"
 # create_all leaves existing tables alone, so databases from before these columns need them added.
 USER_COLUMNS = ("name VARCHAR(100)",)
 OLD_USER_COLUMNS = ("password_hash", "phone", "address")

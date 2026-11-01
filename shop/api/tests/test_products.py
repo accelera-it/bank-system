@@ -86,3 +86,44 @@ async def test_missing_image_is_not_found(client):
 
 async def test_image_key_cannot_leave_the_bucket(client):
     assert (await client.get("/api/products/images/..%2Fsecret")).status_code in (404, 422)
+
+
+async def test_update_needs_a_session(client, product):
+    assert (await client.put(f"/api/products/{product.id}", json=NEW_PRODUCT)).status_code == 401
+
+
+async def test_update_changes_the_product_and_clears_the_cache(signed_in, product, redis):
+    await signed_in.get("/api/products")
+
+    response = await signed_in.put(f"/api/products/{product.id}", json=NEW_PRODUCT)
+
+    assert response.status_code == 200
+    assert not await redis.exists(CACHE_KEY)
+    assert [p["name"] for p in (await signed_in.get("/api/products")).json()] == ["Phone"]
+
+
+async def test_update_of_a_missing_product_is_not_found(signed_in):
+    assert (await signed_in.put("/api/products/missing", json=NEW_PRODUCT)).status_code == 404
+
+
+async def test_delete_needs_a_session(client, product):
+    assert (await client.delete(f"/api/products/{product.id}")).status_code == 401
+
+
+async def test_delete_removes_the_product_and_clears_the_cache(signed_in, product, redis):
+    await signed_in.get("/api/products")
+
+    response = await signed_in.delete(f"/api/products/{product.id}")
+
+    assert response.status_code == 204
+    assert not await redis.exists(CACHE_KEY)
+    assert (await signed_in.get("/api/products")).json() == []
+
+
+async def test_delete_keeps_a_product_with_orders(signed_in, product):
+    await signed_in.post("/api/orders", json={"product_id": product.id})
+
+    response = await signed_in.delete(f"/api/products/{product.id}")
+
+    assert response.status_code == 409
+    assert len((await signed_in.get("/api/products")).json()) == 1

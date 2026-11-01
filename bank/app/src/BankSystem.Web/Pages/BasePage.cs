@@ -37,6 +37,18 @@ namespace BankSystem.Web.Pages
             return this.Challenge(properties, KycServiceCollectionExtensions.Scheme);
         }
 
+        /// <summary>Runs a Keycloak form, which comes back with new tokens for the session.</summary>
+        protected IActionResult RunKycAction(string action, string returnUrl)
+        {
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = this.Url.Page("/Account/Callback", new { returnUrl })
+            };
+            properties.Items[KycServiceCollectionExtensions.ActionKey] = action;
+
+            return this.Challenge(properties, KycServiceCollectionExtensions.Scheme);
+        }
+
         protected void ShowErrorMessage(string message)
         {
             this.TempData[GlobalConstants.TempDataErrorMessageKey] = message;

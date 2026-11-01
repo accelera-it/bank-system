@@ -13,6 +13,9 @@ namespace BankSystem.Web.Infrastructure.Extensions
         public const string Scheme = "kyc";
         public const string PromptKey = "prompt";
         public const string RegisterPrompt = "create";
+        public const string ActionKey = "kc_action";
+        public const string UpdateProfileAction = "UPDATE_PROFILE";
+        public const string UpdatePasswordAction = "UPDATE_PASSWORD";
 
         private const string ClientSecretKey = "BANK_CLIENT_SECRET";
 
@@ -48,6 +51,11 @@ namespace BankSystem.Web.Infrastructure.Extensions
                         if (context.Properties.Items.TryGetValue(PromptKey, out var prompt))
                         {
                             context.ProtocolMessage.Prompt = prompt;
+                        }
+
+                        if (context.Properties.Items.TryGetValue(ActionKey, out var action))
+                        {
+                            context.ProtocolMessage.SetParameter(ActionKey, action);
                         }
 
                         return Task.CompletedTask;

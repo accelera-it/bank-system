@@ -25,6 +25,8 @@ export const api = {
   },
   products: () => signedIn<Product[]>("GET", "/products"),
   createProduct: (product: ProductInput) => signedIn<Product>("POST", "/products", product),
+  updateProduct: (id: string, product: ProductInput) => signedIn<Product>("PUT", `/products/${id}`, product),
+  deleteProduct: (id: string) => signedIn<null>("DELETE", `/products/${id}`),
   orders: () => signedIn<Order[]>("GET", "/orders"),
   directPayment: (orderId: string) => signedIn<DirectPayment>("POST", `/orders/${orderId}/direct-payment`),
   cardPayment: (orderId: string, card: Card) => signedIn<Order>("POST", `/orders/${orderId}/card-payment`, card),

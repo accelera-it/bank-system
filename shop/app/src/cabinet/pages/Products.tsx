@@ -1,5 +1,5 @@
-import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
-import { App, Button, Card, Flex, Form, Input, InputNumber, Modal, Table, type TableColumnsType, Upload } from "antd";
+import { DeleteOutlined, EditOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
+import { App, Button, Card, Flex, Form, Input, InputNumber, Modal, Popconfirm, Table, type TableColumnsType, Upload } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
 import type { Product, ProductInput } from "../../types";
@@ -40,16 +40,22 @@ function ImageUpload({ value, onChange }: { value?: string; onChange?: (url: str
   );
 }
 
-function CreateProductModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+interface ModalProps {
+  product?: Product;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+function ProductModal({ product, onClose, onSaved }: ModalProps) {
   const [form] = Form.useForm<ProductInput>();
   const [busy, setBusy] = useState(false);
   const { message } = App.useApp();
 
-  async function create(product: ProductInput) {
+  async function save(values: ProductInput) {
     setBusy(true);
     try {
-      await api.createProduct(product);
-      onCreated();
+      await (product ? api.updateProduct(product.id, values) : api.createProduct(values));
+      onSaved();
     } catch (failure) {
       message.error(errorMessage(failure));
       setBusy(false);
@@ -57,8 +63,8 @@ function CreateProductModal({ onClose, onCreated }: { onClose: () => void; onCre
   }
 
   return (
-    <Modal open title="Create product" okText="Create" confirmLoading={busy} onOk={form.submit} onCancel={onClose} destroyOnHidden>
-      <Form form={form} layout="vertical" requiredMark={false} onFinish={create}>
+    <Modal open title={product ? "Edit product" : "Create product"} okText={product ? "Save" : "Create"} confirmLoading={busy} onOk={form.submit} onCancel={onClose} destroyOnHidden>
+      <Form form={form} layout="vertical" requiredMark={false} initialValues={product} onFinish={save}>
         <Form.Item name="name" label="Name" rules={[{ required: true, whitespace: true, max: 200, message: "Enter a name" }]}>
           <Input maxLength={200} placeholder="e.g. Wireless headphones" />
         </Form.Item>
@@ -76,7 +82,7 @@ function CreateProductModal({ onClose, onCreated }: { onClose: () => void; onCre
 export default function Products() {
   const { message } = App.useApp();
   const [products, setProducts] = useState<Product[] | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<Product | "new" | null>(null);
 
   const load = useCallback(() => {
     api
@@ -90,6 +96,16 @@ export default function Products() {
 
   useEffect(load, [load]);
 
+  async function remove(product: Product) {
+    try {
+      await api.deleteProduct(product.id);
+      message.success("Product deleted");
+      load();
+    } catch (failure) {
+      message.error(errorMessage(failure));
+    }
+  }
+
   const columns: TableColumnsType<Product> = [
     {
       title: "",
@@ -99,13 +115,29 @@ export default function Products() {
     },
     { title: "Name", dataIndex: "name" },
     { title: "Price", dataIndex: "price", render: formatPrice },
+    {
+      title: "",
+      align: "right",
+      render: (_, product) => (
+        <Flex justify="flex-end" gap={8}>
+          <Button icon={<EditOutlined />} onClick={() => setEditing(product)}>
+            Edit
+          </Button>
+          <Popconfirm title="Delete this product?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => remove(product)}>
+            <Button danger icon={<DeleteOutlined />}>
+              Delete
+            </Button>
+          </Popconfirm>
+        </Flex>
+      ),
+    },
   ];
 
   return (
     <Card
       title="Products"
       extra={
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreating(true)}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing("new")}>
           Create product
         </Button>
       }
@@ -119,12 +151,13 @@ export default function Products() {
         scroll={{ x: "max-content" }}
         locale={{ emptyText: "There are no products yet" }}
       />
-      {creating && (
-        <CreateProductModal
-          onClose={() => setCreating(false)}
-          onCreated={() => {
-            setCreating(false);
-            message.success("Product created");
+      {editing && (
+        <ProductModal
+          product={editing === "new" ? undefined : editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            message.success("Product saved");
             load();
           }}
         />

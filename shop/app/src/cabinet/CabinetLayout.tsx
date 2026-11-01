@@ -4,9 +4,9 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import type { User } from "../types";
 
-// Profile and password live in Keycloak
-const EDIT_PROFILE = "/api/auth/account";
-const CHANGE_PASSWORD = "/api/auth/account?password=true";
+// Keycloak's forms run in a popup, which comes back with new tokens and reloads the cabinet
+const EDIT_PROFILE = "/api/auth/login?action=UPDATE_PROFILE&next=/updated.html";
+const CHANGE_PASSWORD = "/api/auth/login?action=UPDATE_PASSWORD&next=/updated.html";
 
 const ITEMS = [
   {
@@ -57,7 +57,7 @@ export default function CabinetLayout({ user, onLogout }: Props) {
             mode="inline"
             selectedKeys={[location.pathname]}
             items={ITEMS}
-            onClick={({ key }) => (key.startsWith("/api/") ? window.location.assign(key) : navigate(key))}
+            onClick={({ key }) => (key.startsWith("/api/") ? window.open(key, "kyc", "popup,width=560,height=760") : navigate(key))}
             style={{ borderInlineEnd: 0, flex: 1 }}
           />
           <Flex vertical gap={12} style={{ padding: 16 }}>

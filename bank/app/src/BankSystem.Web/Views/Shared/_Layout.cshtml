@@ -1,5 +1,4 @@
 @inject Microsoft.AspNetCore.Identity.UserManager<BankSystem.Models.BankUser> Users
-@inject Microsoft.Extensions.Options.IOptions<BankSystem.Common.Configuration.KycConfiguration> Kyc
 @{
     var authenticated = User.Identity.IsAuthenticated;
     var routeArea = ViewContext.RouteData.Values["area"] as string ?? string.Empty;
@@ -7,8 +6,6 @@
     var routeAction = ViewContext.RouteData.Values["action"] as string;
     var routePage = ViewContext.RouteData.Values["page"] as string ?? string.Empty;
     var fullName = authenticated ? (await Users.GetUserAsync(User))?.FullName : null;
-    var account = $"{Kyc.Value.PublicAuthority}/account";
-    var referrer = $"?referrer={Kyc.Value.ClientId}&referrer_uri={Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/")}";
     var IsTransferCreation = routePage == "/MoneyTransfers"
         || (routeArea == "MoneyTransfers" && routeController != "Home");
 
@@ -79,10 +76,10 @@
                 }
 
                 <div class="app-nav-heading">Settings</div>
-                <a class="app-nav-link" href="@account/@referrer">
+                <a class="app-nav-link" asp-area="" asp-page="/Account/Profile" asp-route-returnUrl="/updated.html" onclick="window.open(this.href, 'kyc', 'popup,width=560,height=760'); return false;">
                     <i class="fas fa-user-edit" aria-hidden="true"></i> Edit profile
                 </a>
-                <a class="app-nav-link" href="@account/account-security/signing-in@(referrer)">
+                <a class="app-nav-link" asp-area="" asp-page="/Account/Password" asp-route-returnUrl="/updated.html" onclick="window.open(this.href, 'kyc', 'popup,width=560,height=760'); return false;">
                     <i class="fas fa-key" aria-hidden="true"></i> Change password
                 </a>
             </nav>

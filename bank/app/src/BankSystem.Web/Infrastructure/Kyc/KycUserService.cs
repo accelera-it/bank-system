@@ -17,6 +17,12 @@ namespace BankSystem.Web.Infrastructure.Kyc
             var user = await this.userManager.FindByEmailAsync(email);
             if (user != null)
             {
+                if (!string.IsNullOrWhiteSpace(fullName) && user.FullName != fullName)
+                {
+                    user.FullName = fullName;
+                    await this.userManager.UpdateAsync(user);
+                }
+
                 return user;
             }
 

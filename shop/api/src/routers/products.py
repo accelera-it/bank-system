@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.cache import get_redis
 from src.config import get_settings
 from src.db import get_db
-from src.models import Product, User
+from src.models import Order, Product, User
 from src.schemas import ImageOut, ProductIn, ProductOut
 from src.security import current_user
 from src.storage import Storage, get_storage
@@ -96,3 +96,39 @@ async def create_product(
     await db.commit()
     await redis.delete(CACHE_KEY)
     return product
+
+
+@router.put("/{product_id}", response_model=ProductOut)
+async def update_product(
+    product_id: str,
+    model: ProductIn,
+    _: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> Product:
+    product = await db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found")
+
+    product.name, product.price, product.image_url = model.name, model.price, model.image_url
+    await db.commit()
+    await redis.delete(CACHE_KEY)
+    return product
+
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product(
+    product_id: str,
+    _: User = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> None:
+    product = await db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found")
+    if await db.scalar(select(Order.id).where(Order.product_id == product_id).limit(1)):
+        raise HTTPException(status.HTTP_409_CONFLICT, "This product has orders, so it cannot be deleted")
+
+    await db.delete(product)
+    await db.commit()
+    await redis.delete(CACHE_KEY)

@@ -25,7 +25,7 @@ test("login with demo user goes to keycloak and comes back", async ({ page }) =>
   await fillLogin(page, "demo@abs.uz");
 
   await expect(page).toHaveURL("/cabinet/dashboard");
-  await expect(page.getByText("Demo User")).toBeVisible();
+  await expect(page.getByText("ABS Admin")).toBeVisible();
 });
 
 test("wrong password shows the keycloak error", async ({ page }) => {

@@ -3,6 +3,7 @@ import hashlib
 import json
 import secrets
 import time
+from typing import Literal
 from urllib.parse import urlencode
 
 import httpx
@@ -48,6 +49,7 @@ async def login(
     next: str | None = None,
     buy: str | None = None,
     register: bool = False,
+    action: Literal["UPDATE_PROFILE", "UPDATE_PASSWORD"] | None = None,
     redis: Redis = Depends(get_redis),
     settings: Settings = Depends(get_settings),
 ) -> RedirectResponse:
@@ -73,6 +75,8 @@ async def login(
     }
     if register:
         query["prompt"] = "create"
+    if action:
+        query["kc_action"] = action
 
     url = f"{settings.kyc_public_authority}/protocol/openid-connect/auth?{urlencode(query)}"
     return RedirectResponse(url, status.HTTP_302_FOUND)
@@ -82,6 +86,7 @@ async def login(
 async def callback(
     state: str = Query(),
     code: str | None = None,
+    token: str | None = Cookie(default=None, alias=COOKIE_NAME),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     settings: Settings = Depends(get_settings),
@@ -135,6 +140,7 @@ async def callback(
     await db.commit()
 
     redirect = RedirectResponse(settings.site_url + target.lstrip("/"), status.HTTP_303_SEE_OTHER)
+    await end_session(redirect, redis, token)
     await start_session(redirect, redis, user.id, id_token)
     return redirect
 
@@ -158,11 +164,3 @@ async def logout(
 @router.get("/me", response_model=UserOut)
 async def me(user: User = Depends(current_user)) -> User:
     return user
-
-
-@router.get("/account", include_in_schema=False)
-async def account(password: bool = False, settings: Settings = Depends(get_settings)) -> RedirectResponse:
-    """Password and profile live in Keycloak, whose account page links back to the cabinet."""
-    page = "account-security/signing-in" if password else ""
-    query = urlencode({"referrer": settings.kyc_client_id, "referrer_uri": settings.site_url + "cabinet"})
-    return RedirectResponse(f"{settings.kyc_public_authority}/account/{page}?{query}", status.HTTP_302_FOUND)

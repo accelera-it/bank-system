@@ -63,17 +63,22 @@ async def test_second_login_takes_the_full_name_from_keycloak(signed_in, kyc):
     assert (await signed_in.get("/api/auth/me")).json()["name"] == "Edited In Keycloak"
 
 
-async def test_account_goes_to_the_keycloak_account_page(client):
-    response = await client.get("/api/auth/account")
-
-    assert response.status_code == 302
-    assert response.headers["location"].startswith(f"{KYC}/account/?referrer=shop")
+async def test_profile_and_password_forms_run_at_keycloak(client):
+    for action in ("UPDATE_PROFILE", "UPDATE_PASSWORD"):
+        assert query_of(await client.get(f"/api/auth/login?action={action}"))["kc_action"] == action
 
 
-async def test_change_password_goes_to_the_keycloak_security_page(client):
-    response = await client.get("/api/auth/account?password=true")
+async def test_unknown_action_is_refused(client):
+    assert (await client.get("/api/auth/login?action=DELETE_ACCOUNT")).status_code == 422
 
-    assert response.headers["location"].startswith(f"{KYC}/account/account-security/signing-in?referrer=shop")
+
+async def test_coming_back_replaces_the_session(signed_in, kyc, redis):
+    keys = await redis.dbsize()
+
+    await sign_in(signed_in, kyc, query="?action=UPDATE_PROFILE&next=/cabinet", name="New Name")
+
+    assert (await signed_in.get("/api/auth/me")).json()["name"] == "New Name"
+    assert await redis.dbsize() == keys
 
 
 async def test_state_works_only_once(client, kyc):

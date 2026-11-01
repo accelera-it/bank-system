@@ -5,7 +5,7 @@ Sample online shop, DemoShop, that accepts card and direct payments through Cent
 | Component | Description
 | - | -
 | **Shop API** | FastAPI middleware: accounts, products, orders and the calls to CentralApi
-| **Sign-in** | Login, register, Edit profile and Change password open Keycloak, see [kyc/README.md](../kyc/README.md)
+| **Sign-in** | Login, register, Edit profile and Change password run at Keycloak and come back, see [kyc/README.md](../kyc/README.md)
 | **UI** | One React, TypeScript and Vite app: the public shop in Tailwind CSS and, under `/cabinet`, the customer cabinet in Ant Design
 
 ## Structure

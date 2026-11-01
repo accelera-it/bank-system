@@ -22,8 +22,7 @@
       "directAccessGrantsEnabled": false,
       "baseUrl": "http://localhost:8081/",
       "redirectUris": [
-        "http://localhost:8081/signin-oidc",
-        "http://localhost:8081/"
+        "http://localhost:8081/signin-oidc"
       ],
       "webOrigins": [],
       "attributes": {
@@ -41,8 +40,7 @@
       "directAccessGrantsEnabled": false,
       "baseUrl": "http://localhost:8082/",
       "redirectUris": [
-        "http://localhost:8082/api/auth/callback",
-        "http://localhost:8082/cabinet"
+        "http://localhost:8082/api/auth/callback"
       ],
       "webOrigins": [],
       "attributes": {
@@ -56,7 +54,7 @@
       "email": "demo@abs.uz",
       "emailVerified": true,
       "enabled": true,
-      "firstName": "Demo User",
+      "firstName": "ABS Admin",
       "credentials": [
         {
           "type": "password",

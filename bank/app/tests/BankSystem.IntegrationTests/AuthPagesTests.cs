@@ -92,14 +92,15 @@ namespace BankSystem.IntegrationTests
         }
 
         [Fact]
-        public async Task KycUser_KnownEmail_ShouldKeepTheBankUser()
+        public async Task KycUser_KnownEmail_ShouldTakeTheNameFromKeycloak()
         {
             using var scope = this.factory.Services.CreateScope();
             var kycUsers = scope.ServiceProvider.GetRequiredService<IKycUserService>();
+            await kycUsers.FindOrCreateAsync("renamed@abs.uz", "Old Name");
 
-            var user = await kycUsers.FindOrCreateAsync(BankWebFactory.SeededUserName, "Someone Else");
+            var user = await kycUsers.FindOrCreateAsync("renamed@abs.uz", "New Name");
 
-            user.FullName.Should().Be(BankWebFactory.SeededUserFullName);
+            user.FullName.Should().Be("New Name");
         }
 
         [Fact]
@@ -111,13 +112,30 @@ namespace BankSystem.IntegrationTests
 
             var html = await client.GetStringAsync("/");
 
-            html.Should().Contain("href=\"http://kyc.test/realms/abs/account/?referrer=bank")
-                .And.Contain("href=\"http://kyc.test/realms/abs/account/account-security/signing-in?referrer=bank")
+            html.Should().Contain("href=\"/account/profile?returnUrl=%2Fupdated.html\"")
+                .And.Contain("href=\"/account/password?returnUrl=%2Fupdated.html\"")
                 .And.Contain("Edit profile")
                 .And.Contain("Change password")
                 .And.Contain(BankWebFactory.SeededUserFullName)
                 .And.Contain("btn btn-danger btn-block")
                 .And.NotContain("app-user-email");
+        }
+
+        [Theory]
+        [InlineData("/account/profile", "kc_action=UPDATE_PROFILE")]
+        [InlineData("/account/password", "kc_action=UPDATE_PASSWORD")]
+        public async Task KeycloakForms_ShouldComeBackThroughTheCallback(string url, string action)
+        {
+            var account = await this.factory.GetSeededAccountAsync();
+            var client = this.Client();
+            TestAuthHandler.SignIn(client, BankWebFactory.SeededUserName, account.UserId);
+
+            var response = await client.GetAsync(url);
+
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should()
+                .StartWith("http://kyc.test/realms/abs/auth")
+                .And.Contain(action);
         }
 
         [Fact]

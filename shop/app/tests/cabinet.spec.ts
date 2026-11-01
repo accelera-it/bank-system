@@ -48,20 +48,65 @@ test("sidebar shows the full name as plain text", async ({ signedIn: page }) => 
   await expect(sidebar.getByRole("link", { name: "Test User" })).toHaveCount(0);
 });
 
-test("edit profile opens keycloak with phone and address", async ({ signedIn: page }) => {
+test("edit profile opens a keycloak window and updates the cabinet", async ({ signedIn: page }) => {
+  const opened = page.waitForEvent("popup");
   await page.getByRole("menuitem", { name: "Edit profile" }).click();
+  const popup = await opened;
 
-  await expect(page).toHaveURL(/localhost:8080\/realms\/abs\/account/);
-  await expect(page.getByLabel("Full Name")).toHaveValue("Test User");
-  await expect(page.locator("#phone")).toHaveAttribute("type", "tel");
-  await expect(page.locator("textarea#address")).toBeVisible();
-  await expect(page.locator("#email")).toBeDisabled();
+  await expect(popup).toHaveURL(/localhost:8080\/realms\/abs/);
+  await expect(popup.locator("#phone")).toHaveAttribute("type", "tel");
+  await expect(popup.locator("textarea#address")).toBeVisible();
+  await popup.locator("#firstName").fill("New Name");
+  await popup.locator("form [type=submit]").first().click();
+
+  await popup.waitForEvent("close");
+  await expect(page.getByRole("complementary").getByText("New Name")).toBeVisible();
 });
 
-test("change password opens keycloak", async ({ signedIn: page }) => {
+test("change password opens a keycloak window and comes back", async ({ signedIn: page }) => {
+  const opened = page.waitForEvent("popup");
   await page.getByRole("menuitem", { name: "Change password" }).click();
+  const popup = await opened;
 
-  await expect(page).toHaveURL(/localhost:8080\/realms\/abs\/account\/account-security\/signing-in/);
+  await popup.locator("#password-new").fill("New-Passw0rd");
+  await popup.locator("#password-confirm").fill("New-Passw0rd");
+  await popup.locator("form [type=submit]").first().click();
+
+  await popup.waitForEvent("close");
+  await expect(page).toHaveURL("/cabinet/dashboard");
+});
+
+test("a product can be edited and deleted", async ({ signedIn: page }) => {
+  const name = `Keyboard ${randomUUID().slice(0, 8)}`;
+  await page.getByRole("menuitem", { name: "Products" }).click();
+  await page.getByRole("button", { name: "Create product" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill(name);
+  await dialog.getByLabel("Price").fill("1500");
+  await dialog.locator("input[type=file]").setInputFiles({ name: "keyboard.png", mimeType: "image/png", buffer: PNG });
+  await expect(dialog.locator("img")).toBeVisible();
+  await dialog.getByRole("button", { name: "Create" }).click();
+
+  const row = (text: string) => page.getByRole("row").filter({ hasText: text });
+  await row(name).getByRole("button", { name: "Edit" }).click();
+  await dialog.getByLabel("Name").fill(`${name} v2`);
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(row(`${name} v2`)).toBeVisible();
+
+  await row(`${name} v2`).getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("tooltip").getByRole("button", { name: "Delete" }).click();
+  await expect(row(name)).toHaveCount(0);
+});
+
+test("a product with orders stays", async ({ pendingOrder: page }) => {
+  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("menuitem", { name: "Products" }).click();
+
+  await page.getByRole("row").filter({ hasText: LAPTOP }).getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("tooltip").getByRole("button", { name: "Delete" }).click();
+
+  await expect(page.getByText("This product has orders")).toBeVisible();
+  await expect(page.getByRole("cell", { name: LAPTOP })).toBeVisible();
 });
 
 test("brand opens the site", async ({ signedIn: page }) => {

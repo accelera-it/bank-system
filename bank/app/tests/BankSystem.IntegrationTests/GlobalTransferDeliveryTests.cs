@@ -24,6 +24,7 @@ namespace BankSystem.IntegrationTests
     using Services.Models.MoneyTransfer;
     using Services.MoneyTransfer;
     using Web.Infrastructure.Helpers.GlobalTransferHelpers;
+    using Web.Infrastructure.Messaging;
     using Web.Infrastructure.Helpers.GlobalTransferHelpers.Models;
     using Xunit;
 
@@ -32,6 +33,7 @@ namespace BankSystem.IntegrationTests
         private const string Url = "/administration/pendingtransfers";
 
         private readonly BankWebFactory factory;
+        private readonly Mock<IPendingTransferQueue> queue = new Mock<IPendingTransferQueue>();
 
         public GlobalTransferDeliveryTests(BankWebFactory factory) => this.factory = factory;
 
@@ -238,6 +240,38 @@ namespace BankSystem.IntegrationTests
             this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
         }
 
+        [Fact]
+        public async Task Transfer_WhenOutcomeIsUnknown_ShouldEnqueueItAndNotifyWhenSettled()
+        {
+            this.factory.CentralApi.ResponseStatus = HttpStatusCode.BadGateway;
+            var moneyTransfers = new Mock<IMoneyTransferService>();
+            moneyTransfers
+                .Setup(s => s.WithdrawAsync(It.IsAny<MoneyTransferCreateServiceModel>(), It.IsAny<string>()))
+                .ReturnsAsync(MoneyTransferResult.Succeeded);
+            moneyTransfers
+                .Setup(s => s.GetPendingTransferAsync("1", It.IsAny<int>()))
+                .ReturnsAsync(new PendingTransferServiceModel
+                {
+                    ReferenceNumber = "1",
+                    Payload = JsonConvert.SerializeObject(new CentralApiSubmitTransferDto())
+                });
+            moneyTransfers.Setup(s => s.AddPendingTransferAttemptAsync("1")).ReturnsAsync(1);
+            var helper = this.CreateHelper(moneyTransfers, new Mock<ILogger<GlobalTransferHelper>>());
+
+            (await helper.TransferMoneyAsync(Transfer("source", 10))).Should().Be(GlobalTransferResult.Pending);
+            this.queue.Verify(q => q.EnqueueAsync(It.IsAny<string>()), Times.Once);
+
+            (await helper.DeliverPendingTransferAsync("1")).Should().BeTrue();
+            this.queue.Verify(q => q.NotifySettledAsync(It.IsAny<string>()), Times.Never);
+
+            this.factory.CentralApi.ResponseStatus = HttpStatusCode.OK;
+
+            (await helper.DeliverPendingTransferAsync("1")).Should().BeFalse();
+            moneyTransfers.Verify(s => s.CompletePendingTransferAsync("1"), Times.Once);
+            this.queue.Verify(q => q.NotifySettledAsync("1"), Times.Once);
+            (await helper.DeliverPendingTransferAsync("gone")).Should().BeFalse();
+        }
+
         private GlobalTransferHelper CreateHelper(
             Mock<IMoneyTransferService> moneyTransfers, Mock<ILogger<GlobalTransferHelper>> logger)
         {
@@ -251,7 +285,8 @@ namespace BankSystem.IntegrationTests
                 moneyTransfers.Object,
                 this.factory.Services.GetRequiredService<IOptions<BankConfiguration>>(),
                 this.factory.Services.GetRequiredService<IMapper>(),
-                logger.Object);
+                logger.Object,
+                this.queue.Object);
         }
     }
 }

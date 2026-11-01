@@ -41,7 +41,7 @@ Docker (each app has its own `Dockerfile`; the bank build context is `bank/`). S
 
 ```bash
 docker compose -f kyc/docker-compose.yml up -d --build    # Keycloak :8080
-docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> bank_gateway (Kong) -> bank_api, the rest -> bank_web (everything else internal only)
+docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> bank_gateway (Kong) -> bank_api, the rest -> bank_web (everything else, RabbitMQ included, internal only)
 docker compose -f shop/docker-compose.yml up -d --build   # ui :8082 with the cabinet at /cabinet (the rest internal only)
 docker compose -f bank/docker-compose.test.yml up --build --abort-on-container-failure   # four bank test projects on EF Core InMemory
 docker compose -f shop/docker-compose.test.yml up --build --abort-on-container-failure --exit-code-from shop_ui_tests shop_ui_tests   # Playwright, full stack with real Keycloak and a CentralApi stub
@@ -65,7 +65,7 @@ Keycloak's `abs` realm (`kyc/app/realms/abs-realm.json`) has the clients `bank` 
 `demo@abs.uz` / `123456` is the default user: Keycloak holds the password, BankSystem.Web seeds it with an account and the Administrator role, and DemoShop seeds it with a laptop product (`shop/api/src/seed.py`).
 
 ### Money
-Transfers are atomic, a global transfer with no clear answer holds the money and is delivered again, and a bank credits each reference number once; `bank/CLAUDE.md` has the rules. The shop follows such a payment by its reference number, see `shop/CLAUDE.md`.
+Transfers are atomic, a global transfer with no clear answer holds the money and is delivered again, and a bank credits each reference number once; `bank/CLAUDE.md` has the rules. RabbitMQ (`bank_rabbit`) carries the retries and tells the shop when a payment settles, but the database stays the record, so nothing is lost without it. The shop follows such a payment by its reference number, see `shop/CLAUDE.md`.
 
 ### Tests
 Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the shop has pytest in `shop/api/tests` and Playwright in `shop/app/tests`, and `kyc/app/tests` has JUnit tests against a real Keycloak on H2.

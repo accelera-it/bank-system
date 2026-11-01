@@ -13,5 +13,10 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
         /// A repeated delivery is safe: the receiving bank credits a reference number once.
         /// </summary>
         Task RetryPendingTransfersAsync(TimeSpan minimumAge);
+
+        /// <summary>
+        /// Delivers one pending transfer again and says whether it needs another try.
+        /// </summary>
+        Task<bool> DeliverPendingTransferAsync(string referenceNumber);
     }
 }

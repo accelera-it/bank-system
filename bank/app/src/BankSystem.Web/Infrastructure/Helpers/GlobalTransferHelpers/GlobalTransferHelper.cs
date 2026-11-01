@@ -9,6 +9,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
     using MapsterMapper;
     using Common.Configuration;
     using Common.Utils;
+    using Messaging;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Models;
@@ -44,14 +45,17 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
         private readonly IMoneyTransferService moneyTransferService;
         private readonly IMapper mapper;
         private readonly ILogger<GlobalTransferHelper> logger;
+        private readonly IPendingTransferQueue queue;
 
         public GlobalTransferHelper(
             IBankAccountService bankAccountService,
             IMoneyTransferService moneyTransferService,
             IOptions<BankConfiguration> bankConfigurationOptions,
             IMapper mapper,
-            ILogger<GlobalTransferHelper> logger)
+            ILogger<GlobalTransferHelper> logger,
+            IPendingTransferQueue queue)
         {
+            this.queue = queue;
             this.bankAccountService = bankAccountService;
             this.moneyTransferService = moneyTransferService;
             this.mapper = mapper;
@@ -113,6 +117,7 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
                     await this.FinishSafelyAsync(submitDto.ReferenceNumber, DeliveryOutcome.Refused);
                     return GlobalTransferResult.GeneralFailure;
                 default:
+                    await this.queue.EnqueueAsync(submitDto.ReferenceNumber);
                     return GlobalTransferResult.Pending;
             }
         }
@@ -142,22 +147,38 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
 
             foreach (var pending in pendingTransfers)
             {
-                var model = JsonConvert.DeserializeObject<CentralApiSubmitTransferDto>(pending.Payload);
-                var outcome = await this.ContactCentralApiAsync(model);
-                if (outcome != DeliveryOutcome.Unknown)
-                {
-                    await this.FinishSafelyAsync(pending.ReferenceNumber, outcome);
-                    continue;
-                }
-
-                var attempts = await this.moneyTransferService.AddPendingTransferAttemptAsync(pending.ReferenceNumber);
-                if (attempts >= MaxDeliveryAttempts)
-                {
-                    this.logger.LogCritical(
-                        "Transfer {ReferenceNumber} still has no answer after {Attempts} attempts: it needs a person",
-                        pending.ReferenceNumber, attempts);
-                }
+                await this.DeliverAsync(pending);
             }
+        }
+
+        public async Task<bool> DeliverPendingTransferAsync(string referenceNumber)
+        {
+            var pending = await this.moneyTransferService.GetPendingTransferAsync(referenceNumber, MaxDeliveryAttempts);
+
+            return pending != null && await this.DeliverAsync(pending);
+        }
+
+        private async Task<bool> DeliverAsync(PendingTransferServiceModel pending)
+        {
+            var model = JsonConvert.DeserializeObject<CentralApiSubmitTransferDto>(pending.Payload);
+            var outcome = await this.ContactCentralApiAsync(model);
+            if (outcome != DeliveryOutcome.Unknown)
+            {
+                await this.FinishSafelyAsync(pending.ReferenceNumber, outcome);
+                return false;
+            }
+
+            var attempts = await this.moneyTransferService.AddPendingTransferAttemptAsync(pending.ReferenceNumber);
+            if (attempts < MaxDeliveryAttempts)
+            {
+                return true;
+            }
+
+            this.logger.LogCritical(
+                "Transfer {ReferenceNumber} still has no answer after {Attempts} attempts: it needs a person",
+                pending.ReferenceNumber, attempts);
+
+            return false;
         }
 
         // The pending row survives a failure here, so the retry service finishes the job
@@ -172,7 +193,10 @@ namespace BankSystem.Web.Infrastructure.Helpers.GlobalTransferHelpers
                 else if (!await this.moneyTransferService.RefundPendingTransferAsync(referenceNumber))
                 {
                     this.logger.LogError("Refund of transfer {ReferenceNumber} will be retried", referenceNumber);
+                    return;
                 }
+
+                await this.queue.NotifySettledAsync(referenceNumber);
             }
             catch (Exception ex)
             {

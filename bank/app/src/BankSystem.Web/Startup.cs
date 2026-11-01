@@ -31,6 +31,7 @@ namespace BankSystem.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHostedService<PendingTransferRetryService>();
+            services.AddPendingTransferQueue(this.Configuration.GetConnectionString("RabbitMq"));
 
             services.AddHealthChecks();
 

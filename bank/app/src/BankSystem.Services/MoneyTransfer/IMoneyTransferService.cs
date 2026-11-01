@@ -49,6 +49,8 @@
         /// </summary>
         Task ResetPendingTransferAttemptsAsync(string referenceNumber);
 
+        Task<PendingTransferServiceModel> GetPendingTransferAsync(string referenceNumber, int maxAttempts);
+
         Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
             DateTime createdBefore, int maxAttempts, int count);
 

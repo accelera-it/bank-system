@@ -1,0 +1,89 @@
+{
+  "users": [
+    {
+      "name": "bank",
+      "password_hash": "Sk+58360+27jTl7sw+Wmn1PG99sleZk/xjzKDaZz1Qg5e+XE",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": [
+        "administrator"
+      ]
+    },
+    {
+      "name": "shop",
+      "password_hash": "SExtes3uBL6zQlpojTDcL0R5W1YyLNoEKdbE49atCFhwWC6o",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": []
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "bank",
+      "vhost": "/",
+      "configure": "^$",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "shop",
+      "vhost": "/",
+      "configure": "^$",
+      "write": "^$",
+      "read": "^shop\\.payments$"
+    }
+  ],
+  "queues": [
+    {
+      "name": "transfers.deliver",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "transfers.retry",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 30000,
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "transfers.deliver"
+      }
+    },
+    {
+      "name": "shop.payments",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000
+      }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "payments.settled",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "payments.settled",
+      "vhost": "/",
+      "destination": "shop.payments",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    }
+  ]
+}

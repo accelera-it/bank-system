@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     central_api_payment_url: str = "http://localhost:8080/pay"
     central_api_card_payments_url: str = "http://localhost:8080/api/CardPayments"
     reconcile_interval_seconds: int = 60
+    rabbit_url: str = ""
 
     destination_bank_name: str = ""
     destination_bank_country: str = ""

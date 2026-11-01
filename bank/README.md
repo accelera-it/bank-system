@@ -30,7 +30,8 @@ The bank and the hub that connects banks.
 | `app/tests/` | Unit and integration tests (xUnit) and their Dockerfile
 | `data/mssql/` | SQL Server image; each app creates its own database
 | `data/redis/` | Redis image, for the bank's login sessions and cache
-| `docker-compose.yml` | SQL Server, Redis, CentralApi, BankSystem.Web, Kong and nginx
+| `data/rabbitmq/` | RabbitMQ image with its queues and users, for pending transfers
+| `docker-compose.yml` | SQL Server, Redis, RabbitMQ, CentralApi, BankSystem.Web, Kong and nginx
 | `docker-compose.test.yml` | The four test projects, one service each
 | `bank.env` | Environment of `docker-compose.yml`
 

@@ -138,6 +138,18 @@
             return await this.SaveAsync(model, null, payload);
         }
 
+        public async Task<PendingTransferServiceModel> GetPendingTransferAsync(string referenceNumber, int maxAttempts)
+            => await this.Context
+                .PendingTransfers
+                .AsNoTracking()
+                .Where(p => p.ReferenceNumber == referenceNumber && p.Attempts < maxAttempts)
+                .Select(p => new PendingTransferServiceModel
+                {
+                    ReferenceNumber = p.ReferenceNumber,
+                    Payload = p.Payload
+                })
+                .FirstOrDefaultAsync();
+
         public async Task<IEnumerable<PendingTransferServiceModel>> GetPendingTransfersAsync(
             DateTime createdBefore, int maxAttempts, int count)
             => await this.Context

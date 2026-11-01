@@ -36,6 +36,20 @@ services:
     networks:
       - bank_lan
 
+  bank_rabbit:
+    build:
+      context: data/rabbitmq
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity" ]
+      interval: 10s
+      timeout: 10s
+      start_period: 20s
+      retries: 10
+    networks:
+      - bank_lan
+
   bank_api:
     build:
       context: .
@@ -60,6 +74,8 @@ services:
       bank_mssql:
         condition: service_healthy
       bank_redis:
+        condition: service_healthy
+      bank_rabbit:
         condition: service_healthy
       bank_gateway:
         condition: service_healthy
@@ -105,6 +121,7 @@ services:
 volumes:
   mssql_data:
   redis_data:
+  rabbit_data:
 
 networks:
   bank_lan:

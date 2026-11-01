@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-BankSystem is three independently deployed web apps; the first two are an ASP.NET Core (.NET 10) solution (`bank/BankSystem.sln`):
+BankSystem is three independently deployed stacks: the bank and its hub, a sample shop and a central sign-in. The first two apps below are an ASP.NET Core (.NET 10) solution (`bank/BankSystem.sln`):
 
 - **BankSystem.Web** (`bank/app/src/BankSystem.Web`) — the bank: MVC + Razor Pages, feature areas `Cards`, `MoneyTransfers`, `Administration`.
 - **CentralApi** (`bank/app/src/CentralApi`) — a hub that connects multiple BankSystem instances and routes global transfers, card payments and direct payments between them.
 - **DemoShop** (`shop/`) — sample merchant that pays via CentralApi (direct and card payments): Python FastAPI middleware (`shop/api`), and one React + TypeScript + Vite app (`shop/app`): the Tailwind CDN shop site and, under `/cabinet`, the Ant Design cabinet. It is not part of `BankSystem.sln`.
+- **Keycloak** (`kyc/`) — the central sign-in for the bank and the shop, on H2, with a provider in `kyc/app/provider` and the `abs` theme.
 
 In `bank`, `bank/proxy` (nginx) is the only public entry (:8081): `/api/` goes to `bank/app/src/CentralApi.Gateway` (Ocelot, routes in its `appsettings.json`), everything else to BankSystem.Web. Ocelot takes every call to CentralApi, including those from the bank and the shop, and CentralApi reaches the bank's API through it at `/bank/api/*`, which nginx does not publish. The gateway rate limits each client IP with ASP.NET's limiter (`RateLimit` in its `appsettings.json`, `Program.cs`), using the `X-Real-IP` header from nginx, so internal calls are not limited. Ocelot's own limiter is not used: it refuses callers without a client id header. `/pay` exists in both apps, so CentralApi's page is public as `/api/pay` and Ocelot sends `X-Forwarded-Prefix` so its links keep the prefix.
 
-Repo layout: `kyc/` holds Keycloak on H2 (`app/` with Java tests in `app/tests`, `proxy/`); it runs on its own at :8080 and neither app signs in through it yet. `bank/` holds the bank and CentralApi (`app/{src,core,tests}`, `proxy/` with nginx for the web app, `data/`), `shop/` holds DemoShop (`api/` with its package in `src/`, `app/`, `data/`). `data/` has one Dockerfile per backing service, and each side has its own compose files and env file; there is no compose file at the root. Demo tests sit next to their code: `shop/api/tests` (pytest) and `shop/app/tests` (Playwright in TypeScript). `README.md` is the overview; `bank/README.md` and `shop/README.md` cover setup, tests and configuration for each side. `docs/rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config. Setup and feature docs live in the GitHub wiki (https://github.com/banksystembg/BankSystem/wiki), linked from README.md.
+Repo layout: `kyc/` holds Keycloak on H2 (`app/` with Java tests in `app/tests`, `proxy/`). `bank/` holds the bank and CentralApi (`app/{src,core,tests}`, `proxy/` with nginx for the web app, `data/`), `shop/` holds DemoShop (`api/` with its package in `src/`, `app/`, `data/`). `data/` has one Dockerfile per backing service, and each side has its own compose files and env file; there is no compose file at the root. Shop tests sit next to their code: `shop/api/tests` (pytest) and `shop/app/tests` (Playwright in TypeScript). `README.md` is the overview; `kyc/README.md`, `bank/README.md` and `shop/README.md` cover setup, tests and configuration for each side, and `docs/` holds the architecture diagram, the technical overview and the slide, rendered from `docs/src`. `docs/rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config.
 
 ## Commands
 
@@ -40,7 +41,7 @@ Docker (each app has its own `Dockerfile`; the bank build context is `bank/`). S
 
 ```bash
 docker compose -f kyc/docker-compose.yml up -d --build    # Keycloak :8080
-docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> ocelot -> api, the rest -> web (everything else internal only)
+docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> bank_api (Ocelot) -> bank_central, the rest -> bank_web (everything else internal only)
 docker compose -f shop/docker-compose.yml up -d --build   # ui :8082 with the cabinet at /cabinet (the rest internal only)
 docker compose -f bank/docker-compose.test.yml up --build --abort-on-container-failure   # four bank test projects on EF Core InMemory
 docker compose -f shop/docker-compose.test.yml up --build --abort-on-container-failure --exit-code-from shop_ui_tests shop_ui_tests   # Playwright, full stack with real Keycloak and a CentralApi stub
@@ -50,13 +51,13 @@ docker compose -f bank/docker-compose.test.yml run --rm --build bank_api_unit   
 
 Every service has a `healthcheck` in its compose file (not in the Dockerfiles): the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
 
-Each stack loads its own env file through `env_file` (`bank/bank.env`, `shop/shop.env`), which holds connection strings, inter-service URLs, RSA keys and every other setting; `appsettings.json` only has logging defaults, and `ASPNETCORE_ENVIRONMENT=Development` is set in the Dockerfiles (`Section__Key`: `ConnectionStrings__BankSystem`, `__CentralApi`, `__Redis`; `shop.env` uses plain names such as `DATABASE_URL`). Apps listen on port 5000 inside the containers.
+Each stack loads its own env file through `env_file` (`kyc/kyc.env`, `bank/bank.env`, `shop/shop.env`; the client secrets in `kyc/client.env` go to all three), which holds connection strings, inter-service URLs, RSA keys and every other setting; `appsettings.json` only has logging defaults, except the gateway's routes and rate limit, and `ASPNETCORE_ENVIRONMENT=Development` is set in the Dockerfiles (`Section__Key`: `ConnectionStrings__BankSystem`, `__CentralApi`, `__Redis`; `shop.env` uses plain names such as `DATABASE_URL`). Apps listen on port 5000 inside the containers, and Keycloak on 8080. SQL Server runs as `linux/amd64`, under emulation on Apple Silicon.
 
 ## Architecture
 
 ### Layering
 BankSystem and CentralApi follow the same layered layout, split into separate projects per layer:
-`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Projects sit under `bank/app/src/`; what both apps share is in `bank/app/core/`. `bank/app/core/BankSystem.Common` is shared by BankSystem and CentralApi (config classes, crypto utils, Mapster setup).
+`*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Projects sit under `bank/app/src/`; what both apps share is in `bank/app/core/`. `BankSystem.Common` holds the config classes, crypto utils and Mapster setup.
 
 ### Look
 The bank, the shop and the Keycloak theme share the light palette of cbu.uz: gold `#ffc700` / `#e4a216` with dark text, deep gold `#8a5a00` for links and cream `#f6f5e7` behind the pages. There is no dark mode.
@@ -65,7 +66,7 @@ The bank, the shop and the Keycloak theme share the light palette of cbu.uz: gol
 Keycloak's `abs` realm (`kyc/app/realms/abs-realm.json`) has the clients `bank` and `shop`; their secrets are in `kyc/client.env`. The realm is imported on first start only. Neither app has login or register pages or keeps passwords: `/account/login` and `/account/register` in the bank and `/api/auth/login` in the shop send the browser to Keycloak (`prompt=create` for register), and it comes back to `/signin-oidc` + `/account/callback` and `/api/auth/callback`, which create the local user on first sign-in, by email. Each app keeps the refresh token with its session (`KycTokenRefresher` in the bank, `current_user` in the shop): expired tokens are renewed on the next request, a refused refresh ends the session, and an unreachable Keycloak leaves it alone. Logout ends the Keycloak session too, and the Edit profile and Change password menu items run Keycloak's forms in a popup through the login flow (`kc_action`); the password form asks for the current password, added by the `abs` theme and checked by the `ABS_UPDATE_PASSWORD` required action in `kyc/app/provider`, and neither app has a settings page. A saved form (`kc_action_status=success`) ends the app session and the Keycloak session and lands on `/relogin.html`, which sends the app behind to login; a cancelled form lands on `/updated.html`, which only reloads it. Both apps take the Full Name from Keycloak on each sign-in. A shop payment is accepted only if the bank user's Full Name equals `RECIPIENT_NAME` in `shop.env`, so the default user's name is `ABS Admin`. Browsers use `localhost:8080`; the apps use `kyc-proxy:5000` for tokens, which Keycloak's dynamic backchannel allows.
 
 ### MinIO (shop)
-Product images uploaded in the cabinet go to the `products` bucket through `shop/api/src/storage.py`. The bucket is private: `shop-api` serves images at `/api/products/images/{key}`. The image is `cgr.dev/chainguard/minio`, because the official one is not on the registries.
+Product images uploaded in the cabinet go to the `products` bucket through `shop/api/src/storage.py`. The bucket is private: `shop_api` serves images at `/api/products/images/{key}`. The image is `cgr.dev/chainguard/minio`, because the official one is not on the registries. A product with orders cannot be deleted.
 
 ### Redis
 `RedisServiceCollectionExtensions.AddRedisSessions` in BankSystem.Web puts `IDistributedCache`, login tickets (`RedisTicketStore`) and Data Protection keys in Redis, so the auth cookie only carries a key. Without `ConnectionStrings:Redis` (tests, plain `dotnet run`) the cache lives in memory. CentralApi has no logins or cache, so it does not use Redis.
@@ -92,6 +93,6 @@ All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`bank/a
 - `demo@abs.uz` / `123456` is the default user: Keycloak holds the password, BankSystem.Web seeds it with an account and the Administrator role, and DemoShop seeds it with a laptop product (`shop/api/src/seed.py`).
 
 ### Tests
-Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the demo has pytest in `shop/api/tests` and Playwright in `shop/app/tests`.
+Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the shop has pytest in `shop/api/tests` and Playwright in `shop/app/tests`, and `kyc/app/tests` has JUnit tests against a real Keycloak on H2.
 - Unit tests cover services and crypto/payment helpers on an EF Core InMemory DB.
 - Integration tests boot the real app with `WebApplicationFactory`, one instance and database per test class. Helpers are linked from `bank/app/tests/Shared`: `TestDatabase` (EF Core InMemory, so the seeders call `EnsureCreated` instead of migrating; real SQL Server is not covered by tests), `TestAuthHandler` (sign in through headers), `StubHttpServer` (loopback server for the next hop, because the apps create their own `HttpClient`) and `SecureRequestBuilder` (the inter-bank protocol).

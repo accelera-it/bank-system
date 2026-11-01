@@ -6,7 +6,7 @@ Sample online shop, DemoShop, that accepts card and direct payments through Cent
 | - | -
 | **Shop API** | FastAPI middleware: accounts, products, orders and the calls to CentralApi
 | **Sign-in** | Login, register, Edit profile and Change password run at Keycloak and come back, see [kyc/README.md](../kyc/README.md)
-| **UI** | One React, TypeScript and Vite app: the public shop in Tailwind CSS and, under `/cabinet`, the customer cabinet in Ant Design
+| **UI** | One React, TypeScript and Vite app: the public shop in Tailwind CSS and, under `/cabinet`, the customer cabinet in Ant Design, with a dashboard, orders and products
 
 ## Structure
 
@@ -34,7 +34,7 @@ docker compose -f shop/docker-compose.yml up -d --build
 | **Shop** | <http://localhost:8082>
 | **Cabinet** | <http://localhost:8082/cabinet>
 
-The API, PostgreSQL, Redis and MinIO are only reachable inside the Docker network. Passwords and RSA keys are in `shop.env`. A new database password needs a fresh volume, because PostgreSQL keeps the one it was created with.
+Products take images uploaded to MinIO, and a product with orders cannot be deleted. The API, PostgreSQL, Redis and MinIO are only reachable inside the Docker network. Passwords and RSA keys are in `shop.env`. A new database password needs a fresh volume, because PostgreSQL keeps the one it was created with.
 
 ### Tests
 

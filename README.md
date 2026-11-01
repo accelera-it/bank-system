@@ -1,6 +1,6 @@
 # BankSystem
 
-**BankSystem** is a web banking application built with ASP.NET Core. Users can open bank accounts, transfer money, issue payment cards and pay online with a card or directly from their account.
+**BankSystem** is a web banking application built with ASP.NET Core, with a sample shop and one central sign-in through Keycloak. Users can open bank accounts, transfer money, issue payment cards and pay online with a card or directly from their account.
 
 Several independent BankSystem instances can be connected through **CentralApi**, which securely routes transfers and payments between banks.
 
@@ -26,7 +26,7 @@ The bank and the shop have no login or register pages: users sign in at Keycloak
 | `bank/` | BankSystem.Web and CentralApi on SQL Server and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
 | `shop/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [shop/README.md](shop/README.md)
 
-Each has its own `data/`, compose files and env file. The .NET projects are in `bank/BankSystem.sln`.
+Each has its own compose files and env file. The .NET projects are in `bank/BankSystem.sln`. `docs/` holds the [architecture diagram](docs/infra.png), the [technical overview](docs/tech.pdf) and the [slide](docs/slide.pdf).
 
 ## Quick start
 

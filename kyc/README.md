@@ -6,7 +6,7 @@ Keycloak, the identity system for the bank and the shop. Both are clients of the
 
 | Path | Contents
 | - | -
-| `app/` | Keycloak image, the `abs` realm in `realms/abs-realm.json` and the `abs` login theme in `themes/`
+| `app/` | Keycloak image, the `abs` realm in `realms/abs-realm.json` and the `abs` login theme in `themes/`, in the colors of the bank and the shop
 | `proxy/` | nginx, the public entry
 | `app/provider/` | Keycloak provider that checks the current password in Change password
 | `app/setup.sh` | Makes the root user permanent, run once by the `kyc_setup` service

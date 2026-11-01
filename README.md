@@ -7,9 +7,9 @@ Several independent BankSystem instances can be connected through **CentralApi**
 ## How it works
 
 ```
-browser ──► bank_nginx :8081 ──► bank_web (BankSystem.Web)
+browser ──► bank_proxy :8081 ──► bank_web (BankSystem.Web)
                   │
-                  └─ /api ──► bank_api (Kong) ──► bank_central (CentralApi)
+                  └─ /api ──► bank_gateway (Kong) ──► bank_api (CentralApi)
                                    ▲    │
                         shop_api ──┘    └──► bank_web, other BankSystem instances
 

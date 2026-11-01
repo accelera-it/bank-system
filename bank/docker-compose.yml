@@ -36,7 +36,7 @@ services:
     networks:
       - bank_lan
 
-  bank_central:
+  bank_api:
     build:
       context: .
       dockerfile: app/src/CentralApi/Dockerfile
@@ -61,13 +61,13 @@ services:
         condition: service_healthy
       bank_redis:
         condition: service_healthy
-      bank_api:
+      bank_gateway:
         condition: service_healthy
     networks:
       - bank_lan
       - kyc_lan
 
-  bank_api:
+  bank_gateway:
     build:
       context: gateway
     healthcheck:
@@ -77,18 +77,18 @@ services:
       start_period: 10s
       retries: 5
     depends_on:
-      bank_central:
+      bank_api:
         condition: service_healthy
     networks:
       - bank_lan
 
-  bank_nginx:
+  bank_proxy:
     build:
       context: proxy
     ports:
-      - "8081:5000"
+      - "8081:80"
     healthcheck:
-      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health" ]
       interval: 10s
       timeout: 5s
       start_period: 10s
@@ -96,7 +96,7 @@ services:
     depends_on:
       bank_web:
         condition: service_healthy
-      bank_api:
+      bank_gateway:
         condition: service_healthy
     networks:
       - bank_lan

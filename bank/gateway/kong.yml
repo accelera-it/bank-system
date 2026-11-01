@@ -1,8 +1,6 @@
-_format_version: "3.0"
-
 services:
   - name: central-pages
-    url: http://bank_central:5000
+    url: http://bank_api:5000
     routes:
       - name: central-pages
         paths:
@@ -16,7 +14,7 @@ services:
                 uri: /$(uri_captures["page"])
 
   - name: central-api
-    url: http://bank_central:5000
+    url: http://bank_api:5000
     routes:
       - name: central-api
         paths:

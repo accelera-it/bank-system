@@ -52,7 +52,7 @@ CentralApi serves Swagger at <http://localhost:8081/api/swagger/index.html> in t
 
 Only nginx publishes a port. Above the limit in `proxy/nginx.conf`, public `/api/` calls get `429`. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
 
-The bank and the shop call CentralApi through Kong (`bank_api`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret. SQL Server runs as `linux/amd64`, so it is slower under emulation on Apple Silicon.
+The bank and the shop call CentralApi through Kong (`bank_gateway`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret. SQL Server runs as `linux/amd64`, so it is slower under emulation on Apple Silicon.
 
 ### Without Docker
 

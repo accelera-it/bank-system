@@ -41,7 +41,7 @@ Docker (each app has its own `Dockerfile`; the bank build context is `bank/`). S
 
 ```bash
 docker compose -f kyc/docker-compose.yml up -d --build    # Keycloak :8080
-docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> bank_api (Kong) -> bank_central, the rest -> bank_web (everything else internal only)
+docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> bank_gateway (Kong) -> bank_api, the rest -> bank_web (everything else internal only)
 docker compose -f shop/docker-compose.yml up -d --build   # ui :8082 with the cabinet at /cabinet (the rest internal only)
 docker compose -f bank/docker-compose.test.yml up --build --abort-on-container-failure   # four bank test projects on EF Core InMemory
 docker compose -f shop/docker-compose.test.yml up --build --abort-on-container-failure --exit-code-from shop_ui_tests shop_ui_tests   # Playwright, full stack with real Keycloak and a CentralApi stub

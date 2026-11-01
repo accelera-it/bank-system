@@ -38,7 +38,7 @@ test("menu opens every section", async ({ signedIn: page }) => {
 
   await page.getByRole("menuitem", { name: "Dashboard" }).click();
   await expect(page.getByText("Recent orders")).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: "Profile" })).toHaveCount(0);
+  await expect(page.getByRole("menuitem", { name: "Profile", exact: true })).toHaveCount(0);
 });
 
 test("sidebar shows the full name as plain text", async ({ signedIn: page }) => {
@@ -48,20 +48,20 @@ test("sidebar shows the full name as plain text", async ({ signedIn: page }) => 
   await expect(sidebar.getByRole("link", { name: "Test User" })).toHaveCount(0);
 });
 
-test("settings edit the profile", async ({ signedIn: page, email }) => {
-  await page.getByRole("menuitem", { name: "Settings" }).click();
-  await expect(page.getByLabel("Email")).toHaveValue(email);
-  await page.getByLabel("Full Name").fill("New Name");
-  await page.getByLabel("Phone").fill("+998 90 123 45 67");
-  await page.getByLabel("Address").fill("Tashkent");
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText("Profile saved")).toBeVisible();
-  await expect(page.getByRole("complementary").getByText("New Name")).toBeVisible();
+test("edit profile opens keycloak with phone and address", async ({ signedIn: page }) => {
+  await page.getByRole("menuitem", { name: "Edit profile" }).click();
 
-  await page.reload();
-  await expect(page.getByLabel("Full Name")).toHaveValue("New Name");
-  await expect(page.getByLabel("Phone")).toHaveValue("+998 90 123 45 67");
-  await expect(page.getByLabel("Address")).toHaveValue("Tashkent");
+  await expect(page).toHaveURL(/localhost:8080\/realms\/abs\/account/);
+  await expect(page.getByLabel("Full Name")).toHaveValue("Test User");
+  await expect(page.locator("#phone")).toHaveAttribute("type", "tel");
+  await expect(page.locator("textarea#address")).toBeVisible();
+  await expect(page.locator("#email")).toBeDisabled();
+});
+
+test("change password opens keycloak", async ({ signedIn: page }) => {
+  await page.getByRole("menuitem", { name: "Change password" }).click();
+
+  await expect(page).toHaveURL(/localhost:8080\/realms\/abs\/account\/account-security\/signing-in/);
 });
 
 test("brand opens the site", async ({ signedIn: page }) => {
@@ -71,17 +71,21 @@ test("brand opens the site", async ({ signedIn: page }) => {
   await expect(page.getByRole("link", { name: "Cabinet" })).toBeVisible();
 });
 
-test("dashboard counts orders", async ({ pendingOrder: page }) => {
+test("dashboard shows what is waiting and what was paid", async ({ pendingOrder: page }) => {
+  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("menuitem", { name: "Dashboard" }).click();
+  await expect(page.getByText("1 order is waiting for payment")).toBeVisible();
+
+  await page.getByRole("button", { name: "Pay now" }).click();
   await fillCard(page, "1234567890123456");
   await expect(page.getByText("Payment completed")).toBeVisible();
 
   await page.getByRole("menuitem", { name: "Dashboard" }).click();
-
   const stat = (title: string) => page.locator(".ant-statistic").filter({ hasText: title });
-  await expect(stat("Orders")).toContainText("1");
   await expect(stat("Paid")).toContainText("1");
   await expect(stat("Pending")).toContainText("0");
   await expect(stat("Total spent")).toContainText("8 900 000 UZS");
+  await expect(page.getByText("waiting for payment")).toHaveCount(0);
   await expect(page.getByRole("cell", { name: LAPTOP })).toBeVisible();
 });
 

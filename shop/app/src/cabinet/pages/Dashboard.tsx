@@ -1,7 +1,6 @@
-import { CheckCircleOutlined, ClockCircleOutlined, ShoppingCartOutlined, WalletOutlined } from "@ant-design/icons";
-import { App, Card, Col, Flex, Row, Statistic, Table, type TableColumnsType } from "antd";
+import { App, Alert, Button, Card, Col, Flex, Row, Statistic, Table, type TableColumnsType } from "antd";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import type { Order } from "../../types";
 import { api, formatPrice } from "../api";
@@ -17,6 +16,7 @@ const columns: TableColumnsType<Order> = [
 
 export default function Dashboard() {
   const { message } = App.useApp();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[] | null>(null);
 
   useEffect(() => {
@@ -29,23 +29,35 @@ export default function Dashboard() {
       });
   }, [message]);
 
-  const paid = orders?.filter((order) => order.payment_status === "completed") ?? [];
-  const spent = paid.reduce((total, order) => total + order.product.price, 0);
   const loading = orders === null;
+  const paid = orders?.filter((order) => order.payment_status === "completed") ?? [];
+  const pending = orders?.filter((order) => order.payment_status === "pending") ?? [];
+  const spent = paid.reduce((total, order) => total + order.product.price, 0);
   const stats = [
-    { title: "Orders", value: orders?.length ?? 0, icon: <ShoppingCartOutlined /> },
-    { title: "Paid", value: paid.length, icon: <CheckCircleOutlined /> },
-    { title: "Pending", value: (orders?.length ?? 0) - paid.length, icon: <ClockCircleOutlined /> },
-    { title: "Total spent", value: formatPrice(spent), icon: <WalletOutlined /> },
+    { title: "Total spent", value: formatPrice(spent) },
+    { title: "Paid", value: paid.length },
+    { title: "Pending", value: pending.length },
   ];
 
   return (
     <Flex vertical gap={24}>
+      {pending.length > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          title={`${pending.length} ${pending.length === 1 ? "order is" : "orders are"} waiting for payment`}
+          action={
+            <Button type="primary" size="small" onClick={() => navigate(`/cabinet/orders?pay=${pending[0].id}`)}>
+              Pay now
+            </Button>
+          }
+        />
+      )}
       <Row gutter={[16, 16]}>
-        {stats.map(({ title, value, icon }) => (
-          <Col key={title} xs={24} sm={12} xl={6}>
-            <Card>
-              <Statistic title={title} value={value} prefix={icon} loading={loading} />
+        {stats.map(({ title, value }) => (
+          <Col key={title} xs={24} sm={8}>
+            <Card style={{ height: "100%" }}>
+              <Statistic title={title} value={value} loading={loading} />
             </Card>
           </Col>
         ))}

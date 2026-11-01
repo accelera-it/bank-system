@@ -1,14 +1,35 @@
-import { AppstoreOutlined, DashboardOutlined, LogoutOutlined, SettingOutlined, ShoppingCartOutlined } from "@ant-design/icons";
+import { AppstoreOutlined, DashboardOutlined, EditOutlined, KeyOutlined, LogoutOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import { Button, Flex, Layout, Menu, Typography } from "antd";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import type { User } from "../types";
 
+// Profile and password live in Keycloak
+const EDIT_PROFILE = "/api/auth/account";
+const CHANGE_PASSWORD = "/api/auth/account?password=true";
+
 const ITEMS = [
-  { key: "/cabinet/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
-  { key: "/cabinet/orders", icon: <ShoppingCartOutlined />, label: "Orders" },
-  { key: "/cabinet/products", icon: <AppstoreOutlined />, label: "Products" },
-  { key: "/cabinet/settings", icon: <SettingOutlined />, label: "Settings" },
+  {
+    type: "group" as const,
+    label: "Overview",
+    children: [{ key: "/cabinet/dashboard", icon: <DashboardOutlined />, label: "Dashboard" }],
+  },
+  {
+    type: "group" as const,
+    label: "Shopping",
+    children: [
+      { key: "/cabinet/orders", icon: <ShoppingCartOutlined />, label: "Orders" },
+      { key: "/cabinet/products", icon: <AppstoreOutlined />, label: "Products" },
+    ],
+  },
+  {
+    type: "group" as const,
+    label: "Settings",
+    children: [
+      { key: EDIT_PROFILE, icon: <EditOutlined />, label: "Edit profile" },
+      { key: CHANGE_PASSWORD, icon: <KeyOutlined />, label: "Change password" },
+    ],
+  },
 ];
 
 interface Props {
@@ -36,7 +57,7 @@ export default function CabinetLayout({ user, onLogout }: Props) {
             mode="inline"
             selectedKeys={[location.pathname]}
             items={ITEMS}
-            onClick={({ key }) => navigate(key)}
+            onClick={({ key }) => (key.startsWith("/api/") ? window.location.assign(key) : navigate(key))}
             style={{ borderInlineEnd: 0, flex: 1 }}
           />
           <Flex vertical gap={12} style={{ padding: 16 }}>

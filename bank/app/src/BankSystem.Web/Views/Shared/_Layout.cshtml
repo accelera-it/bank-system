@@ -1,10 +1,14 @@
+@inject Microsoft.AspNetCore.Identity.UserManager<BankSystem.Models.BankUser> Users
+@inject Microsoft.Extensions.Options.IOptions<BankSystem.Common.Configuration.KycConfiguration> Kyc
 @{
     var authenticated = User.Identity.IsAuthenticated;
     var routeArea = ViewContext.RouteData.Values["area"] as string ?? string.Empty;
     var routeController = ViewContext.RouteData.Values["controller"] as string;
     var routeAction = ViewContext.RouteData.Values["action"] as string;
     var routePage = ViewContext.RouteData.Values["page"] as string ?? string.Empty;
-    var IsSettings = routePage.StartsWith("/Account/Settings");
+    var fullName = authenticated ? (await Users.GetUserAsync(User))?.FullName : null;
+    var account = $"{Kyc.Value.PublicAuthority}/account";
+    var referrer = $"?referrer={Kyc.Value.ClientId}&referrer_uri={Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/")}";
     var IsTransferCreation = routePage == "/MoneyTransfers"
         || (routeArea == "MoneyTransfers" && routeController != "Home");
 
@@ -42,16 +46,9 @@
             </a>
 
             <nav aria-label="Main">
+                <div class="app-nav-heading">Overview</div>
                 <a class="app-nav-link @NavClass("", "Home")" asp-area="" asp-controller="Home" asp-action="Index">
                     <i class="fas fa-th-large" aria-hidden="true"></i> Dashboard
-                </a>
-
-                <div class="app-nav-heading">Cards</div>
-                <a class="app-nav-link" data-card-modal="New card" asp-area="Cards" asp-controller="Cards" asp-action="Create">
-                    <i class="fas fa-plus" aria-hidden="true"></i> New card
-                </a>
-                <a class="app-nav-link @NavClass("Cards", "Cards", "Index")" asp-area="Cards" asp-controller="Cards" asp-action="Index">
-                    <i class="fas fa-credit-card" aria-hidden="true"></i> Your cards
                 </a>
 
                 <div class="app-nav-heading">Transfers</div>
@@ -60,6 +57,14 @@
                 </a>
                 <a class="app-nav-link @NavClass("MoneyTransfers", "Home")" asp-area="MoneyTransfers" asp-controller="Home" asp-action="All">
                     <i class="fas fa-history" aria-hidden="true"></i> History
+                </a>
+
+                <div class="app-nav-heading">Cards</div>
+                <a class="app-nav-link @NavClass("Cards", "Cards", "Index")" asp-area="Cards" asp-controller="Cards" asp-action="Index">
+                    <i class="fas fa-credit-card" aria-hidden="true"></i> Your cards
+                </a>
+                <a class="app-nav-link" data-card-modal="New card" asp-area="Cards" asp-controller="Cards" asp-action="Create">
+                    <i class="fas fa-plus" aria-hidden="true"></i> New card
                 </a>
 
                 @if (User.IsInRole(GlobalConstants.AdministratorRoleName))
@@ -75,12 +80,17 @@
             </nav>
 
             <div class="app-sidebar-footer">
-                <a class="app-nav-link @(IsSettings ? "active" : string.Empty)" asp-area="" asp-page="/Account/Settings/Index">
-                    <i class="fas fa-cog" aria-hidden="true"></i> Settings
+                <div class="app-nav-heading">Settings</div>
+                <a class="app-nav-link" href="@account/@referrer">
+                    <i class="fas fa-user-edit" aria-hidden="true"></i> Edit profile
                 </a>
+                <a class="app-nav-link" href="@account/account-security/signing-in@(referrer)">
+                    <i class="fas fa-key" aria-hidden="true"></i> Change password
+                </a>
+                <p class="text-white font-weight-bold text-truncate mt-3 mb-2 px-2">@fullName</p>
                 <form asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new {area = ""})">
-                    <button type="submit" class="app-nav-link">
-                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+                    <button type="submit" class="btn btn-danger btn-block">
+                        <i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i> Log out
                     </button>
                 </form>
             </div>
@@ -95,10 +105,6 @@
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
                 <h1 class="app-topbar-title">@ViewData["Title"]</h1>
-                <a class="app-user" asp-page="/Account/Settings/Index" title="Settings">
-                    <span class="app-user-email">@User.Identity.Name</span>
-                    <span class="app-user-avatar"><i class="fas fa-user" aria-hidden="true"></i></span>
-                </a>
             </div>
         }
 

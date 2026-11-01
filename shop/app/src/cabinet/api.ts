@@ -1,5 +1,5 @@
 import { ApiError, request } from "../api";
-import type { Card, DirectPayment, Order, Product, Profile, ProductInput, User } from "../types";
+import type { Card, DirectPayment, Order, Product, ProductInput, User } from "../types";
 
 export { errorMessage, formatPrice } from "../api";
 
@@ -18,7 +18,6 @@ async function signedIn<T>(method: string, path: string, body?: unknown): Promis
 export const api = {
   me: () => signedIn<User>("GET", "/auth/me"),
   logout: () => signedIn<{ url: string }>("POST", "/auth/logout"),
-  updateProfile: (profile: Profile) => signedIn<User>("PUT", "/auth/me", profile),
   uploadImage: (file: File) => {
     const form = new FormData();
     form.append("file", file);

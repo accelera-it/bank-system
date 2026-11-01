@@ -6,6 +6,7 @@ namespace BankSystem.IntegrationTests
     using System.Net.Http;
     using System.Threading.Tasks;
     using BankSystem.Models;
+    using BankSystem.Tests.Shared;
     using Common;
     using FluentAssertions;
     using Microsoft.AspNetCore.Identity;
@@ -99,6 +100,32 @@ namespace BankSystem.IntegrationTests
             var user = await kycUsers.FindOrCreateAsync(BankWebFactory.SeededUserName, "Someone Else");
 
             user.FullName.Should().Be(BankWebFactory.SeededUserFullName);
+        }
+
+        [Fact]
+        public async Task Menu_ShouldLinkToKeycloakProfileAndPassword()
+        {
+            var account = await this.factory.GetSeededAccountAsync();
+            var client = this.Client();
+            TestAuthHandler.SignIn(client, BankWebFactory.SeededUserName, account.UserId);
+
+            var html = await client.GetStringAsync("/");
+
+            html.Should().Contain("href=\"http://kyc.test/realms/abs/account/?referrer=bank")
+                .And.Contain("href=\"http://kyc.test/realms/abs/account/account-security/signing-in?referrer=bank")
+                .And.Contain("Edit profile")
+                .And.Contain("Change password")
+                .And.Contain(BankWebFactory.SeededUserFullName)
+                .And.Contain("btn btn-danger btn-block")
+                .And.NotContain("app-user-email");
+        }
+
+        [Fact]
+        public async Task OldSettingsPage_ShouldBeGone()
+        {
+            var response = await this.Client().GetAsync("/account/settings/index");
+
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }
 
         [Fact]

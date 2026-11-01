@@ -55,13 +55,25 @@ async def test_callback_finishes_the_purchase(client, kyc, product):
     assert len((await client.get("/api/orders")).json()) == 1
 
 
-async def test_second_login_keeps_the_user_and_the_profile(signed_in, kyc):
-    await signed_in.put("/api/auth/me", json={"name": "Edited"})
+async def test_second_login_takes_the_full_name_from_keycloak(signed_in, kyc):
     signed_in.cookies.clear()
 
-    await sign_in(signed_in, kyc, name="From Keycloak")
+    await sign_in(signed_in, kyc, name="Edited In Keycloak")
 
-    assert (await signed_in.get("/api/auth/me")).json()["name"] == "Edited"
+    assert (await signed_in.get("/api/auth/me")).json()["name"] == "Edited In Keycloak"
+
+
+async def test_account_goes_to_the_keycloak_account_page(client):
+    response = await client.get("/api/auth/account")
+
+    assert response.status_code == 302
+    assert response.headers["location"].startswith(f"{KYC}/account/?referrer=shop")
+
+
+async def test_change_password_goes_to_the_keycloak_security_page(client):
+    response = await client.get("/api/auth/account?password=true")
+
+    assert response.headers["location"].startswith(f"{KYC}/account/account-security/signing-in?referrer=shop")
 
 
 async def test_state_works_only_once(client, kyc):
@@ -136,26 +148,3 @@ async def test_session_cookie_is_set(signed_in):
 
 async def test_me_needs_a_session(client):
     assert (await client.get("/api/auth/me")).status_code == 401
-
-
-async def test_new_user_has_an_empty_profile(signed_in):
-    user = (await signed_in.get("/api/auth/me")).json()
-
-    assert (user["name"], user["phone"], user["address"]) == ("Buyer", "", "")
-
-
-async def test_profile_can_be_edited(signed_in):
-    profile = {"name": "New Name", "phone": "+998 90 123 45 67", "address": "Tashkent"}
-
-    response = await signed_in.put("/api/auth/me", json=profile)
-
-    assert response.status_code == 200
-    assert (await signed_in.get("/api/auth/me")).json() | profile == response.json()
-
-
-async def test_profile_needs_a_session(client):
-    assert (await client.put("/api/auth/me", json={"name": "A"})).status_code == 401
-
-
-async def test_profile_needs_a_name(signed_in):
-    assert (await signed_in.put("/api/auth/me", json={"name": ""})).status_code == 422

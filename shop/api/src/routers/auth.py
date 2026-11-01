@@ -17,7 +17,7 @@ from src.config import Settings, get_settings
 from src.db import get_db
 from src.models import Order, Product, User
 from src.routers.orders import get_http_client
-from src.schemas import LogoutOut, ProfileIn, UserOut
+from src.schemas import LogoutOut, UserOut
 from src.security import COOKIE_NAME, current_user, end_session, id_token_of, start_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -120,9 +120,10 @@ async def callback(
 
     user = await db.scalar(select(User).where(User.email == claims["email"]))
     if user is None:
-        user = User(email=claims["email"], name=claims.get("name", ""))
+        user = User(email=claims["email"])
         db.add(user)
-        await db.flush()
+    user.name = claims.get("name", "")
+    await db.flush()
 
     target = _local_path(login_data["next"])
     product_id = login_data["buy"]
@@ -159,13 +160,9 @@ async def me(user: User = Depends(current_user)) -> User:
     return user
 
 
-@router.put("/me", response_model=UserOut)
-async def update_profile(
-    profile: ProfileIn,
-    user: User = Depends(current_user),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    user = await db.merge(user)
-    user.name, user.phone, user.address = profile.name, profile.phone, profile.address
-    await db.commit()
-    return user
+@router.get("/account", include_in_schema=False)
+async def account(password: bool = False, settings: Settings = Depends(get_settings)) -> RedirectResponse:
+    """Password and profile live in Keycloak, whose account page links back to the cabinet."""
+    page = "account-security/signing-in" if password else ""
+    query = urlencode({"referrer": settings.kyc_client_id, "referrer_uri": settings.site_url + "cabinet"})
+    return RedirectResponse(f"{settings.kyc_public_authority}/account/{page}?{query}", status.HTTP_302_FOUND)

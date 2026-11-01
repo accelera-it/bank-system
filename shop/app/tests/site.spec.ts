@@ -74,6 +74,8 @@ test("register shows full name first and waits for the agreement", async ({ page
 
   const names = await page.locator("form input:visible").evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).name));
   expect(names.slice(0, 5)).toEqual(["firstName", "email", "password", "password-confirm", "termsAccepted"]);
+  await expect(page.locator("#phone")).toBeHidden();
+  await expect(page.locator("#address")).toBeHidden();
   const submit = page.locator("#kc-register-form [type=submit]");
   await expect(submit).toBeDisabled();
 

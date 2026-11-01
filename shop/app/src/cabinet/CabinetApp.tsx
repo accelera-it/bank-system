@@ -8,7 +8,6 @@ import CabinetLayout from "./CabinetLayout";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Products from "./pages/Products";
-import Settings from "./pages/Settings";
 
 function Cabinet() {
   const [user, setUser] = useState<User | null>(null);
@@ -37,7 +36,6 @@ function Cabinet() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="orders" element={<Orders />} />
         <Route path="products" element={<Products />} />
-        <Route path="settings" element={<Settings user={user} onSaved={setUser} />} />
         <Route path="*" element={<Navigate to="/cabinet/dashboard" replace />} />
       </Route>
     </Routes>

@@ -15,7 +15,7 @@ Keycloak, the identity system for the bank and the shop. Both are clients of the
 | `kyc.env` | Keycloak settings of `docker-compose.yml`
 | `client.env` | Client secrets, read by kyc, bank and shop
 
-Login asks for email and password. Register asks for Full Name, email, password and its confirmation, and the button waits for the agreement checkbox.
+Login asks for email and password. Register asks for Full Name, email, password and its confirmation, and the button waits for the agreement checkbox. The account page at <http://localhost:8080/realms/abs/account> also edits Phone and Address, with the email read-only.
 
 ## Running
 

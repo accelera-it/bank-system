@@ -1,12 +1,7 @@
-export interface Profile {
-  name: string;
-  phone: string;
-  address: string;
-}
-
-export interface User extends Profile {
+export interface User {
   id: string;
   email: string;
+  name: string;
 }
 
 export interface Product {

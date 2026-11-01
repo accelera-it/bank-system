@@ -1,39 +1,18 @@
-﻿@model HomeViewModel
+@model HomeViewModel
 @{
     ViewData["Title"] = "Dashboard";
 }
 @{
     var totalBalance = Model.UserBankAccounts.Sum(a => a.Balance);
-    var incoming = Model.MoneyTransfers.Where(t => t.Amount > 0).Sum(t => t.Amount);
-    var outgoing = Model.MoneyTransfers.Where(t => t.Amount < 0).Sum(t => -t.Amount);
+    var accounts = Model.UserBankAccounts.Count();
+    var recentTransfers = Model.MoneyTransfers.Take(5).ToArray();
 }
 
 <div>
-    <div class="row">
-        <div class="col-12 col-lg-6 col-xl-4 mb-3">
-            <div class="stat stat-primary">
-                <span class="stat-label">Total balance</span>
-                <span class="stat-value">@totalBalance.ToString("N2") UZS</span>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3 col-xl-2 mb-3">
-            <div class="stat">
-                <span class="stat-label">Accounts</span>
-                <span class="stat-value">@Model.UserBankAccounts.Count()</span>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3 mb-3">
-            <div class="stat">
-                <span class="stat-label">Incoming, last 10 transfers</span>
-                <span class="stat-value text-green">@(incoming > 0 ? "+" : string.Empty)@incoming.ToString("N2")</span>
-            </div>
-        </div>
-        <div class="col-12 col-lg-6 col-xl-3 mb-3">
-            <div class="stat">
-                <span class="stat-label">Outgoing, last 10 transfers</span>
-                <span class="stat-value text-red">@(outgoing > 0 ? "-" : string.Empty)@outgoing.ToString("N2")</span>
-            </div>
-        </div>
+    <div class="stat stat-primary mb-3">
+        <span class="stat-label">Total balance</span>
+        <span class="stat-value">@totalBalance.ToString("N2") UZS</span>
+        <small>@accounts @(accounts == 1 ? "account" : "accounts")</small>
     </div>
 
     <div class="row mb-3">
@@ -81,19 +60,32 @@
             </section>
         </div>
         <div class="col-12 col-lg-8">
-            <section class="panel panel-table">
+            <section class="panel">
                 <div class="panel-header">
-                    <h2 class="panel-title">Last 10 transfers</h2>
-                    @if (Model.MoneyTransfers.Any())
+                    <h2 class="panel-title">Recent transfers</h2>
+                    @if (recentTransfers.Any())
                     {
                         <a asp-area="MoneyTransfers" asp-controller="Home" asp-action="All">View all</a>
                     }
                 </div>
-                @if (Model.MoneyTransfers.Any())
+                @foreach (var transfer in recentTransfers)
                 {
-                    <partial name="_TransfersTable" model="@Model.MoneyTransfers" />
+                    <div class="account-row">
+                        <div class="text-truncate mr-3">
+                            <p class="text-truncate">@transfer.Description</p>
+                            <small>@transfer.MadeOn.ToString("d MMM yyyy, HH:mm")</small>
+                        </div>
+                        @if (transfer.Amount < 0)
+                        {
+                            <p class="amount text-red text-nowrap">@transfer.Amount.ToString("N2") UZS</p>
+                        }
+                        else
+                        {
+                            <p class="amount text-green text-nowrap">+@transfer.Amount.ToString("N2") UZS</p>
+                        }
+                    </div>
                 }
-                else
+                @if (!recentTransfers.Any())
                 {
                     <div class="empty-state">
                         <i class="fas fa-exchange-alt" aria-hidden="true"></i>

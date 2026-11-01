@@ -28,8 +28,6 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     email: Mapped[str] = mapped_column(String(256), unique=True)
     name: Mapped[str] = mapped_column(String(100), default="")
-    phone: Mapped[str] = mapped_column(String(30), default="")
-    address: Mapped[str] = mapped_column(String(300), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 

@@ -5,20 +5,12 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 
-class ProfileIn(BaseModel):
-    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
-    phone: Annotated[str, StringConstraints(strip_whitespace=True, max_length=30)] = ""
-    address: Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)] = ""
-
-
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
     email: str
     name: str
-    phone: str
-    address: str
 
 
 class ProductIn(BaseModel):

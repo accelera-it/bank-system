@@ -99,4 +99,16 @@ class TokenTest {
         assertEquals(1, users.size());
         assertEquals(Kyc.DEMO, users.get(0).get("email").asText());
     }
+
+    @Test
+    void defaultUserCanOpenTheAccountPages() {
+        var token = browser.post(Kyc.BASE + "/realms/master/protocol/openid-connect/token",
+                Map.of("grant_type", "password", "client_id", "admin-cli", "username", "admin", "password", "123456"))
+                .json().get("access_token").asText();
+        var id = browser.get(Kyc.BASE + "/admin/realms/abs/users?email=" + Kyc.DEMO, token).json().get(0).get("id").asText();
+
+        var roles = browser.get(Kyc.BASE + "/admin/realms/abs/users/" + id + "/role-mappings/realm", token).body();
+
+        assertTrue(roles.contains("default-roles-abs"), roles);
+    }
 }

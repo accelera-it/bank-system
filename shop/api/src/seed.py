@@ -10,7 +10,8 @@ from src.storage import get_storage
 DEMO_EMAIL = "demo@abs.uz"
 DEMO_NAME = "Demo User"
 # create_all leaves existing tables alone, so databases from before these columns need them added.
-USER_COLUMNS = ("name VARCHAR(100)", "phone VARCHAR(30)", "address VARCHAR(300)")
+USER_COLUMNS = ("name VARCHAR(100)",)
+OLD_USER_COLUMNS = ("password_hash", "phone", "address")
 PRODUCTS = [
     ('Laptop 14" Core i7, 16 GB, 512 GB SSD', Decimal("8900000"), "/img/products/laptop.svg"),
 ]
@@ -21,7 +22,8 @@ async def seed() -> None:
         await connection.run_sync(Base.metadata.create_all)
         for column in USER_COLUMNS:
             await connection.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {column} NOT NULL DEFAULT ''"))
-        await connection.execute(text("ALTER TABLE users DROP COLUMN IF EXISTS password_hash"))
+        for column in OLD_USER_COLUMNS:
+            await connection.execute(text(f"ALTER TABLE users DROP COLUMN IF EXISTS {column}"))
 
     async with session_factory() as db:
         if await db.scalar(select(User).where(User.email == DEMO_EMAIL)) is None:

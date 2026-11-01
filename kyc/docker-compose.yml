@@ -1,10 +1,12 @@
 services:
-  kyc:
+  kyc_app:
     build:
       context: app
-    env_file: kyc.env
+    env_file:
+      - kyc.env
+      - client.env
     volumes:
-      - kyc-data:/opt/keycloak/data/h2
+      - kyc_data:/opt/keycloak/data/h2
     healthcheck:
       test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]" ]
       interval: 10s
@@ -14,7 +16,7 @@ services:
     networks:
       - kyc_lan
 
-  kyc-proxy:
+  kyc_proxy:
     build:
       context: proxy
     ports:
@@ -26,13 +28,15 @@ services:
       start_period: 10s
       retries: 5
     depends_on:
-      kyc:
+      kyc_app:
         condition: service_healthy
     networks:
-      - kyc_lan
+      kyc_lan:
+        aliases:
+          - kyc-proxy
 
 volumes:
-  kyc-data:
+  kyc_data:
 
 networks:
   kyc_lan:

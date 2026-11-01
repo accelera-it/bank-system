@@ -85,13 +85,13 @@ export default function Header({ user }: { user: User | null }) {
               Cabinet
             </Link>
           ) : (
-            <Link
-              to="/login"
+            <a
+              href="/api/auth/login"
               className="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand hover:text-brand sm:px-4"
             >
               <LoginIcon />
               Login
-            </Link>
+            </a>
           )}
         </div>
       </div>

@@ -5,15 +5,6 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 
-class Credentials(BaseModel):
-    email: Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, pattern=r"^[^@\s]+@[^@\s]+$")]
-    password: str = Field(min_length=6, max_length=72)
-
-
-class Registration(Credentials):
-    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
-
-
 class ProfileIn(BaseModel):
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
     phone: Annotated[str, StringConstraints(strip_whitespace=True, max_length=30)] = ""
@@ -43,6 +34,10 @@ class ProductOut(BaseModel):
     name: str
     price: float
     image_url: str
+
+
+class LogoutOut(BaseModel):
+    url: str
 
 
 class ImageOut(BaseModel):

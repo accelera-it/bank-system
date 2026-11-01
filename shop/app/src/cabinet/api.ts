@@ -9,7 +9,7 @@ async function signedIn<T>(method: string, path: string, body?: unknown): Promis
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.assign(`/login?next=${next}`);
+      window.location.assign(`/api/auth/login?next=${next}`);
     }
     throw error;
   }
@@ -17,7 +17,7 @@ async function signedIn<T>(method: string, path: string, body?: unknown): Promis
 
 export const api = {
   me: () => signedIn<User>("GET", "/auth/me"),
-  logout: () => signedIn<null>("POST", "/auth/logout"),
+  logout: () => signedIn<{ url: string }>("POST", "/auth/logout"),
   updateProfile: (profile: Profile) => signedIn<User>("PUT", "/auth/me", profile),
   uploadImage: (file: File) => {
     const form = new FormData();

@@ -1,3 +1,4 @@
+from conftest import sign_in
 import json
 
 import pytest
@@ -31,9 +32,9 @@ async def test_order_of_unknown_product_is_refused(signed_in):
     assert response.status_code == 404
 
 
-async def test_order_of_another_user_is_hidden(signed_in, product):
+async def test_order_of_another_user_is_hidden(signed_in, kyc, product):
     created = await order_id(signed_in, product)
-    await signed_in.post("/api/auth/register", json={"name": "Other", "email": "other@abs.uz", "password": "123456"})
+    await sign_in(signed_in, kyc, email="other@abs.uz", name="Other")
 
     assert (await signed_in.get(f"/api/orders/{created}")).status_code == 404
     assert (await signed_in.post(f"/api/orders/{created}/card-payment", json=CARD)).status_code == 404

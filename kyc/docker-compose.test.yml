@@ -6,25 +6,29 @@ x-healthcheck: &healthcheck
   retries: 36
 
 services:
-  kyc-tests:
+  kyc_tests:
     build:
       context: app/tests
     env_file: app/tests/test.env
     depends_on:
-      kyc-proxy:
+      kyc_proxy:
         condition: service_healthy
-      kyc-redis:
+      kyc_redis:
         condition: service_healthy
 
-  kyc-redis:
+  kyc_redis:
     build:
       context: data/redis
     env_file: app/tests/test.env
+    networks:
+      default:
+        aliases:
+          - kyc-redis
     healthcheck:
       <<: *healthcheck
       test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
 
-  kyc:
+  kyc_app:
     build:
       context: app
     env_file: app/tests/test.env
@@ -33,12 +37,16 @@ services:
       <<: *healthcheck
       test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]" ]
 
-  kyc-proxy:
+  kyc_proxy:
     build:
       context: proxy
+    networks:
+      default:
+        aliases:
+          - kyc-proxy
     healthcheck:
       <<: *healthcheck
       test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
     depends_on:
-      kyc:
+      kyc_app:
         condition: service_healthy

@@ -1,9 +1,9 @@
 namespace BankSystem.IntegrationTests
 {
+    using System;
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
-    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using BankSystem.Models;
     using Common;
@@ -11,6 +11,7 @@ namespace BankSystem.IntegrationTests
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.Extensions.DependencyInjection;
+    using Web.Infrastructure.Kyc;
     using Xunit;
 
     public class AuthPagesTests : IClassFixture<BankWebFactory>
@@ -19,20 +20,40 @@ namespace BankSystem.IntegrationTests
 
         public AuthPagesTests(BankWebFactory factory) => this.factory = factory;
 
-        [Theory]
-        [InlineData("/account/login", "Log in")]
-        [InlineData("/account/register", "Create account")]
-        public async Task AccountPages_ShouldRenderTheirOwnForm(string url, string title)
+        private HttpClient Client()
+            => this.factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        [Fact]
+        public async Task Login_ShouldGoToKeycloakAndComeBackToTheCallback()
         {
-            using var client = this.factory.CreateClient();
+            var response = await this.Client().GetAsync("/account/login?returnUrl=%2Fpay");
 
-            var response = await client.GetAsync(url);
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            var location = Uri.UnescapeDataString(response.Headers.Location!.ToString());
+            location.Should().StartWith("http://kyc.test/realms/abs/auth")
+                .And.Contain("client_id=bank")
+                .And.Contain("/signin-oidc")
+                .And.NotContain("prompt=");
+        }
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var html = await response.Content.ReadAsStringAsync();
-            html.Should().Contain($"<title>{title} - Bank System</title>")
-                .And.Contain("name=\"Input.Password\"")
-                .And.NotContain("class=\"modal");
+        [Fact]
+        public async Task Register_ShouldOpenKeycloakRegistration()
+        {
+            var response = await this.Client().GetAsync("/account/register");
+
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should()
+                .StartWith("http://kyc.test/realms/abs/auth")
+                .And.Contain("prompt=create");
+        }
+
+        [Fact]
+        public async Task Callback_WithoutKeycloakLogin_ShouldGoHome()
+        {
+            var response = await this.Client().GetAsync("/account/callback");
+
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should().Be("/");
         }
 
         [Fact]
@@ -51,54 +72,37 @@ namespace BankSystem.IntegrationTests
         [Fact]
         public async Task PaymentConfirmation_ShouldBeRoutedWhereTheScriptPosts()
         {
-            var client = this.factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-
-            var response = await client.PostAsync("/payments/pay", new FormUrlEncodedContent(new Dictionary<string, string>()));
+            var response = await this.Client().PostAsync("/payments/pay", new FormUrlEncodedContent(new Dictionary<string, string>()));
 
             response.StatusCode.Should().NotBe(HttpStatusCode.NotFound);
         }
 
         [Fact]
-        public async Task Register_ShouldStartWithButtonDisabled()
+        public async Task KycUser_FirstLogin_ShouldCreateTheBankUser()
         {
-            var html = await this.factory.CreateClient().GetStringAsync("/account/register");
-
-            html.Should().Contain("name=\"Input.AcceptAgreement\"")
-                .And.MatchRegex("<button id=\"RegisterButton\"[^>]* disabled");
-        }
-
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Register_ShouldNeedTheAgreement(bool accepted)
-        {
-            var email = $"agreement-{accepted}@abs.uz".ToLowerInvariant();
-            var client = this.factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-            var page = await client.GetStringAsync("/account/register");
-            var token = Regex.Match(page, "name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value;
-            var form = new Dictionary<string, string>
-            {
-                ["__RequestVerificationToken"] = token,
-                ["Input.Email"] = email,
-                ["Input.FullName"] = "Agreement Test",
-                ["Input.Password"] = "Passw0rd",
-                ["Input.ConfirmPassword"] = "Passw0rd",
-            };
-            if (accepted)
-            {
-                form["Input.AcceptAgreement"] = "true";
-            }
-
-            var response = await client.PostAsync("/account/register", new FormUrlEncodedContent(form));
-
             using var scope = this.factory.Services.CreateScope();
-            var users = scope.ServiceProvider.GetRequiredService<UserManager<BankUser>>();
-            (await users.FindByEmailAsync(email) != null).Should().Be(accepted);
-            response.StatusCode.Should().Be(accepted ? HttpStatusCode.Redirect : HttpStatusCode.OK);
+            var kycUsers = scope.ServiceProvider.GetRequiredService<IKycUserService>();
+
+            var user = await kycUsers.FindOrCreateAsync("new.client@abs.uz", "New Client");
+
+            user.FullName.Should().Be("New Client");
+            user.EmailConfirmed.Should().BeTrue();
+            user.PasswordHash.Should().BeNull();
         }
 
         [Fact]
-        public async Task SeededAdministrator_CanSignInAndIsAdministrator()
+        public async Task KycUser_KnownEmail_ShouldKeepTheBankUser()
+        {
+            using var scope = this.factory.Services.CreateScope();
+            var kycUsers = scope.ServiceProvider.GetRequiredService<IKycUserService>();
+
+            var user = await kycUsers.FindOrCreateAsync(BankWebFactory.SeededUserName, "Someone Else");
+
+            user.FullName.Should().Be(BankWebFactory.SeededUserFullName);
+        }
+
+        [Fact]
+        public async Task SeededUser_ShouldBeAdministrator()
         {
             using var scope = this.factory.Services.CreateScope();
             var users = scope.ServiceProvider.GetRequiredService<UserManager<BankUser>>();
@@ -106,7 +110,6 @@ namespace BankSystem.IntegrationTests
             var user = await users.FindByNameAsync(BankWebFactory.SeededUserName);
 
             user.EmailConfirmed.Should().BeTrue();
-            (await users.CheckPasswordAsync(user, "123456")).Should().BeTrue();
             (await users.IsInRoleAsync(user, GlobalConstants.AdministratorRoleName)).Should().BeTrue();
         }
     }

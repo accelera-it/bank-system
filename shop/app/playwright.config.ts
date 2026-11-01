@@ -7,6 +7,6 @@ export default defineConfig({
   use: {
     // The browser sees localhost, as it does for real users; inside Docker that is the ui service.
     baseURL: "http://localhost:8082",
-    launchOptions: { args: ["--host-resolver-rules=MAP localhost:8082 ui:5000"] },
+    launchOptions: { args: ["--host-resolver-rules=MAP localhost:8082 shop_ui:5000, MAP localhost:8080 kyc_proxy:5000"] },
   },
 });

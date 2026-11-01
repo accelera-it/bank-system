@@ -1,4 +1,4 @@
-﻿namespace CentralApi.Infrastructure
+namespace CentralApi.Infrastructure
 {
     using System.Linq;
     using Data;
@@ -45,9 +45,11 @@
             var paymentUrl = $"{bankPublicUrl}/pay";
             var defaultBank = dbContext.Banks.SingleOrDefault(b => b.SwiftCode == DefaultBankSwiftCode);
 
-            if (defaultBank != null && defaultBank.PaymentUrl != paymentUrl)
+            if (defaultBank != null)
             {
                 defaultBank.PaymentUrl = paymentUrl;
+                defaultBank.ApiAddress = $"{bankBaseUrl}/api/ReceiveMoneyTransfers";
+                defaultBank.CardPaymentUrl = $"{bankBaseUrl}/api/cardPayments";
                 dbContext.SaveChanges();
             }
 

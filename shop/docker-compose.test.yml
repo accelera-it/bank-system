@@ -6,22 +6,24 @@ x-healthcheck: &healthcheck
   retries: 12
 
 services:
-  api-tests:
+  shop_api_tests:
     build:
       context: api
       dockerfile: tests/Dockerfile
 
-  ui-tests:
+  shop_ui_tests:
     build:
       context: app
       dockerfile: tests/Dockerfile
     depends_on:
-      ui:
+      shop_ui:
         condition: service_healthy
-      central-stub:
+      shop_central_stub:
+        condition: service_healthy
+      kyc_proxy:
         condition: service_healthy
 
-  central-stub:
+  shop_central_stub:
     build:
       context: app
       dockerfile: tests/Dockerfile
@@ -30,7 +32,34 @@ services:
       <<: *healthcheck
       test: [ "CMD", "node", "-e", "require('net').connect(5000, '127.0.0.1').on('connect', () => process.exit(0)).on('error', () => process.exit(1))" ]
 
-  pg:
+  kyc_app:
+    build:
+      context: ../kyc/app
+    env_file: ../kyc/app/tests/test.env
+    environment:
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    command: [ "start-dev", "--import-realm" ]
+    healthcheck:
+      <<: *healthcheck
+      retries: 36
+      test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]" ]
+
+  kyc_proxy:
+    build:
+      context: ../kyc/proxy
+    networks:
+      default:
+        aliases:
+          - kyc-proxy
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
+    depends_on:
+      kyc_app:
+        condition: service_healthy
+
+  shop_pg:
     build:
       context: data/pg
     env_file: shop.env
@@ -40,7 +69,7 @@ services:
       <<: *healthcheck
       test: [ "CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\"" ]
 
-  shop-redis:
+  shop_redis:
     build:
       context: data/redis
     env_file: shop.env
@@ -48,40 +77,47 @@ services:
       <<: *healthcheck
       test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
 
-  minio:
+  shop_minio:
     build:
       context: data/minio
     env_file: shop.env
+    networks:
+      default:
+        aliases:
+          - shop-minio
     tmpfs:
       - /data:uid=65532,gid=65532
     healthcheck:
       <<: *healthcheck
       test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /minio/health/live HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]" ]
 
-  shop-api:
+  shop_api:
     build:
       context: api
     env_file: shop.env
     environment:
-      CENTRAL_API_PAYMENT_URL: http://central-stub:5000/pay
-      CENTRAL_API_CARD_PAYMENTS_URL: http://central-stub:5000/api/CardPayments
+      SHOP_CLIENT_SECRET: shop-test-secret
+      CENTRAL_API_PAYMENT_URL: http://shop_central_stub:5000/pay
+      CENTRAL_API_CARD_PAYMENTS_URL: http://shop_central_stub:5000/api/CardPayments
     healthcheck:
       <<: *healthcheck
       test: [ "CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5000/health', timeout=2)" ]
     depends_on:
-      pg:
+      shop_pg:
         condition: service_healthy
-      shop-redis:
+      shop_redis:
         condition: service_healthy
-      minio:
+      shop_minio:
+        condition: service_healthy
+      kyc_proxy:
         condition: service_healthy
 
-  ui:
+  shop_ui:
     build:
       context: app
     healthcheck:
       <<: *healthcheck
       test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5000/health" ]
     depends_on:
-      shop-api:
+      shop_api:
         condition: service_healthy

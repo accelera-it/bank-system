@@ -1,4 +1,4 @@
-# Core
+# Bank
 
 The bank and the hub that connects banks.
 
@@ -6,8 +6,8 @@ The bank and the hub that connects banks.
 | - | -
 | **BankSystem.Web** | The bank: web UI plus API endpoints that receive transfers and card payments
 | **CentralApi** | Connects banks together; routes global transfers, card payments and direct payments
-| **nginx** | The only public entry, on port 8081: `/api/` goes to Ocelot, everything else to BankSystem.Web
-| **Ocelot** | Gateway for every call to CentralApi
+| **nginx** | The only public entry, on port 8081: `/api/` goes to Ocelot, rate limited per client IP, and everything else to BankSystem.Web
+| **Ocelot** | Gateway for every API call, to CentralApi and to the bank
 
 ## Features
 
@@ -16,7 +16,7 @@ The bank and the hub that connects banks.
 - **Cards** – issue payment cards and use them for online purchases
 - **Direct payments** – pay on third-party websites straight from a bank account, without card details
 - **Administration** – bank administration area
-- **User settings** – account and security settings
+- **Sign-in** – through Keycloak, see [kyc/README.md](../kyc/README.md)
 
 ## Structure
 
@@ -24,7 +24,7 @@ The bank and the hub that connects banks.
 | - | -
 | `app/src/` | The Models / Data / Services layers and web projects of BankSystem and CentralApi
 | `app/core/` | `BankSystem.Common`, used by both apps
-| `app/src/CentralApi.Gateway/` | Ocelot gateway for CentralApi; routes are in `ocelot.json`
+| `app/src/CentralApi.Gateway/` | Ocelot gateway; routes are in its `appsettings.json`
 | `proxy/` | nginx, the public entry for both apps
 | `app/tests/` | Unit and integration tests (xUnit) and their Dockerfile
 | `data/oracle/` | Oracle image, with one schema per app
@@ -37,7 +37,7 @@ The bank and the hub that connects banks.
 
 ### With Docker
 
-Run from the repository root. Start core before `demo`, because it creates the `bank_lan` network the shop joins.
+Run from the repository root. Start `kyc` first, because the bank joins its `kyc_lan` network, and the bank before `shop`, which joins `bank_lan`.
 
 ```bash
 docker compose -f bank/docker-compose.yml up -d --build
@@ -50,7 +50,9 @@ docker compose -f bank/docker-compose.yml up -d --build
 
 CentralApi serves Swagger at <http://localhost:8081/api/swagger/index.html> in the Development environment. It lists the endpoints only: the API bodies are encrypted and signed, so "Try it out" returns 403.
 
-Only nginx publishes a port. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only. The bank and the shop call CentralApi through Ocelot; CentralApi calls the bank's API on `web` directly. Passwords are in `bank.env`. A new database password needs a fresh volume, because Oracle keeps the one it was created with.
+Only nginx publishes a port. It allows each client IP one `/api/` call a second, with bursts of 60, and answers `429` above that. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
+
+The bank and the shop call CentralApi through Ocelot (`bank_api`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. The `client.env` file of `kyc` holds the bank's client secret.
 
 ### Without Docker
 
@@ -68,16 +70,18 @@ The tests run on EF Core InMemory and need no database.
 ```bash
 dotnet test app/tests/BankSystem.UnitTests
 docker compose -f bank/docker-compose.test.yml up --build --abort-on-container-failure
-docker compose -f bank/docker-compose.test.yml run --rm --build api-unit   # one project: {web,api}-{unit,integration}
+docker compose -f bank/docker-compose.test.yml run --rm --build bank_api_unit   # one project: bank_{web,api}_{unit,integration}
 ```
 
 ### Demo account
 
-On first start the bank creates a demo user with a 10,000,000 UZS account:
+On first start the bank creates the default user, an administrator with a 10,000,000 UZS account. Sign in at Keycloak:
 
 | Email | Password
 |-|-
-| <admin@abs.uz> | 123456
+| <demo@abs.uz> | 123456
+
+Anyone else gets their bank user on the first sign-in.
 
 ## Configuration
 

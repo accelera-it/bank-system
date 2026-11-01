@@ -18,8 +18,8 @@ function Cabinet() {
   }, []);
 
   async function logout() {
-    await api.logout();
-    window.location.assign("/");
+    const { url } = await api.logout();
+    window.location.assign(url);
   }
 
   if (!user) {

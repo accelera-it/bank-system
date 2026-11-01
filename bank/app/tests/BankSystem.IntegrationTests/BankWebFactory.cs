@@ -7,6 +7,7 @@ namespace BankSystem.IntegrationTests
     using BankSystem.Models;
     using BankSystem.Tests.Shared;
     using Data;
+    using Microsoft.AspNetCore.Authentication.OpenIdConnect;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Mvc.Testing;
     using Microsoft.AspNetCore.TestHost;
@@ -14,13 +15,15 @@ namespace BankSystem.IntegrationTests
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
+    using Microsoft.IdentityModel.Protocols.OpenIdConnect;
     using Moq;
     using Web;
+    using Web.Infrastructure.Extensions;
 
     public class BankWebFactory : WebApplicationFactory<Startup>
     {
         public const string SeededAccountUniqueId = "ABCJ98131785";
-        public const string SeededUserName = "admin@abs.uz";
+        public const string SeededUserName = "demo@abs.uz";
         public const string SeededUserFullName = "ABS Admin";
 
         private readonly string databaseName = TestDatabase.CreateName("BankTests");
@@ -47,6 +50,9 @@ namespace BankSystem.IntegrationTests
             builder.UseEnvironment("Testing");
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string>
             {
+                ["KycConfiguration:Authority"] = "http://kyc.test/realms/abs",
+                ["KycConfiguration:PublicAuthority"] = "http://kyc.test/realms/abs",
+                ["KycConfiguration:ClientId"] = "bank",
                 ["BankConfiguration:BankName"] = "Bank system",
                 ["BankConfiguration:UniqueIdentifier"] = "ABC",
                 ["BankConfiguration:First3CardDigits"] = "101",
@@ -57,6 +63,11 @@ namespace BankSystem.IntegrationTests
             }));
             builder.ConfigureTestServices(services =>
             {
+                services.Configure<OpenIdConnectOptions>(KycServiceCollectionExtensions.Scheme, options =>
+                    options.Configuration = new OpenIdConnectConfiguration
+                    {
+                        AuthorizationEndpoint = "http://kyc.test/realms/abs/auth"
+                    });
                 services.UseTestDatabase<BankSystemDbContext>(this.databaseName);
                 services.AddTestAuthentication();
             });

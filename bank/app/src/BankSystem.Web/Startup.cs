@@ -1,4 +1,4 @@
-﻿namespace BankSystem.Web
+namespace BankSystem.Web
 {
     using System;
     using MapsterMapper;
@@ -68,6 +68,8 @@
                 .AddApplicationServices()
                 .AddCommonProjectServices()
                 .AddAuthentication();
+
+            services.AddKycAuthentication(this.Configuration);
 
             services.Configure<SecurityStampValidatorOptions>(
                 options => { options.ValidationInterval = TimeSpan.Zero; });

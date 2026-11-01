@@ -27,7 +27,6 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     email: Mapped[str] = mapped_column(String(256), unique=True)
-    password_hash: Mapped[str] = mapped_column(String(100))
     name: Mapped[str] = mapped_column(String(100), default="")
     phone: Mapped[str] = mapped_column(String(30), default="")
     address: Mapped[str] = mapped_column(String(300), default="")

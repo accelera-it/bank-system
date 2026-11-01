@@ -500,5 +500,3 @@ shop/app/test-results/
 shop/app/playwright-report/
 kyc/app/tests/target/
 
-# Local secrets of the kyc stack; kyc.env.example lists the settings
-kyc/kyc.env

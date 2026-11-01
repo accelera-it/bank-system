@@ -7,20 +7,22 @@ Several independent BankSystem instances can be connected through **CentralApi**
 ## How it works
 
 ```
-browser ──► nginx :8081 ──► web (BankSystem.Web)
-                 │
-                 └─ /api ──► ocelot ──► api (CentralApi) ──► web, other BankSystem instances
-                                ▲
-                  shop (shop-api)
+browser ──► bank_nginx :8081 ──► bank_web (BankSystem.Web)
+                  │
+                  └─ /api ──► bank_api (Ocelot) ──► bank_central (CentralApi)
+                                   ▲    │
+                        shop_api ──┘    └──► bank_web, other BankSystem instances
+
+browser, bank_web, shop_api ──► kyc_proxy :8080 ──► kyc_app (Keycloak)
 ```
 
-All traffic between components is encrypted and signed (RSA + AES hybrid encryption).
+The bank and the shop have no login or register pages: users sign in at Keycloak and come back. All traffic between banks and CentralApi is encrypted and signed (RSA + AES hybrid encryption).
 
 ## Repository structure
 
 | Folder | Contents | Docs
 | - | - | -
-| `kyc/` | Keycloak, the central identity system, on H2 behind nginx | [kyc/README.md](kyc/README.md)
+| `kyc/` | Keycloak, the central identity system for the bank and the shop, on H2 behind nginx | [kyc/README.md](kyc/README.md)
 | `bank/` | BankSystem.Web and CentralApi on Oracle and Redis, behind nginx and Ocelot | [bank/README.md](bank/README.md)
 | `shop/` | DemoShop: FastAPI and a React shop with an Ant Design cabinet on PostgreSQL and Redis | [shop/README.md](shop/README.md)
 
@@ -28,9 +30,10 @@ Each has its own `data/`, compose files and env file. The .NET projects are in `
 
 ## Quick start
 
-Start `bank` first, because it creates the network the shop joins:
+Start them in this order, because each one joins the networks of those before it:
 
 ```bash
+docker compose -f kyc/docker-compose.yml up -d --build
 docker compose -f bank/docker-compose.yml up -d --build
 docker compose -f shop/docker-compose.yml up -d --build
 ```
@@ -43,7 +46,7 @@ docker compose -f shop/docker-compose.yml up -d --build
 | **Shop** | <http://localhost:8082>
 | **Shop cabinet** | <http://localhost:8082/cabinet>
 
-All containers use the `Asia/Tashkent` timezone.
+Sign in with `demo@abs.uz` / `123456`. The Keycloak root user is `admin` / `123456`. All containers use the `Asia/Tashkent` timezone.
 
 To build and test the .NET projects (no database needed), with the .NET 10 SDK:
 
@@ -59,12 +62,12 @@ dotnet test
 - Entity Framework Core, Oracle
 - Python, FastAPI, SQLAlchemy, PostgreSQL, MinIO
 - React, TypeScript, Vite, Tailwind CSS, Ant Design
-- Ocelot, nginx
+- Keycloak, Ocelot, nginx
 - Redis (login sessions, cache)
-- ASP.NET Core Identity
+- ASP.NET Core Identity, OpenID Connect
 - Mapster
 - jQuery, Bootstrap
-- xUnit, Moq, FluentAssertions, pytest, Playwright
+- xUnit, Moq, FluentAssertions, pytest, Playwright, JUnit
 - Docker, Docker Compose
 
 ## Acknowledgements

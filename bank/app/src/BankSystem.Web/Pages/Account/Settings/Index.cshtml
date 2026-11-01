@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model IndexModel
 @{
     ViewData["Title"] = "Account settings";
@@ -10,29 +10,9 @@
             <span class="profile-avatar"><i class="fas fa-user" aria-hidden="true"></i></span>
             <h2 class="panel-title">@Model.FullName</h2>
             <p class="text-muted">@Model.Email</p>
-            <a class="btn btn-outline-primary" asp-page="./ChangePassword">
-                <i class="fas fa-key mr-1" aria-hidden="true"></i> Change password
+            <a class="btn btn-outline-primary" href="@Model.AccountUrl">
+                <i class="fas fa-key mr-1" aria-hidden="true"></i> Password and security
             </a>
-        </section>
-    </div>
-    <div class="col-12 col-lg-5 mb-3">
-        <section class="panel h-100 mb-0">
-            <span class="profile-avatar"><i class="fas fa-shield-alt" aria-hidden="true"></i></span>
-            <h2 class="panel-title">Two-factor authentication</h2>
-            @if (Model.TwoFactorEnabled)
-            {
-                <p class="text-green">Enabled</p>
-                <a class="btn btn-outline-danger" asp-page="./Disable2fa">
-                    <i class="fas fa-lock-open mr-1" aria-hidden="true"></i> Disable
-                </a>
-            }
-            else
-            {
-                <p class="text-red">Disabled</p>
-                <a class="btn btn-primary" asp-page="./Enable2fa">
-                    <i class="fas fa-shield-alt mr-1" aria-hidden="true"></i> Enable
-                </a>
-            }
         </section>
     </div>
 </div>

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Page } from "@playwright/test";
 
-import { expect, fillRegistration, LAPTOP, PASSWORD, test } from "./fixtures";
+import { expect, fillRegistration, LAPTOP, test } from "./fixtures";
 
 const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
@@ -22,8 +22,8 @@ async function fillCard(page: Page, number: string) {
 test("guest is sent to login and back", async ({ page, email }) => {
   await page.goto("/cabinet/products");
 
-  await expect(page).toHaveURL(/\/login\?next=/);
-  await page.getByRole("link", { name: "Create an account" }).click();
+  await expect(page).toHaveURL(/localhost:8080\/realms\/abs/);
+  await page.getByRole("link", { name: "Register" }).click();
   await fillRegistration(page, email);
 
   await expect(page).toHaveURL("/cabinet/products");
@@ -140,7 +140,7 @@ test("logout ends the session", async ({ signedIn: page }) => {
   await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
 
   await page.goto("/cabinet");
-  await expect(page).toHaveURL(/\/login/);
+  await expect(page).toHaveURL(/localhost:8080\/realms\/abs/);
 });
 
 test("laptop name is shown in orders", async ({ pendingOrder: page }) => {

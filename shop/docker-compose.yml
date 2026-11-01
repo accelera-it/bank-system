@@ -19,12 +19,12 @@ x-minio-healthcheck: &minio-healthcheck
   retries: 10
 
 services:
-  pg:
+  shop_pg:
     build:
       context: data/pg
     env_file: shop.env
     volumes:
-      - pg-data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\"" ]
       interval: 5s
@@ -33,12 +33,12 @@ services:
     networks:
       - shop_lan
 
-  shop-redis:
+  shop_redis:
     build:
       context: data/redis
     env_file: shop.env
     volumes:
-      - redis-data:/data
+      - redis_data:/data
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
       interval: 5s
@@ -47,51 +47,59 @@ services:
     networks:
       - shop_lan
 
-  minio:
+  shop_minio:
     build:
       context: data/minio
     env_file: shop.env
     volumes:
-      - minio-data:/data
+      - minio_data:/data
     healthcheck: *minio-healthcheck
     networks:
-      - shop_lan
+      shop_lan:
+        # MinIO refuses "_" in a host name
+        aliases:
+          - shop-minio
 
-  shop-api:
+  shop_api:
     build:
       context: api
-    env_file: shop.env
+    env_file:
+      - shop.env
+      - ../kyc/client.env
     healthcheck: *app-healthcheck
     depends_on:
-      pg:
+      shop_pg:
         condition: service_healthy
-      shop-redis:
+      shop_redis:
         condition: service_healthy
-      minio:
+      shop_minio:
         condition: service_healthy
     networks:
       - shop_lan
       - bank_lan
+      - kyc_lan
 
-  ui:
+  shop_ui:
     build:
       context: app
     ports:
       - "8082:5000"
     healthcheck: *ui-healthcheck
     depends_on:
-      shop-api:
+      shop_api:
         condition: service_healthy
     networks:
       - shop_lan
 
 volumes:
-  pg-data:
-  redis-data:
-  minio-data:
+  pg_data:
+  redis_data:
+  minio_data:
 
 networks:
   shop_lan:
     name: shop_lan
   bank_lan:
+    external: true
+  kyc_lan:
     external: true

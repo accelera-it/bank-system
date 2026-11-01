@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     products_cache_seconds: int = 60
 
     site_url: str = "http://localhost:8082/"
+    kyc_authority: str = "http://localhost:8080/realms/abs"
+    kyc_public_authority: str = "http://localhost:8080/realms/abs"
+    kyc_client_id: str = "shop"
+    shop_client_secret: str = ""
     site_key: str = ""
     central_api_public_key: str = ""
     central_api_payment_url: str = "http://localhost:8080/pay"

@@ -5,7 +5,6 @@ import { api } from "../api";
 import type { User } from "../types";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
-import AuthPage from "./pages/AuthPage";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import ProductDetails from "./pages/ProductDetails";
@@ -26,8 +25,6 @@ export default function SiteApp() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetails />} />
-          <Route path="/login" element={<AuthPage mode="login" />} />
-          <Route path="/register" element={<AuthPage mode="register" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

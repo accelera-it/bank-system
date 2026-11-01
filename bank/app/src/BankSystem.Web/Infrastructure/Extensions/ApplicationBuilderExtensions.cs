@@ -1,4 +1,4 @@
-﻿namespace BankSystem.Web.Infrastructure.Extensions
+namespace BankSystem.Web.Infrastructure.Extensions
 {
     using System;
     using System.Collections.Generic;
@@ -15,8 +15,8 @@
 
     public static class ApplicationBuilderExtensions
     {
-        private const string AdministratorEmail = "admin@abs.uz";
-        private const string AdministratorPassword = "123456";
+        private const string AdministratorEmail = "demo@abs.uz";
+        private const string PreviousAdministratorEmail = "admin@abs.uz";
         private const string AdministratorAccountId = "ABCJ98131785";
 
         public static IApplicationBuilder InitializeDatabase(this IApplicationBuilder app)
@@ -59,6 +59,16 @@
                 return;
             }
 
+            // A database seeded earlier holds the default user under its old email, with the shop's account
+            var previous = await userManager.FindByNameAsync(PreviousAdministratorEmail);
+            if (previous != null)
+            {
+                previous.UserName = AdministratorEmail;
+                previous.Email = AdministratorEmail;
+                await userManager.UpdateAsync(previous);
+                return;
+            }
+
             var user = new BankUser
             {
                 Email = AdministratorEmail,
@@ -66,9 +76,6 @@
                 UserName = AdministratorEmail,
                 EmailConfirmed = true
             };
-
-            // Hashed directly: this demo password is below the policy that applies to real users
-            user.PasswordHash = userManager.PasswordHasher.HashPassword(user, AdministratorPassword);
 
             // A database seeded earlier already holds this account, under the previous default user
             var account = await dbContext.Accounts.SingleOrDefaultAsync(a => a.UniqueId == AdministratorAccountId);

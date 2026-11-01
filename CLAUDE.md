@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BankSystem is three independently deployed web apps; the first two are an ASP.NET Core (.NET 10) solution (`bank/BankSystem.sln`):
 
-- **BankSystem.Web** (`bank/app/src/BankSystem.Web`) — the bank: MVC + Razor Pages (Identity under `Pages/Account`), feature areas `Cards`, `MoneyTransfers`, `Administration`.
+- **BankSystem.Web** (`bank/app/src/BankSystem.Web`) — the bank: MVC + Razor Pages, feature areas `Cards`, `MoneyTransfers`, `Administration`.
 - **CentralApi** (`bank/app/src/CentralApi`) — a hub that connects multiple BankSystem instances and routes global transfers, card payments and direct payments between them.
 - **DemoShop** (`shop/`) — sample merchant that pays via CentralApi (direct and card payments): Python FastAPI middleware (`shop/api`), and one React + TypeScript + Vite app (`shop/app`): the Tailwind CDN shop site and, under `/cabinet`, the Ant Design cabinet. It is not part of `BankSystem.sln`.
 
-In `bank`, `bank/proxy` (nginx) is the only public entry (:8081): `/api/` goes to `bank/app/src/CentralApi.Gateway` (Ocelot, routes in `ocelot.json`), everything else to BankSystem.Web. Ocelot takes every call to CentralApi, including those from the bank and the shop; CentralApi calls the bank's API on `web` directly. `/pay` exists in both apps, so CentralApi's page is public as `/api/pay` and Ocelot sends `X-Forwarded-Prefix` so its links keep the prefix.
+In `bank`, `bank/proxy` (nginx) is the only public entry (:8081): `/api/` goes to `bank/app/src/CentralApi.Gateway` (Ocelot, routes in its `appsettings.json`), everything else to BankSystem.Web. Ocelot takes every call to CentralApi, including those from the bank and the shop, and CentralApi reaches the bank's API through it at `/bank/api/*`, which nginx does not publish. nginx rate limits `/api/` per client IP (`bank/proxy/nginx.conf`); Ocelot cannot, because its limiter refuses callers without a client id header, which would block internal calls. `/pay` exists in both apps, so CentralApi's page is public as `/api/pay` and Ocelot sends `X-Forwarded-Prefix` so its links keep the prefix.
 
 Repo layout: `kyc/` holds Keycloak (`app/` with Java tests in `app/tests`, `data/`, `proxy/`); it runs on its own at :8080 and neither app signs in through it yet. `bank/` holds the bank and CentralApi (`app/{src,core,tests}`, `proxy/` with nginx for the web app, `data/`), `shop/` holds DemoShop (`api/` with its package in `src/`, `app/`, `data/`). `data/` has one Dockerfile per backing service, and each side has its own compose files and env file; there is no compose file at the root. Demo tests sit next to their code: `shop/api/tests` (pytest) and `shop/app/tests` (Playwright in TypeScript). `README.md` is the overview; `bank/README.md` and `shop/README.md` cover setup, tests and configuration for each side. `./rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config. Setup and feature docs live in the GitHub wiki (https://github.com/banksystembg/BankSystem/wiki), linked from README.md.
 
@@ -36,14 +36,16 @@ dotnet ef migrations add <Name> --project app/src/BankSystem.Data --startup-proj
 dotnet ef migrations add <Name> --project app/src/CentralApi.Data --startup-project app/src/CentralApi
 ```
 
-Docker (each app has its own `Dockerfile`; the bank build context is `bank/`). Start bank first: it creates the `bank_lan` network DemoShop uses to reach CentralApi.
+Docker (each app has its own `Dockerfile`; the bank build context is `bank/`). Start kyc, then bank, then shop: each joins the networks of those before it (`kyc_lan`, `bank_lan`). Service names carry the stack prefix (`bank_web`, `shop_api`, `kyc_app`), and MinIO and Keycloak are reached through the `shop-minio` and `kyc-proxy` network aliases, because they reject "_" in a host name.
 
 ```bash
+docker compose -f kyc/docker-compose.yml up -d --build    # Keycloak :8080
 docker compose -f bank/docker-compose.yml up -d --build   # nginx :8081: /api -> ocelot -> api, the rest -> web (everything else internal only)
-docker compose -f shop/docker-compose.yml up -d --build   # ui :8082 with the cabinet at /cabinet (shop-api, pg, shop-redis, minio internal only)
+docker compose -f shop/docker-compose.yml up -d --build   # ui :8082 with the cabinet at /cabinet (the rest internal only)
 docker compose -f bank/docker-compose.test.yml up --build --abort-on-container-failure   # four bank test projects on EF Core InMemory
-docker compose -f shop/docker-compose.test.yml up --build --abort-on-container-failure --exit-code-from ui-tests ui-tests   # Playwright, full stack with a CentralApi stub
-docker compose -f bank/docker-compose.test.yml run --rm --build api-unit   # one project: {web,api}-{unit,integration}; api-tests (pytest) in shop/
+docker compose -f shop/docker-compose.test.yml up --build --abort-on-container-failure --exit-code-from shop_ui_tests shop_ui_tests   # Playwright, full stack with real Keycloak and a CentralApi stub
+docker compose -f kyc/docker-compose.test.yml up --build --abort-on-container-failure --exit-code-from kyc_tests kyc_tests   # Java tests on H2 and Redis
+docker compose -f bank/docker-compose.test.yml run --rm --build bank_api_unit   # one project: bank_{web,api}_{unit,integration}; shop_api_tests (pytest) in shop/
 ```
 
 Every service has a `healthcheck` in its compose file (not in the Dockerfiles): the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
@@ -55,6 +57,9 @@ Each stack loads its own env file through `env_file` (`bank/bank.env`, `shop/sho
 ### Layering
 BankSystem and CentralApi follow the same layered layout, split into separate projects per layer:
 `*.Models` (EF entities) → `*.Data` (DbContext + migrations) → `*.Services.Models` (DTOs) → `*.Services` → web project. Projects sit under `bank/app/src/`; what both apps share is in `bank/app/core/`. `bank/app/core/BankSystem.Common` is shared by BankSystem and CentralApi (config classes, crypto utils, Mapster setup).
+
+### Sign-in (kyc)
+Keycloak's `abs` realm (`kyc/app/realms/abs-realm.json`) has the clients `bank` and `shop`; their secrets are in `kyc/client.env`. The realm is imported on first start only. Neither app has login or register pages or keeps passwords: `/account/login` and `/account/register` in the bank and `/api/auth/login` in the shop send the browser to Keycloak (`prompt=create` for register), and it comes back to `/signin-oidc` + `/account/callback` and `/api/auth/callback`, which create the local user on first sign-in, by email. Logout ends the Keycloak session too. Browsers use `localhost:8080`; the apps use `kyc-proxy:5000` for tokens, which Keycloak's dynamic backchannel allows.
 
 ### MinIO (shop)
 Product images uploaded in the cabinet go to the `products` bucket through `shop/api/src/storage.py`. The bucket is private: `shop-api` serves images at `/api/products/images/{key}`. The image is `cgr.dev/chainguard/minio`, because the official one is not on the registries.
@@ -81,7 +86,7 @@ All bank ↔ CentralApi traffic uses hybrid encryption + RSA signatures (`bank/a
 ### Configuration and multi-bank setup
 - Bank identity comes from the `BankConfiguration` section (name, `UniqueIdentifier` = swift code, country, `First3CardDigits`, own RSA `Key`, `CentralApiPublicKey`, `CentralApiAddress`). It is validated in `PostConfigure`, so startup throws if a value is missing.
 - CentralApi knows banks through its `Banks` table (`bank/app/src/CentralApi.Models/Bank.cs`: public `ApiKey`, `ApiAddress`, `PaymentUrl`, `CardPaymentUrl`, `BankIdentificationCardNumbers`). It routes transfers by matching name + swift code + country, and card payments by the card's first 3 digits. A default bank is seeded in `bank/app/src/CentralApi/Infrastructure/ApplicationBuilderExtensions.cs`, at the address in the `DefaultBankBaseUrl` setting, with its browser-facing payment page at `DefaultBankPublicUrl`.
-- BankSystem.Web seeds the `admin@abs.uz` / `123456` user with an account and the Administrator role on startup (its password bypasses the policy by being hashed directly). Nothing sends email: registration signs the user in straight away, and DemoShop seeds `demo@abs.uz` / `123456` and a laptop product (`shop/api/src/seed.py`).
+- `demo@abs.uz` / `123456` is the default user: Keycloak holds the password, BankSystem.Web seeds it with an account and the Administrator role, and DemoShop seeds it with a laptop product (`shop/api/src/seed.py`).
 
 ### Tests
 Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the demo has pytest in `shop/api/tests` and Playwright in `shop/app/tests`.

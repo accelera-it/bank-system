@@ -6,12 +6,18 @@ export const PASSWORD = "123456";
 export const LAPTOP = 'Laptop 14" Core i7, 16 GB, 512 GB SSD';
 
 export async function fillRegistration(page: Page, email: string) {
-  await page.getByLabel("Full Name").fill("Test User");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
-  await page.getByLabel("Confirm password").fill(PASSWORD);
-  await page.getByLabel("I accept").check();
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.locator("#firstName").fill("Test User");
+  await page.locator("#email").fill(email);
+  await page.locator("#password").fill(PASSWORD);
+  await page.locator("#password-confirm").fill(PASSWORD);
+  await page.locator("input[name=termsAccepted]").check();
+  await page.locator("#kc-register-form [type=submit]").click();
+}
+
+export async function fillLogin(page: Page, email: string, password = PASSWORD) {
+  await page.locator("#username").fill(email);
+  await page.locator("#password").fill(password);
+  await page.locator("#kc-login").click();
 }
 
 interface Fixtures {
@@ -26,7 +32,7 @@ export const test = base.extend<Fixtures>({
   },
 
   signedIn: async ({ page, email }, use) => {
-    await page.goto("/register");
+    await page.goto("/api/auth/login?register=true");
     await fillRegistration(page, email);
     await expect(page).toHaveURL("/cabinet/dashboard");
     await use(page);

@@ -4,6 +4,10 @@ from collections.abc import AsyncIterator
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
 import base64
+import json
+import time
+
+from urllib.parse import parse_qs, urlparse
 
 import fakeredis.aioredis
 import httpx
@@ -18,12 +22,14 @@ from src.db import Base, get_db
 from src.main import app
 from src.models import Product
 from src.routers.orders import get_http_client
-from src.seed import DEMO_PASSWORD
 from src.storage import get_storage
 
 
 def _encode(value: int) -> str:
     return base64.b64encode(value.to_bytes((value.bit_length() + 7) // 8, "big")).decode()
+
+
+KYC = "http://kyc.test/realms/abs"
 
 
 class Keys:
@@ -63,6 +69,9 @@ def settings(site_keys: Keys, central_keys: Keys) -> Settings:
         site_key=site_keys.private,
         central_api_public_key=central_keys.public,
         site_url="http://shop.test/",
+        kyc_authority=KYC,
+        kyc_public_authority=KYC,
+        shop_client_secret="secret",
         central_api_payment_url="http://central.test/pay",
         central_api_card_payments_url="http://central.test/api/CardPayments",
         destination_bank_name="Bank system",
@@ -71,6 +80,33 @@ def settings(site_keys: Keys, central_keys: Keys) -> Settings:
         destination_bank_account_unique_id="ABCJ98131785",
         recipient_name="ABS Admin",
     )
+
+
+def id_token(claims: dict) -> str:
+    payload = base64.urlsafe_b64encode(json.dumps(claims).encode()).rstrip(b"=").decode()
+    return f"header.{payload}.signature"
+
+
+@pytest.fixture
+def kyc() -> dict:
+    """The claims the fake Keycloak answers with, and its status."""
+    return {"status": 200, "claims": {}}
+
+
+async def sign_in(client, kyc, *, email="buyer@abs.uz", name="Buyer", query="", **overrides) -> httpx.Response:
+    """Goes through /login and /callback, which is what a browser does around the Keycloak pages."""
+    location = (await client.get(f"/api/auth/login{query}")).headers["location"]
+    params = {key: values[0] for key, values in parse_qs(urlparse(location).query).items()}
+    kyc["claims"] = {
+        "iss": KYC,
+        "aud": "shop",
+        "nonce": params["nonce"],
+        "exp": time.time() + 60,
+        "email": email,
+        "name": name,
+        **overrides,
+    }
+    return await client.get("/api/auth/callback", params={"state": params["state"], "code": "code"})
 
 
 @pytest.fixture
@@ -112,7 +148,7 @@ def storage() -> FakeStorage:
 
 
 @pytest.fixture
-async def client(db_factory, redis, settings, central_api, storage) -> AsyncIterator[httpx.AsyncClient]:
+async def client(db_factory, redis, settings, central_api, storage, kyc) -> AsyncIterator[httpx.AsyncClient]:
     async def db():
         async with db_factory() as session:
             yield session
@@ -121,6 +157,8 @@ async def client(db_factory, redis, settings, central_api, storage) -> AsyncIter
         yield redis
 
     def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            return httpx.Response(kyc["status"], json={"id_token": id_token(kyc["claims"])})
         central_api["requests"].append(request)
         return httpx.Response(central_api["status"])
 
@@ -153,11 +191,8 @@ async def product(db_factory) -> Product:
 
 
 @pytest.fixture
-async def signed_in(client: httpx.AsyncClient) -> httpx.AsyncClient:
-    response = await client.post(
-        "/api/auth/register", json={"name": "Buyer", "email": "buyer@abs.uz", "password": DEMO_PASSWORD}
-    )
-    assert response.status_code == 201
+async def signed_in(client: httpx.AsyncClient, kyc: dict) -> httpx.AsyncClient:
+    assert (await sign_in(client, kyc)).status_code == 303
     return client
 
 

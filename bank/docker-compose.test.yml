@@ -5,18 +5,18 @@ x-tests: &tests
     dockerfile: app/tests/Dockerfile
 
 services:
-  web-unit:
+  bank_web_unit:
     <<: *tests
     command: app/tests/BankSystem.UnitTests
 
-  web-integration:
+  bank_web_integration:
     <<: *tests
     command: app/tests/BankSystem.IntegrationTests
 
-  api-unit:
+  bank_api_unit:
     <<: *tests
     command: app/tests/CentralApi.UnitTests
 
-  api-integration:
+  bank_api_integration:
     <<: *tests
     command: app/tests/CentralApi.IntegrationTests

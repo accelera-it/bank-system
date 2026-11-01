@@ -6,12 +6,12 @@ x-app-healthcheck: &app-healthcheck
   retries: 5
 
 services:
-  oracle:
+  bank_oracle:
     build:
       context: data/oracle
     env_file: bank.env
     volumes:
-      - oracle-data:/opt/oracle/oradata
+      - oracle_data:/opt/oracle/oradata
     healthcheck:
       test: [ "CMD", "healthcheck.sh" ]
       interval: 10s
@@ -21,12 +21,12 @@ services:
     networks:
       - bank_lan
 
-  bank-redis:
+  bank_redis:
     build:
       context: data/redis
     env_file: bank.env
     volumes:
-      - redis-data:/data
+      - redis_data:/data
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
       interval: 5s
@@ -35,46 +35,49 @@ services:
     networks:
       - bank_lan
 
-  api:
+  bank_central:
     build:
       context: .
       dockerfile: app/src/CentralApi/Dockerfile
     env_file: bank.env
     healthcheck: *app-healthcheck
     depends_on:
-      oracle:
+      bank_oracle:
         condition: service_healthy
     networks:
       - bank_lan
 
-  web:
+  bank_web:
     build:
       context: .
       dockerfile: app/src/BankSystem.Web/Dockerfile
-    env_file: bank.env
+    env_file:
+      - bank.env
+      - ../kyc/client.env
     healthcheck: *app-healthcheck
     depends_on:
-      oracle:
+      bank_oracle:
         condition: service_healthy
-      bank-redis:
+      bank_redis:
         condition: service_healthy
-      ocelot:
+      bank_api:
         condition: service_healthy
     networks:
       - bank_lan
+      - kyc_lan
 
-  ocelot:
+  bank_api:
     build:
       context: .
       dockerfile: app/src/CentralApi.Gateway/Dockerfile
     healthcheck: *app-healthcheck
     depends_on:
-      api:
+      bank_central:
         condition: service_healthy
     networks:
       - bank_lan
 
-  nginx:
+  bank_nginx:
     build:
       context: proxy
     ports:
@@ -86,17 +89,19 @@ services:
       start_period: 10s
       retries: 5
     depends_on:
-      web:
+      bank_web:
         condition: service_healthy
-      ocelot:
+      bank_api:
         condition: service_healthy
     networks:
       - bank_lan
 
 volumes:
-  oracle-data:
-  redis-data:
+  oracle_data:
+  redis_data:
 
 networks:
   bank_lan:
     name: bank_lan
+  kyc_lan:
+    external: true

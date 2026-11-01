@@ -1,6 +1,5 @@
 import secrets
 
-import bcrypt
 from fastapi import Cookie, Depends, HTTPException, Response, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,29 +12,30 @@ from src.models import User
 COOKIE_NAME = "shop_session"
 
 
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-
-def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
-
-
 def _key(token: str) -> str:
     return f"session:{token}"
 
 
-async def start_session(response: Response, redis: Redis, user_id: str) -> None:
+def _id_token_key(token: str) -> str:
+    return f"session_id_token:{token}"
+
+
+async def start_session(response: Response, redis: Redis, user_id: str, id_token: str) -> None:
     token = secrets.token_urlsafe(32)
     lifetime = get_settings().session_days * 86400
     await redis.set(_key(token), user_id, ex=lifetime)
+    await redis.set(_id_token_key(token), id_token, ex=lifetime)
     response.set_cookie(COOKIE_NAME, token, max_age=lifetime, httponly=True, samesite="lax", path="/")
 
 
 async def end_session(response: Response, redis: Redis, token: str | None) -> None:
     if token:
-        await redis.delete(_key(token))
+        await redis.delete(_key(token), _id_token_key(token))
     response.delete_cookie(COOKIE_NAME, path="/")
+
+
+async def id_token_of(redis: Redis, token: str | None) -> str | None:
+    return await redis.get(_id_token_key(token)) if token else None
 
 
 async def current_user(

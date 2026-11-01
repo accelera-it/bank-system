@@ -85,7 +85,7 @@
 
             <div class="app-sidebar-footer">
                 <p class="font-weight-bold text-truncate mb-2 px-2">@fullName</p>
-                <form asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new {area = ""})">
+                <form asp-page="/Account/Logout" method="post">
                     <button type="submit" class="btn btn-danger btn-block">
                         <i class="fas fa-sign-out-alt mr-1" aria-hidden="true"></i> Log out
                     </button>

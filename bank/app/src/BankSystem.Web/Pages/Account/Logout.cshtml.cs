@@ -28,8 +28,7 @@ namespace BankSystem.Web.Pages.Account
             this.kyc = kyc.Value;
         }
 
-        public IActionResult OnGet()
-            => !this.User.Identity.IsAuthenticated ? this.RedirectToHome() : this.Page();
+        public IActionResult OnGet() => this.RedirectToHome();
 
         public async Task<IActionResult> OnPost()
         {

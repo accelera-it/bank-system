@@ -4,7 +4,7 @@ import { api } from "../../api";
 import type { Product } from "../../types";
 import ProductCard from "./ProductCard";
 
-export default function ProductGrid({ limit }: { limit?: number }) {
+export default function ProductGrid() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -18,7 +18,7 @@ export default function ProductGrid({ limit }: { limit?: number }) {
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {products.slice(0, limit).map((product) => (
+      {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>

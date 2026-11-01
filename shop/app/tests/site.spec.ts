@@ -7,15 +7,17 @@ test("home shows shop and navigation", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Products", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Get started" })).toHaveCount(0);
-  await expect(page.getByText(LAPTOP)).toBeVisible();
+  await expect(page.getByText("Ready to order?")).toBeVisible();
+  await expect(page.locator("article").filter({ hasText: LAPTOP })).toHaveCount(0);
+  await expect(page.getByText(/© \d{4} Demo Shop/)).toBeVisible();
 });
 
-test("catalog opens product page", async ({ page }) => {
+test("catalog shows the products with no detail page", async ({ page }) => {
   await page.goto("/products");
-  await page.getByRole("link", { name: LAPTOP, exact: true }).last().click();
 
-  await expect(page.getByRole("heading", { name: LAPTOP })).toBeVisible();
-  await expect(page.getByText("8 900 000 UZS")).toBeVisible();
+  const laptop = page.locator("article").filter({ hasText: LAPTOP });
+  await expect(laptop.getByText("8 900 000 UZS")).toBeVisible();
+  await expect(laptop.getByRole("link")).toHaveCount(0);
 });
 
 test("login with demo user goes to keycloak and comes back", async ({ page }) => {

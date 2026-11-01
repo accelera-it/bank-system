@@ -26,7 +26,6 @@ export async function request<T>(method: string, path: string, body?: unknown): 
 
 export const api = {
   products: () => request<Product[]>("GET", "/products"),
-  product: (id: string) => request<Product>("GET", `/products/${id}`),
   me: () => request<User>("GET", "/auth/me"),
   createOrder: (productId: string) => request<Order>("POST", "/orders", { product_id: productId }),
 };

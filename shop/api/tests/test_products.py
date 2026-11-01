@@ -39,10 +39,6 @@ async def test_create_rejects_a_price_of_zero(signed_in):
     assert response.status_code == 422
 
 
-async def test_unknown_product_is_not_found(client):
-    assert (await client.get("/api/products/missing")).status_code == 404
-
-
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 32
 
 

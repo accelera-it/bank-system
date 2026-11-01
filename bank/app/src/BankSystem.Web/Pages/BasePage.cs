@@ -10,9 +10,6 @@ namespace BankSystem.Web.Pages
     {
         public IActionResult RedirectToHome() => this.RedirectToAction("Index", "Home");
 
-        public IActionResult RedirectToLoginPage()
-            => this.RedirectToPage("/Account/Login");
-
         protected IActionResult ReturnTo(string returnUrl)
             => this.Url.IsLocalUrl(returnUrl) ? this.LocalRedirect(returnUrl) : this.RedirectToHome();
 

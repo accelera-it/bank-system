@@ -63,13 +63,6 @@ async def create_order(
     return await db.get(Order, order.id, populate_existing=True)
 
 
-@router.get("/orders/{order_id}", response_model=OrderOut)
-async def get_order(
-    order_id: str, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)
-) -> Order:
-    return await _own_order(order_id, user, db)
-
-
 @router.post("/orders/{order_id}/direct-payment", response_model=DirectPaymentOut)
 async def start_direct_payment(
     order_id: str,

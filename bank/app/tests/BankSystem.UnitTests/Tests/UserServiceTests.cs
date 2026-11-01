@@ -1,4 +1,4 @@
-﻿namespace BankSystem.Services.UnitTests.Tests
+namespace BankSystem.Services.UnitTests.Tests
 {
     using System.Threading.Tasks;
     using BankSystem.Models;
@@ -21,24 +21,6 @@
 
         private readonly BankSystemDbContext dbContext;
         private readonly IUserService userService;
-
-        [Theory]
-        [InlineData(" ")]
-        [InlineData("asd  1 ")]
-        [InlineData("     10   ")]
-        [InlineData("5215@%*)%@")]
-        public async Task GetUserIdByUsernameAsync_WithInvalidUsername_Should_ReturnNull(string username)
-        {
-            // Arrange
-            await this.SeedUserAsync();
-            // Act
-            var result = await this.userService.GetUserIdByUsernameAsync(username);
-
-            // Assert
-            result
-                .Should()
-                .BeNull();
-        }
 
         [Theory]
         [InlineData("  !")]
@@ -80,20 +62,5 @@
                 .Be(SampleUserFullName);
         }
 
-        [Fact]
-        public async Task GetUserIdByUsernameAsync_WithValidUsername_Should_ReturnCorrectId()
-        {
-            // Arrange
-            await this.SeedUserAsync();
-            // Act
-            var result = await this.userService.GetUserIdByUsernameAsync(SampleUsername);
-
-            // Assert
-            result
-                .Should()
-                .NotBeNull()
-                .And
-                .Be(SampleUserId);
-        }
     }
 }

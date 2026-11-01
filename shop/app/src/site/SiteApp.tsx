@@ -7,7 +7,6 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
-import ProductDetails from "./pages/ProductDetails";
 import Products from "./pages/Products";
 
 export default function SiteApp() {
@@ -24,7 +23,6 @@ export default function SiteApp() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
-          <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

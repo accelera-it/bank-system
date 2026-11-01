@@ -76,14 +76,6 @@ async def get_image(key: str = Path(pattern=IMAGE_KEY), storage: Storage = Depen
     return Response(data, media_type=content_type, headers=headers)
 
 
-@router.get("/{product_id}", response_model=ProductOut)
-async def get_product(product_id: str, db: AsyncSession = Depends(get_db)) -> Product:
-    product = await db.get(Product, product_id)
-    if product is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found")
-    return product
-
-
 @router.post("", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
 async def create_product(
     model: ProductIn,

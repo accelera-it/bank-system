@@ -12,6 +12,11 @@ async def order_id(client, product) -> str:
     return response.json()["id"]
 
 
+async def status_of(client, order_id: str) -> str:
+    orders = (await client.get("/api/orders")).json()
+    return next(order for order in orders if order["id"] == order_id)["payment_status"]
+
+
 async def test_orders_need_a_session(client):
     assert (await client.get("/api/orders")).status_code == 401
 
@@ -36,7 +41,6 @@ async def test_order_of_another_user_is_hidden(signed_in, kyc, product):
     created = await order_id(signed_in, product)
     await sign_in(signed_in, kyc, email="other@abs.uz", name="Other")
 
-    assert (await signed_in.get(f"/api/orders/{created}")).status_code == 404
     assert (await signed_in.post(f"/api/orders/{created}/card-payment", json=CARD)).status_code == 404
 
 
@@ -62,7 +66,7 @@ async def test_refused_card_leaves_the_order_pending(signed_in, product, central
     response = await signed_in.post(f"/api/orders/{created}/card-payment", json=CARD)
 
     assert response.status_code == 402
-    assert (await signed_in.get(f"/api/orders/{created}")).json()["payment_status"] == "pending"
+    assert await status_of(signed_in, created) == "pending"
 
 
 async def test_paid_order_cannot_be_paid_again(signed_in, product, central_api):

@@ -60,7 +60,8 @@ async def test_valid_confirmation_completes_the_order(signed_in, product, site_k
 
     assert response.status_code == 303
     assert response.headers["location"] == "http://shop.test/cabinet/orders"
-    assert (await signed_in.get(f"/api/orders/{order_id}")).json()["payment_status"] == "completed"
+    orders = (await signed_in.get("/api/orders")).json()
+    assert next(order for order in orders if order["id"] == order_id)["payment_status"] == "completed"
 
 
 async def test_confirmation_without_data_is_refused(client):

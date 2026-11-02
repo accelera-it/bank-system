@@ -27,7 +27,7 @@ Run from the repository root. Start it before `bank` and `shop`: they join its `
 docker compose -f kyc/docker-compose.yml up -d --build
 ```
 
-Keycloak keeps its data in Postgres (`kyc_pg`), in the `pg_data` volume. Keycloak is at <http://localhost:8080>; inside its container it listens on port 8080 too. The realm is imported on first start, so changes to `abs-realm.json` need a fresh volume.
+Keycloak keeps its data in Postgres (`kyc_pg`), in the `pg_data` volume. Keycloak is at <http://localhost:8080>; inside its container it listens on port 8080 too. The realm is imported on first start, so changes to `abs-realm.json` need a fresh volume, and so does a new database password, because PostgreSQL keeps the one it was created with. Keycloak needs no Redis: it caches in its own embedded Infinispan and keeps user sessions in the database.
 
 | User | Password | Where
 |-|-|-

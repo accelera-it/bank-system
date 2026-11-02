@@ -62,10 +62,11 @@ dotnet test
 
 - C#, ASP.NET Core 10 (MVC, Razor Pages, Web API)
 - Entity Framework Core, Oracle
+- PostgreSQL (Keycloak)
 - Python, FastAPI, SQLAlchemy, PostgreSQL, MinIO
 - React, TypeScript, Vite, Tailwind CSS, Ant Design
 - Keycloak, Kong, nginx
-- Redis (login sessions, cache)
+- Redis (login sessions and cache of the bank and the shop)
 - RabbitMQ (pending transfers, settled payments)
 - ASP.NET Core Identity, OpenID Connect
 - Mapster

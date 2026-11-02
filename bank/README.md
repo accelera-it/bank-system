@@ -57,9 +57,11 @@ Only nginx publishes a port. Above the limit in `proxy/nginx.conf`, public `/api
 
 The bank and the shop call CentralApi through Kong (`bank_gateway`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret.
 
+The `bank_oracle` volume is set up on its first start: `data/oracle/users.sh` creates the users `BankSystem` and `CentralApi` in `FREEPDB1`, so a new `ORACLE_PASSWORD` needs a fresh volume.
+
 ### Without Docker
 
-Requires the .NET 10 SDK and Oracle. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
+Requires the .NET 10 SDK and Oracle 23, with a user per app as in `data/oracle/users.sh`. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
 dotnet run --project app/src/CentralApi

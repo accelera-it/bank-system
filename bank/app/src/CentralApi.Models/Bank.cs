@@ -9,12 +9,15 @@
         public string Id { get; set; }
 
         [Required]
+        [MaxLength(256)]
         public string Name { get; set; }
 
         [Required]
+        [MaxLength(32)]
         public string SwiftCode { get; set; }
 
         [Required]
+        [MaxLength(256)]
         public string Location { get; set; }
 
         [Required]
@@ -27,6 +30,7 @@
 
         public string CardPaymentUrl { get; set; }
 
+        [MaxLength(16)]
         public string BankIdentificationCardNumbers { get; set; }
     }
 }

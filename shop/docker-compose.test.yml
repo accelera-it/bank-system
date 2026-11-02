@@ -32,10 +32,23 @@ services:
       <<: *healthcheck
       test: [ "CMD", "node", "-e", "require('net').connect(5000, '127.0.0.1').on('connect', () => process.exit(0)).on('error', () => process.exit(1))" ]
 
+  kyc_pg:
+    build:
+      context: ../kyc/data/pg
+    env_file: ../kyc/app/tests/test.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\"" ]
+      interval: 5s
+      timeout: 3s
+      retries: 36
+
   kyc_app:
     build:
       context: ../kyc/app
     env_file: ../kyc/app/tests/test.env
+    depends_on:
+      kyc_pg:
+        condition: service_healthy
     environment:
       KC_HOSTNAME: http://localhost:8080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"

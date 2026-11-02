@@ -12,6 +12,7 @@ namespace CentralApi
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
+    using Oracle.EntityFrameworkCore.Infrastructure;
     using Services.Bank;
 
     public class Startup
@@ -26,8 +27,9 @@ namespace CentralApi
             services.AddHealthChecks();
 
             services.AddDbContext<CentralApiDbContext>(options =>
-                options.UseSqlServer(
-                    this.Configuration.GetConnectionString("CentralApi")));
+                options.UseOracle(
+                    this.Configuration.GetConnectionString("CentralApi"),
+                    oracle => oracle.UseOracleSQLCompatibility(OracleSQLCompatibility.DatabaseVersion23)));
             services.AddScoped<IBanksService, BanksService>();
 
             services.Configure<CentralApiConfiguration>(

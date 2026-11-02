@@ -29,10 +29,10 @@ The bank and the hub that connects banks.
 | `gateway/` | Kong gateway; routes are in `kong.yml`
 | `proxy/` | nginx, the public entry for both apps
 | `app/tests/` | Unit and integration tests (xUnit) and their Dockerfile
-| `data/mssql/` | SQL Server image; each app creates its own database
+| `data/oracle/` | Oracle Free image; `users.sh` gives each app its own user, and each app creates its tables
 | `data/redis/` | Redis image, for the bank's login sessions and cache
 | `data/rabbitmq/` | RabbitMQ image with its queues and users, for pending transfers
-| `docker-compose.yml` | SQL Server, Redis, RabbitMQ, CentralApi, BankSystem.Web, Kong and nginx
+| `docker-compose.yml` | Oracle, Redis, RabbitMQ, CentralApi, BankSystem.Web, Kong and nginx
 | `docker-compose.test.yml` | The four test projects, one service each
 | `bank.env` | Environment of `docker-compose.yml`
 
@@ -55,11 +55,11 @@ CentralApi serves Swagger at <http://localhost:8081/api/swagger/index.html> in t
 
 Only nginx publishes a port. Above the limit in `proxy/nginx.conf`, public `/api/` calls get `429`. CentralApi's `/pay` page is public as `/api/pay`, because the bank has its own `/pay`. Everything else is reachable inside the Docker network only.
 
-The bank and the shop call CentralApi through Kong (`bank_gateway`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret. SQL Server runs as `linux/amd64`, so it is slower under emulation on Apple Silicon.
+The bank and the shop call CentralApi through Kong (`bank_gateway`), and CentralApi reaches the bank's API through it at `/bank/api/`, which nginx does not publish. `kyc/client.env` holds the bank's client secret.
 
 ### Without Docker
 
-Requires the .NET 10 SDK and SQL Server. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
+Requires the .NET 10 SDK and Oracle. Run these from `bank/`, which holds `BankSystem.sln`. Settings and RSA keys are environment variables, listed in `bank.env`; each app's `appsettings.json` only holds logging defaults. Databases are migrated automatically on startup. Without `ConnectionStrings:Redis`, login sessions and the cache are kept in memory.
 
 ```bash
 dotnet run --project app/src/CentralApi

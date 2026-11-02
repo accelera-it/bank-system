@@ -14,11 +14,22 @@ services:
       kyc_proxy:
         condition: service_healthy
 
+  kyc_pg:
+    build:
+      context: data/pg
+    env_file: app/tests/test.env
+    healthcheck:
+      <<: *healthcheck
+      test: [ "CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\"" ]
+
   kyc_app:
     build:
       context: app
     env_file: app/tests/test.env
     command: [ "start-dev", "--import-realm" ]
+    depends_on:
+      kyc_pg:
+        condition: service_healthy
     healthcheck:
       <<: *healthcheck
       test: [ "CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *' 200 '* ]]" ]

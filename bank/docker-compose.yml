@@ -6,15 +6,15 @@ x-app-healthcheck: &app-healthcheck
   retries: 5
 
 services:
-  bank_mssql:
+  bank_oracle:
     build:
-      context: data/mssql
-    platform: linux/amd64
+      context: data/oracle
     env_file: bank.env
     volumes:
-      - mssql_data:/var/opt/mssql
+      - oracle_data:/opt/oracle/oradata
     healthcheck:
-      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b" ]
+      # The users are created after the database opens, and CentralApi is the last one
+      test: [ "CMD-SHELL", "echo 'SELECT 1 FROM DUAL;' | sqlplus -s -L \"CentralApi/$$ORACLE_PASSWORD@//localhost/FREEPDB1\" | grep -q 1" ]
       interval: 10s
       timeout: 10s
       start_period: 60s
@@ -59,7 +59,7 @@ services:
     env_file: bank.env
     healthcheck: *app-healthcheck
     depends_on:
-      bank_mssql:
+      bank_oracle:
         condition: service_healthy
     networks:
       - bank_lan
@@ -73,7 +73,7 @@ services:
       - ../kyc/client.env
     healthcheck: *app-healthcheck
     depends_on:
-      bank_mssql:
+      bank_oracle:
         condition: service_healthy
       bank_redis:
         condition: service_healthy
@@ -121,7 +121,7 @@ services:
       - bank_lan
 
 volumes:
-  mssql_data:
+  oracle_data:
   redis_data:
   rabbit_data:
 

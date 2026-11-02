@@ -8,11 +8,12 @@ Keycloak, the identity system for the bank and the shop. Both are clients of the
 | - | -
 | `app/` | Keycloak image, the `abs` realm in `realms/abs-realm.json` and the `abs` login theme in `themes/`, in the colors of the bank and the shop
 | `proxy/` | nginx, the public entry
+| `data/pg/` | Postgres image
 | `app/provider/` | Keycloak provider that checks the current password in Change password
 | `app/setup.sh` | Entry point of `kyc_app`: starts Keycloak, makes the root user permanent and sets the `master` realm: no Remember me, no login with email, SSL not required
 | `app/tests/` | Login, register, token and session tests (Java, JUnit)
-| `docker-compose.yml` | Keycloak and nginx
-| `docker-compose.test.yml` | The tests, with Keycloak on H2
+| `docker-compose.yml` | Postgres, Keycloak and nginx
+| `docker-compose.test.yml` | The tests, with Keycloak on a throwaway Postgres
 | `kyc.env` | Keycloak settings of `docker-compose.yml`
 | `client.env` | Client secrets, read by kyc, bank and shop
 
@@ -26,7 +27,7 @@ Run from the repository root. Start it before `bank` and `shop`: they join its `
 docker compose -f kyc/docker-compose.yml up -d --build
 ```
 
-Keycloak keeps its data in an H2 file database, in the `kyc_data` volume. Keycloak is at <http://localhost:8080>; inside its container it listens on port 8080 too. The realm is imported on first start, so changes to `abs-realm.json` need a fresh volume.
+Keycloak keeps its data in Postgres (`kyc_pg`), in the `pg_data` volume. Keycloak is at <http://localhost:8080>; inside its container it listens on port 8080 too. The realm is imported on first start, so changes to `abs-realm.json` need a fresh volume.
 
 | User | Password | Where
 |-|-|-

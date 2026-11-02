@@ -26,9 +26,9 @@
             var bank = await this.Context
                 .Banks
                 .Where(b =>
-                    EF.Functions.Like(b.Name, string.Format(likeExpression, bankName)) &&
-                    EF.Functions.Like(b.SwiftCode, string.Format(likeExpression, swiftCode)) &&
-                    EF.Functions.Like(b.Location, string.Format(likeExpression, bankCountry)))
+                    EF.Functions.Like(b.Name.ToUpper(), string.Format(likeExpression, bankName).ToUpper()) &&
+                    EF.Functions.Like(b.SwiftCode.ToUpper(), string.Format(likeExpression, swiftCode).ToUpper()) &&
+                    EF.Functions.Like(b.Location.ToUpper(), string.Format(likeExpression, bankCountry).ToUpper()))
                 .ProjectToType<T>(this.mapper.Config)
                 .SingleOrDefaultAsync();
 

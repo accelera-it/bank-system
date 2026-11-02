@@ -19,6 +19,7 @@ namespace BankSystem.Web
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Net.Http.Headers;
+    using Oracle.EntityFrameworkCore.Infrastructure;
     using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
     public class Startup
@@ -36,8 +37,9 @@ namespace BankSystem.Web
             services.AddHealthChecks();
 
             services.AddDbContextPool<BankSystemDbContext>(options =>
-                options.UseSqlServer(
-                    this.Configuration.GetConnectionString("BankSystem")));
+                options.UseOracle(
+                    this.Configuration.GetConnectionString("BankSystem"),
+                    oracle => oracle.UseOracleSQLCompatibility(OracleSQLCompatibility.DatabaseVersion23)));
 
             services.AddDatabaseDeveloperPageExceptionFilter();
 

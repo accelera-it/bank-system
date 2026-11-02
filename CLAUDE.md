@@ -9,11 +9,11 @@ BankSystem is three independently deployed stacks: the bank and its hub, a sampl
 - **BankSystem.Web** (`bank/app/src/BankSystem.Web`) — the bank: MVC + Razor Pages, feature areas `Cards`, `MoneyTransfers`, `Administration`.
 - **CentralApi** (`bank/app/src/CentralApi`) — a hub that connects multiple BankSystem instances and routes global transfers, card payments and direct payments between them.
 - **DemoShop** (`shop/`) — sample merchant that pays via CentralApi (direct and card payments): Python FastAPI middleware (`shop/api`), and one React + TypeScript + Vite app (`shop/app`): the Tailwind CDN shop site and, under `/cabinet`, the Ant Design cabinet. It is not part of `BankSystem.sln`.
-- **Keycloak** (`kyc/`) — the central sign-in for the bank and the shop, on H2, with a provider in `kyc/app/provider` and the `abs` theme.
+- **Keycloak** (`kyc/`) — the central sign-in for the bank and the shop, on Postgres, with a provider in `kyc/app/provider` and the `abs` theme.
 
 In `bank`, `bank/proxy` (nginx) is the only public entry (:8081): `/api/` goes to `bank/gateway` (Kong, DB-less, routes in `kong.yml`), everything else to BankSystem.Web. Kong takes every call to CentralApi, including those from the bank and the shop, and CentralApi reaches the bank's API through it at `/bank/api/*`, which nginx does not publish. nginx rate limits `/api/` per client IP (`limit_req` in `nginx.conf`), so internal calls, which never pass through nginx, are not limited. `/pay` exists in both apps, so CentralApi's page is public as `/api/pay` and nginx sends `X-Forwarded-Prefix` so its links keep the prefix (Kong sets that header before its plugins run).
 
-Repo layout: `kyc/` holds Keycloak on H2 (`app/` with Java tests in `app/tests`, `proxy/`). `bank/` holds the bank and CentralApi (`app/{src,core,tests}`, `proxy/` with nginx for the web app, `gateway/` with Kong, `data/`), `shop/` holds DemoShop (`api/` with its package in `src/`, `app/`, `data/`). `data/` has one Dockerfile per backing service, and each side has its own compose files and env file; there is no compose file at the root. Shop tests sit next to their code: `shop/api/tests` (pytest) and `shop/app/tests` (Playwright in TypeScript). `README.md` is the overview; `kyc/README.md`, `bank/README.md` and `shop/README.md` cover setup, tests and configuration for each side, and `docs/` holds the architecture diagram, the technical overview and the slide. `docs/rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config.
+Repo layout: `kyc/` holds Keycloak on Postgres (`app/` with Java tests in `app/tests`, `proxy/`, `data/`). `bank/` holds the bank and CentralApi (`app/{src,core,tests}`, `proxy/` with nginx for the web app, `gateway/` with Kong, `data/`), `shop/` holds DemoShop (`api/` with its package in `src/`, `app/`, `data/`). `data/` has one Dockerfile per backing service, and each side has its own compose files and env file; there is no compose file at the root. Shop tests sit next to their code: `shop/api/tests` (pytest) and `shop/app/tests` (Playwright in TypeScript). `README.md` is the overview; `kyc/README.md`, `bank/README.md` and `shop/README.md` cover setup, tests and configuration for each side, and `docs/` holds the architecture diagram, the technical overview and the slide. `docs/rsa-keygen.sh [bits]` (openssl) generates RSA key pairs in the .NET `<RSAKeyValue>` XML format used in config.
 
 ## Commands
 
@@ -30,7 +30,7 @@ dotnet run --project app/src/BankSystem.Web
 dotnet run --project app/src/CentralApi
 ```
 
-EF Core migrations (SQL Server for BankSystem and CentralApi, one database each; each app calls `Database.Migrate()` on startup):
+EF Core migrations (Oracle for BankSystem and CentralApi, one user and schema each in `FREEPDB1`, created by `bank/data/oracle/users.sh` on the first start of an empty volume; each app calls `Database.Migrate()` on startup):
 
 ```bash
 dotnet ef migrations add <Name> --project app/src/BankSystem.Data --startup-project app/src/BankSystem.Web
@@ -51,7 +51,7 @@ docker compose -f bank/docker-compose.test.yml run --rm --build bank_api_unit   
 
 Every service has a `healthcheck` in its compose file (not in the Dockerfiles): the apps answer `GET /health` (liveness only), and `depends_on` waits for `service_healthy`.
 
-Each stack loads its own env file through `env_file` (`kyc/kyc.env`, `bank/bank.env`, `shop/shop.env`; the client secrets in `kyc/client.env` go to all three), which holds connection strings, inter-service URLs, RSA keys and every other setting; `appsettings.json` only has logging defaults, and `ASPNETCORE_ENVIRONMENT=Development` is set in the Dockerfiles (`Section__Key`: `ConnectionStrings__BankSystem`, `__CentralApi`, `__Redis`; `shop.env` uses plain names such as `DATABASE_URL`). Apps listen on port 5000 inside the containers, the bank's nginx on 80 and Keycloak on 8080. SQL Server runs as `linux/amd64`, under emulation on Apple Silicon.
+Each stack loads its own env file through `env_file` (`kyc/kyc.env`, `bank/bank.env`, `shop/shop.env`; the client secrets in `kyc/client.env` go to all three), which holds connection strings, inter-service URLs, RSA keys and every other setting; `appsettings.json` only has logging defaults, and `ASPNETCORE_ENVIRONMENT=Development` is set in the Dockerfiles (`Section__Key`: `ConnectionStrings__BankSystem`, `__CentralApi`, `__Redis`; `shop.env` uses plain names such as `DATABASE_URL`). Apps listen on port 5000 inside the containers, the bank's nginx on 80 and Keycloak on 8080.
 
 ## Architecture
 
@@ -68,6 +68,6 @@ Keycloak's `abs` realm (`kyc/app/realms/abs-realm.json`) has the clients `bank` 
 Transfers are atomic, a global transfer with no clear answer holds the money and is delivered again, and a bank credits each reference number once; `bank/CLAUDE.md` has the rules. RabbitMQ (`bank_rabbit`) carries the retries and tells the shop when a payment settles, but the database stays the record, so nothing is lost without it. The shop follows such a payment by its reference number, see `shop/CLAUDE.md`.
 
 ### Tests
-Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the shop has pytest in `shop/api/tests` and Playwright in `shop/app/tests`, and `kyc/app/tests` has JUnit tests against a real Keycloak on H2.
+Four xUnit projects (FluentAssertions, Moq) in `bank/app/tests/{BankSystem,CentralApi}.{UnitTests,IntegrationTests}`; the shop has pytest in `shop/api/tests` and Playwright in `shop/app/tests`, and `kyc/app/tests` has JUnit tests against a real Keycloak on Postgres.
 - Unit tests cover services and crypto/payment helpers on an EF Core InMemory DB.
-- Integration tests boot the real app with `WebApplicationFactory`, one instance and database per test class. Helpers are linked from `bank/app/tests/Shared`: `TestDatabase` (EF Core InMemory, so the seeders call `EnsureCreated` instead of migrating; real SQL Server is not covered by tests), `TestAuthHandler` (sign in through headers), `StubHttpServer` (loopback server for the next hop, because the apps create their own `HttpClient`) and `SecureRequestBuilder` (the inter-bank protocol). The tests have no broker, so RabbitMQ is checked by running the real stack.
+- Integration tests boot the real app with `WebApplicationFactory`, one instance and database per test class. Helpers are linked from `bank/app/tests/Shared`: `TestDatabase` (EF Core InMemory, so the seeders call `EnsureCreated` instead of migrating; real Oracle is not covered by tests, so check data changes on the running stack), `TestAuthHandler` (sign in through headers), `StubHttpServer` (loopback server for the next hop, because the apps create their own `HttpClient`) and `SecureRequestBuilder` (the inter-bank protocol). The tests have no broker, so RabbitMQ is checked by running the real stack.

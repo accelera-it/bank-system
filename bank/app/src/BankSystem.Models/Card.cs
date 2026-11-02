@@ -10,6 +10,7 @@
         public string Id { get; set; }
 
         [Required]
+        [MaxLength(ModelConstants.Card.NumberLength)]
         public string Number { get; set; }
 
         [Required]

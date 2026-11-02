@@ -29,15 +29,15 @@ namespace BankSystem.Data
 
             base.OnModelCreating(builder);
 
-            // The filtered index below covers only credits, so account history needs its own
+            // A pending transfer's JSON has no upper limit, and NVARCHAR2 stops at 2000 characters
+            builder.Entity<PendingTransfer>().Property(p => p.Payload).HasColumnType("NCLOB");
+
             builder.Entity<MoneyTransfer>().HasIndex(t => t.AccountId);
             builder.Entity<MoneyTransfer>().HasIndex(t => t.ReferenceNumber);
 
-            // A bank must credit an incoming transfer once, however many times it is delivered
-            builder.Entity<MoneyTransfer>()
-                .HasIndex(t => new { t.AccountId, t.ReferenceNumber })
-                .IsUnique()
-                .HasFilter("[Amount] > 0");
+            // A bank must credit an incoming transfer once, however many times it is delivered.
+            // Oracle has no filtered indexes, so the Initial migration creates that unique index
+            // on expressions that are NULL for debits, which leaves them out of it.
         }
     }
 }
